@@ -87,9 +87,25 @@ class Part2StartTaskCatalogTests(TestCase):
         self.assertEqual(get_task_metadata("Математика профильная", 13, "ege").exam_part, 2)
 
     def test_subjects_without_catalog_keep_hardcoded_fallback(self):
-        self.assertEqual(part2_start_task("ege", "literature"), 13)
+        self.assertEqual(part2_start_task("ege", "literature"), 11)
         self.assertEqual(part2_start_task("oge", "math_basic"), 20)
-        self.assertEqual(part2_start_task("oge", "russian"), 14)
+        self.assertEqual(part2_start_task("oge", "russian"), 13)
+        self.assertEqual(part2_start_task("oge", "physics"), 17)
+        self.assertEqual(part2_start_task("oge", "chemistry"), 20)
+        self.assertEqual(part2_start_task("oge", "informatics"), 13)
+        self.assertEqual(part2_start_task("oge", "biology"), 22)
+        self.assertEqual(part2_start_task("oge", "history"), 18)
+        self.assertEqual(part2_start_task("oge", "geography"), 28)
+        self.assertEqual(part2_start_task("oge", "social_studies"), 17)
+        self.assertEqual(part2_start_task("oge", "literature"), 5)
+        self.assertEqual(part2_start_task("oge", "english"), 35)
+        self.assertEqual(part2_start_task("oge", "german"), 35)
+        self.assertEqual(part2_start_task("oge", "french"), 35)
+        self.assertEqual(part2_start_task("oge", "spanish"), 35)
+
+    def test_oge_literature_is_expanded_answer(self):
+        for number in range(1, 6):
+            self.assertTrue(is_expanded_answer_task("oge", "literature", number), number)
 
     def test_explicit_short_part_length_still_overrides(self):
         self.assertEqual(part2_start_task("ege", "biology", short_part_length=21), 22)
@@ -97,12 +113,12 @@ class Part2StartTaskCatalogTests(TestCase):
 
 
 class AnalyticsEngineKimPartBoundaryTests(TestCase):
-    def _make_exam(self, subject: str, task_count: int, code: str) -> tuple[School, Exam]:
+    def _make_exam(self, subject: str, task_count: int, code: str, exam_type: str = "ege") -> tuple[School, Exam]:
         ministry = Ministry.objects.create(name=f"Мин {code}")
         district = District.objects.create(ministry=ministry, code=code, name=f"Район {code}")
         school = School.objects.create(district=district, code=code, name=f"Школа {code}")
         exam = Exam.objects.create(
-            exam_type="ege",
+            exam_type=exam_type,
             code=code,
             subject=subject,
             exam_date=date(2026, 6, 2),
@@ -223,6 +239,25 @@ class AnalyticsEngineKimPartBoundaryTests(TestCase):
             self.assertEqual(parts[number], 1, number)
         for number in range(17, 26):
             self.assertEqual(parts[number], 2, number)
+
+    def test_english_oge_1_34_are_part_1(self):
+        school, exam = self._make_exam("Английский язык", 38, "ENO", exam_type="oge")
+        result = AnalyticsEngine().analyze_exam(school.id, exam.id)
+        self.assertTrue(result.valid, result.error_message)
+        parts = {task.task_number: task.exam_part for task in result.tasks}
+        for number in range(1, 35):
+            self.assertEqual(parts[number], 1, number)
+        for number in range(35, 39):
+            self.assertEqual(parts[number], 2, number)
+
+    def test_literature_1_4_are_part_1(self):
+        school, exam = self._make_exam("Литература", 5, "LIO", exam_type="oge")
+        result = AnalyticsEngine().analyze_exam(school.id, exam.id)
+        self.assertTrue(result.valid, result.error_message)
+        parts = {task.task_number: task.exam_part for task in result.tasks}
+        for number in range(1, 5):
+            self.assertEqual(parts[number], 1, number)
+        self.assertEqual(parts[5], 2)
 
     def test_literature_1_10_are_part_1(self):
         school, exam = self._make_exam("Литература", 11, "09")

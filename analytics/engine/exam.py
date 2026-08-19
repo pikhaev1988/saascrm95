@@ -257,7 +257,7 @@ class AnalyticsEngine:
                 for idx, token in enumerate(short_mask, start=1):
                     _accumulate_task(sid, idx, token)
                     raw_task_rows.append({"task_number": idx, "value": token})
-                part2_start = len(short_mask) + 1 if short_mask else part_boundary
+                part2_start = len(short_mask) + 1 if short_mask else 1
                 for task_number, token in parse_long_answer_mask(er.long_answer_tasks, part2_start):
                     _accumulate_task(sid, task_number, token)
                     raw_task_rows.append({"task_number": task_number, "value": token})
