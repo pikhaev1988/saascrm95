@@ -162,6 +162,12 @@
                             <span>Отчёты</span>
                         </a>
                         {% if request.user.role == "school" %}
+                        <a href="{% url 'cabinet-documents' %}" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-documents' %}is-active{% endif %}">
+                            <span class="app-nav-icon">📂</span>
+                            <span>Документы</span>
+                        </a>
+                        {% endif %}
+                        {% if request.user.role == "school" %}
                         <a href="{% url 'cabinet-upload-ege' %}" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-upload-ege' %}is-active{% endif %}">
                             <span class="app-nav-icon">📥</span>
                             <span>Загрузить протоколы ЕГЭ</span>

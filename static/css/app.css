@@ -2527,6 +2527,146 @@ tr.bg-red-50 { background: var(--c-rose-50) !important; }
     font-weight: 800;
     letter-spacing: -0.03em;
 }
+.schooldocs-page .schooldocs-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+.schooldocs-page .schooldocs-hero__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+    gap: 10px;
+}
+.schooldocs-page .schooldocs-meta-chip {
+    margin: 0;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 12px;
+    padding: 8px 10px;
+}
+.schooldocs-page .schooldocs-meta-chip span {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.schooldocs-page .schooldocs-meta-chip strong {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.96rem;
+    font-weight: 800;
+    color: #1d4ed8;
+}
+.schooldocs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+.schooldocs-card {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background:
+        radial-gradient(220px 100px at 100% 0%, rgba(37, 99, 235, 0.05), transparent 70%),
+        #fff;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+.schooldocs-card:hover {
+    transform: translateY(-1px);
+    border-color: #bfdbfe;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.07);
+}
+.schooldocs-card__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.95rem;
+}
+.schooldocs-card__body h3 {
+    margin: 4px 0 6px;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 750;
+    line-height: 1.3;
+}
+.schooldocs-card__body p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.87rem;
+    line-height: 1.45;
+}
+.schooldocs-card__who {
+    margin: 0;
+    color: #475569;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.schooldocs-card .ui-btn {
+    align-self: center;
+}
+.schooldocs-note {
+    margin-top: 8px;
+    color: #64748b;
+}
+.schooldocs-page .schooldocs-legal {
+    margin-top: 2px;
+}
+.schooldocs-page .schooldocs-legal__lead {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+.schooldocs-page .schooldocs-legal__links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+.schooldocs-page .schooldocs-legal__links a {
+    display: block;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+.schooldocs-page .schooldocs-legal__links a:hover {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+}
+.page-legal-links {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 0.82rem;
+}
+.page-legal-links a {
+    color: #64748b;
+    text-decoration: none;
+}
+.page-legal-links a:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
 .enterprise-catalog-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2644,6 +2784,29 @@ tr.bg-red-50 { background: var(--c-rose-50) !important; }
     .enterprise-filter-panel__actions .ui-btn {
         width: 100%;
         justify-content: center;
+    }
+    .schooldocs {
+        grid-template-columns: 1fr;
+    }
+    .schooldocs-card {
+        grid-template-columns: 36px minmax(0, 1fr);
+    }
+    .schooldocs-card .ui-btn {
+        grid-column: 1 / -1;
+        width: 100%;
+        margin-top: 6px;
+    }
+    .schooldocs-page .schooldocs-hero {
+        flex-direction: column;
+    }
+    .schooldocs-page .schooldocs-hero__meta,
+    .schooldocs-page .schooldocs-legal__links {
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+    .page-legal-links {
+        font-size: 0.8rem;
+        line-height: 1.6;
     }
 }
 

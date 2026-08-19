@@ -42,15 +42,6 @@ SCHOOL_DOCUMENTS = [
         "description": "Меры защиты, роли, персональные данные, почему не требуются ФСТЭК и лицензия на образование.",
     },
     {
-        "slug": "contract",
-        "file": "04_Dogovor_5_let.docx",
-        "download_name": "Dogovor_dostupa_5_let_Analiz_GIA.docx",
-        "icon": "📝",
-        "title": "Договор на 5 лет (безнал)",
-        "for_whom": "Бухгалтерии и директору",
-        "description": "Договор оказания услуг с физическим лицом и приложение — поручение на обработку персональных данных.",
-    },
-    {
         "slug": "contract-cash",
         "file": "04_Dogovor_5_let_nalichnye.docx",
         "download_name": "Dogovor_dostupa_5_let_nalichnye_Analiz_GIA.docx",
@@ -58,15 +49,6 @@ SCHOOL_DOCUMENTS = [
         "title": "Договор на 5 лет (наличные)",
         "for_whom": "Бухгалтерии и директору",
         "description": "Вариант договора для оплаты наличными.",
-    },
-    {
-        "slug": "contract-new",
-        "file": "04_Dogovor_5_let_new.docx",
-        "download_name": "Dogovor_dostupa_5_let_new_Analiz_GIA.docx",
-        "icon": "📝",
-        "title": "Договор на 5 лет (новая редакция)",
-        "for_whom": "Бухгалтерии и директору",
-        "description": "Обновлённая редакция договора оказания услуг.",
     },
     {
         "slug": "act",

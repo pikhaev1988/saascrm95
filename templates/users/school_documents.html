@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block head_title %}Документы — Анализ ГИА{% endblock %}
 {% block content %}
-<div class="enterprise-dashboard ds-page">
-    <header class="enterprise-header ds-page-header">
+<div class="enterprise-dashboard ds-page schooldocs-page">
+    <header class="enterprise-header ds-page-header schooldocs-hero">
         <div class="enterprise-header__main">
             <span class="enterprise-eyebrow">Кабинет школы</span>
             <h2>Документы</h2>
@@ -10,6 +10,16 @@
                 Пакет для руководителя и бухгалтерии: описание платформы, договор на
                 {{ access_years }} лет, акт и памятка. Исполнитель — физическое лицо
                 {{ operator_name }} (самозанятый, ИНН {{ operator_inn }}).
+            </p>
+        </div>
+        <div class="schooldocs-hero__meta">
+            <p class="schooldocs-meta-chip">
+                <span>Документов</span>
+                <strong>{{ school_documents|length }}</strong>
+            </p>
+            <p class="schooldocs-meta-chip">
+                <span>Срок доступа</span>
+                <strong>{{ access_years }} лет</strong>
             </p>
         </div>
     </header>
@@ -24,7 +34,7 @@
                 <p>{{ item.description }}</p>
             </div>
             {% if item.available %}
-            <a class="ui-btn ui-btn-primary" href="{% url 'cabinet-documents-download' item.slug %}">Скачать Word</a>
+            <a class="ui-btn ui-btn-primary" href="{% url 'cabinet-document-download' item.slug %}">Скачать Word</a>
             {% else %}
             <span class="ui-btn" aria-disabled="true">Файл готовится</span>
             {% endif %}
@@ -32,17 +42,5 @@
         {% endfor %}
     </div>
 
-    <section class="enterprise-panel" style="margin-top: 1.25rem;">
-        <h3 class="hub-panel-title">Публичные страницы</h3>
-        <p>Их можно открыть без скачивания и переслать ссылкой:</p>
-        <p>
-            <a href="{% url 'legal-privacy' %}">Политика обработки персональных данных</a>
-            ·
-            <a href="{% url 'legal-terms' %}">Условия доступа</a>
-        </p>
-        <p class="schooldocs-note">
-            Вопросы по договору: <a href="mailto:{{ operator_email }}">{{ operator_email }}</a>
-        </p>
-    </section>
 </div>
 {% endblock %}

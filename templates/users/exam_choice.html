@@ -718,5 +718,14 @@
     }
 })();
 </script>
+<footer class="page-legal-links" aria-label="Правовая информация">
+    <a href="{% url 'legal-privacy' %}">Политика обработки персональных данных</a>
+    <span aria-hidden="true">·</span>
+    <a href="{% url 'legal-terms' %}">Условия доступа</a>
+    {% if user_role == "school" %}
+    <span aria-hidden="true">·</span>
+    <a href="{% url 'cabinet-documents' %}">Документы для школы</a>
+    {% endif %}
+</footer>
 </div>
 {% endblock %}
