@@ -590,6 +590,67 @@ def _task_severity(success_rate: float) -> str:
     return "рабочий"
 
 
+def collect_subject_data_for_export(
+    school_id: int,
+    exam_type: str,
+    subject: str,
+    year: int | None,
+) -> ExamData | None:
+    from analytics.engine import AnalyticsEngine
+
+    if not year:
+        return None
+    engine = AnalyticsEngine()
+    result = engine.analyze_subject(school_id, exam_type, subject, int(year))
+    if not result.valid:
+        return None
+
+    tasks = [
+        {
+            "id": task.task_number,
+            "success_rate": task.success_rate,
+            "correct": task.correct,
+            "wrong": task.wrong,
+            "total": task.total,
+        }
+        for task in result.tasks
+    ]
+    from analytics.engine.attempts import filter_latest_exam_results
+
+    score_values = list(
+        filter_latest_exam_results(
+            ExamResult.objects.filter(
+                student__school_id=school_id,
+                exam__exam_type=result.exam_type,
+                exam__subject=result.subject,
+                exam__year=year,
+            )
+        ).values_list("score", flat=True)
+    )
+    score_values = [float(v or 0) for v in score_values]
+
+    data = ExamData(
+        subject=result.subject,
+        date=result.exam_date,
+        students_count=result.students_count,
+        avg_score=result.avg_score,
+        min_score=result.min_score,
+        max_score=result.max_score,
+        pass_rate=result.pass_rate,
+        tasks=tasks,
+        strong_tasks=result.strong_tasks,
+        weak_tasks=result.weak_tasks,
+        recommendations=result.recommendations,
+        topic_deficits=[t.topic for t in result.topics if t.success_rate < result.avg_score][:8],
+        exam_type=result.exam_type,
+        score_values=score_values,
+        exam_year=result.exam_year or int(year),
+        dynamics=result.dynamics,
+    )
+    data.engine_result = result  # type: ignore[attr-defined]
+    return data
+
+
 def collect_exam_data_for_export(school_id: int, exam_id: int) -> ExamData | None:
     from analytics.engine import AnalyticsEngine
 
@@ -2915,7 +2976,7 @@ def _is_weak_subject_row(
 
 
 def _build_school_analytic_note_payload(school_id: int, exam_type: str, year: int | None = None) -> dict:
-    from users.report_ui.school_analytic_note_deficits import filter_latest_exam_results
+    from analytics.engine.attempts import filter_latest_exam_results
 
     et = (exam_type or "").strip().lower()
     if et not in {"ege", "oge"}:
@@ -3289,13 +3350,18 @@ def _build_school_subject_note_payload(
     if not subject_name:
         return {"has_data": False, "message": "Недостаточно данных для формирования предметной аналитической справки."}
 
-    qs = ExamResult.objects.filter(
+    if not subject_name or not year:
+        return {"has_data": False, "message": "Недостаточно данных для формирования предметной аналитической справки."}
+
+    from analytics.engine.attempts import filter_latest_exam_results, task_results_for_exam_results
+
+    base_qs = ExamResult.objects.filter(
         student__school_id=school_id,
         exam__exam_type=et,
         exam__subject=subject_name,
+        exam__year=year,
     )
-    if year:
-        qs = qs.filter(exam__year=year)
+    qs = filter_latest_exam_results(base_qs)
     if not qs.exists():
         return {"has_data": False, "message": "Недостаточно данных для формирования предметной аналитической справки."}
 
@@ -3309,13 +3375,15 @@ def _build_school_subject_note_payload(
     quality_count = qs.filter(score__gte=quality_threshold).count()
     quality_rate = round((quality_count / total) * 100, 1) if total else 0.0
 
-    task_qs = TaskResult.objects.filter(
-        student__school_id=school_id,
-        exam__exam_type=et,
-        exam__subject=subject_name,
+    task_qs = task_results_for_exam_results(
+        TaskResult.objects.filter(
+            student__school_id=school_id,
+            exam__exam_type=et,
+            exam__subject=subject_name,
+            exam__year=year,
+        ),
+        base_qs,
     )
-    if year:
-        task_qs = task_qs.filter(exam__year=year)
     task_rows = list(
         task_qs.values("task_number")
         .annotate(
@@ -3350,24 +3418,26 @@ def _build_school_subject_note_payload(
     dynamics = []
     if year:
         years = [year - 2, year - 1, year]
-        dyn_qs = (
+        dyn_qs = filter_latest_exam_results(
             ExamResult.objects.filter(
                 student__school_id=school_id,
                 exam__exam_type=et,
                 exam__subject=subject_name,
                 exam__year__in=years,
             )
-            .values("exam__year")
-            .annotate(avg=Avg("score"), participants=Count("id"), passed=Count("id", filter=Q(passed=True)))
-            .order_by("exam__year")
         )
-        for row in dyn_qs:
-            participants = int(row["participants"] or 0)
+        for y in years:
+            y_qs = dyn_qs.filter(exam__year=y)
+            participants = y_qs.count()
+            if not participants:
+                continue
+            passed = y_qs.filter(passed=True).count()
+            avg_val = float(y_qs.aggregate(v=Avg("score"))["v"] or 0)
             dynamics.append(
                 {
-                    "year": int(row["exam__year"]),
-                    "avg": round(float(row["avg"] or 0), 2),
-                    "pass_rate": round((int(row["passed"] or 0) / participants) * 100, 1) if participants else 0.0,
+                    "year": y,
+                    "avg": round(avg_val, 2),
+                    "pass_rate": round((passed / participants) * 100, 1) if participants else 0.0,
                 }
             )
 
@@ -3486,64 +3556,24 @@ def generate_school_subject_note_docx(
 ) -> BytesIO:
     from docx import Document
 
-    data = _build_school_subject_note_payload(school_id, exam_type, subject, year)
-    doc = Document()
-    if not data["has_data"]:
-        doc.add_paragraph(data["message"])
+    if not year:
+        doc = Document()
+        doc.add_paragraph("Недостаточно данных для формирования предметной аналитической справки.")
         output = BytesIO()
         doc.save(output)
         output.seek(0)
         return output
 
-    et_label = "ЕГЭ" if data["exam_type"] == "ege" else "ОГЭ"
-    year_label = f" за {data['year']} год" if data["year"] else ""
-    doc.add_heading(f"Предметная аналитическая справка по {data['subject']} ({et_label}){year_label}", 0)
+    exam_data = collect_subject_data_for_export(school_id, exam_type, subject, year)
+    if exam_data is None:
+        doc = Document()
+        doc.add_paragraph("Недостаточно данных для формирования предметной аналитической справки.")
+        output = BytesIO()
+        doc.save(output)
+        output.seek(0)
+        return output
 
-    doc.add_heading("1. Общие результаты по предмету", level=1)
-    doc.add_paragraph(
-        f"Участников: {data['total']}. Средний балл: {data['avg_score']}. "
-        f"Качество знаний: {data['quality_rate']}%. Успеваемость: {data['pass_rate']}%. "
-        f"Мин/макс: {data['min_score']}/{data['max_score']}."
-    )
-
-    doc.add_heading("2. Анализ заданий", level=1)
-    table = doc.add_table(rows=1, cols=4)
-    h = table.rows[0].cells
-    h[0].text, h[1].text, h[2].text, h[3].text = "№", "% выполнения", "Уровень", "Анализ"
-    for row in data["task_rows"]:
-        r = table.add_row().cells
-        r[0].text = str(row["task_number"])
-        r[1].text = str(row["success_rate"])
-        r[2].text = row["difficulty"]
-        r[3].text = row["analysis"]
-    _style_docx_table(table, header_rows=1)
-
-    doc.add_heading("3. Проблемные темы", level=1)
-    if data["weak_topics"]:
-        for item in data["weak_topics"]:
-            doc.add_paragraph(f"Задание №{item['task']}: {item['topic']} ({item['success_rate']}%).")
-    else:
-        doc.add_paragraph("Проблемные темы по данным выборки не выявлены.")
-
-    doc.add_heading("4. Сравнительный анализ и динамика", level=1)
-    if data["dynamics"]:
-        for item in data["dynamics"]:
-            doc.add_paragraph(f"{item['year']}: средний балл {item['avg']}, успеваемость {item['pass_rate']}%.")
-    else:
-        doc.add_paragraph("Недостаточно данных для динамики.")
-
-    doc.add_heading("5. Выводы", level=1)
-    for line in data["conclusions"]:
-        doc.add_paragraph(line)
-
-    doc.add_heading("6. Рекомендации", level=1)
-    for line in data["recommendations"]:
-        doc.add_paragraph(line)
-
-    output = BytesIO()
-    doc.save(output)
-    output.seek(0)
-    return output
+    return generate_word_doc(exam_data)
 
 
 def generate_school_subject_note_pdf(

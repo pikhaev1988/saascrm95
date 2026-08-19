@@ -4,6 +4,8 @@ from collections import defaultdict
 
 from django.db.models import Avg, Count, Max, Min, Q
 
+from analytics.engine.attempts import filter_latest_exam_results, task_results_for_exam_results
+
 from analytics.engine.catalog import get_task_metadata, validate_topic_belongs_to_subject
 from users.task_classification import _official_record as _catalog_official_record
 from analytics.knowledge import get_task_knowledge
@@ -152,13 +154,102 @@ class AnalyticsEngine:
     measure_mode = "percent"
 
     def analyze_exam(self, school_id: int, exam_id: int, measure_mode: str | None = None) -> ExamAnalysisResult:
-        mode = measure_mode or self.measure_mode
         results_qs = ExamResult.objects.filter(student__school_id=school_id, exam_id=exam_id).select_related(
             "exam", "student"
         )
         if not results_qs.exists():
             return ExamAnalysisResult(valid=False, error_message="Нет данных для анализа.")
+        exam = results_qs.first().exam
+        return self._analyze_results(
+            school_id=school_id,
+            district_id=None,
+            results_qs=results_qs,
+            exam_id=exam_id,
+            exam_date_label=exam.exam_date.strftime("%d.%m.%Y"),
+            exam_year=int(exam.year or exam.exam_date.year),
+            measure_mode=measure_mode,
+            dynamics_latest_per_student=False,
+        )
 
+    def analyze_subject(
+        self,
+        school_id: int,
+        exam_type: str,
+        subject: str,
+        year: int,
+        measure_mode: str | None = None,
+    ) -> ExamAnalysisResult:
+        """Итоговая предметная аналитика: последняя попытка каждого ученика за год."""
+        et = (exam_type or "ege").lower()
+        subject_name = (subject or "").strip()
+        if not subject_name or not year:
+            return ExamAnalysisResult(valid=False, error_message="Недостаточно данных для анализа.")
+        base_qs = ExamResult.objects.filter(
+            student__school_id=school_id,
+            exam__exam_type=et,
+            exam__subject=subject_name,
+            exam__year=year,
+        ).select_related("exam", "student")
+        results_qs = filter_latest_exam_results(base_qs)
+        if not results_qs.exists():
+            return ExamAnalysisResult(valid=False, error_message="Нет данных для анализа.")
+        return self._analyze_results(
+            school_id=school_id,
+            district_id=None,
+            results_qs=results_qs,
+            exam_id=None,
+            exam_date_label=f"итоговые результаты за {year} год",
+            exam_year=int(year),
+            measure_mode=measure_mode,
+            dynamics_latest_per_student=True,
+        )
+
+    def analyze_district_subject(
+        self,
+        district_id: int,
+        exam_type: str,
+        subject: str,
+        year: int,
+        measure_mode: str | None = None,
+    ) -> ExamAnalysisResult:
+        """Итоговая предметная аналитика муниципалитета: последняя попытка каждого ученика за год."""
+        et = (exam_type or "ege").lower()
+        subject_name = (subject or "").strip()
+        if not subject_name or not year:
+            return ExamAnalysisResult(valid=False, error_message="Недостаточно данных для анализа.")
+        base_qs = ExamResult.objects.filter(
+            student__school__district_id=district_id,
+            exam__exam_type=et,
+            exam__subject=subject_name,
+            exam__year=year,
+        ).select_related("exam", "student")
+        results_qs = filter_latest_exam_results(base_qs)
+        if not results_qs.exists():
+            return ExamAnalysisResult(valid=False, error_message="Нет данных для анализа.")
+        return self._analyze_results(
+            school_id=None,
+            district_id=district_id,
+            results_qs=results_qs,
+            exam_id=None,
+            exam_date_label=f"итоговые результаты за {year} год",
+            exam_year=int(year),
+            measure_mode=measure_mode,
+            dynamics_latest_per_student=True,
+        )
+
+    def _analyze_results(
+        self,
+        *,
+        school_id: int | None,
+        district_id: int | None,
+        results_qs,
+        exam_id: int | None,
+        exam_date_label: str,
+        exam_year: int,
+        measure_mode: str | None,
+        dynamics_latest_per_student: bool,
+    ) -> ExamAnalysisResult:
+        mode = measure_mode or self.measure_mode
         first = results_qs.first()
         exam = first.exam
         exam_type = (exam.exam_type or "ege").lower()
@@ -215,9 +306,20 @@ class AnalyticsEngine:
         pass_rate = round((pass_count / students_count) * 100, 1) if students_count else 0.0
         fail_rate = round(100.0 - pass_rate, 1)
 
-        task_rows_qs = TaskResult.objects.filter(student__school_id=school_id, exam_id=exam_id).values(
-            "task_number", "value", "student_id"
-        )
+        if exam_id is not None:
+            task_rows_qs = TaskResult.objects.filter(exam_id=exam_id)
+            if school_id is not None:
+                task_rows_qs = task_rows_qs.filter(student__school_id=school_id)
+            elif district_id is not None:
+                task_rows_qs = task_rows_qs.filter(student__school__district_id=district_id)
+        else:
+            task_scope = TaskResult.objects.all()
+            if school_id is not None:
+                task_scope = task_scope.filter(student__school_id=school_id)
+            elif district_id is not None:
+                task_scope = task_scope.filter(student__school__district_id=district_id)
+            task_rows_qs = task_results_for_exam_results(task_scope, results_qs)
+        task_rows_qs = task_rows_qs.values("task_number", "value", "student_id")
         raw_task_rows = list(task_rows_qs.values("task_number", "value"))
         student_scores = {
             row["id"]: float(row["score"] or row["total_score"] or 0)
@@ -248,9 +350,15 @@ class AnalyticsEngine:
         # Если TaskResult пуст, восстанавливаем маски из протокола ExamResult.
         # Отдельный queryset: .only() нельзя сочетать с select_related("exam").
         if not task_agg:
-            mask_qs = ExamResult.objects.filter(
-                student__school_id=school_id, exam_id=exam_id
-            ).only("id", "student_id", "short_answer_tasks", "long_answer_tasks")
+            if exam_id is not None:
+                mask_qs = ExamResult.objects.filter(exam_id=exam_id)
+                if school_id is not None:
+                    mask_qs = mask_qs.filter(student__school_id=school_id)
+                elif district_id is not None:
+                    mask_qs = mask_qs.filter(student__school__district_id=district_id)
+                mask_qs = mask_qs.only("id", "student_id", "short_answer_tasks", "long_answer_tasks")
+            else:
+                mask_qs = results_qs.only("id", "student_id", "short_answer_tasks", "long_answer_tasks")
             for er in mask_qs:
                 sid = er.student_id
                 short_mask = er.short_answer_tasks or ""
@@ -597,8 +705,13 @@ class AnalyticsEngine:
         }
 
         dynamics = self._load_dynamics(
-            school_id, exam_type, subject, int(exam.year or exam.exam_date.year),
+            exam_type,
+            subject,
+            exam_year,
+            school_id=school_id,
+            district_id=district_id,
             current_exam_id=exam_id,
+            use_latest_per_student=dynamics_latest_per_student,
         )
 
         chart = {
@@ -646,8 +759,8 @@ class AnalyticsEngine:
             subject=subject,
             exam_type=exam_type,
             exam_id=exam_id,
-            exam_year=int(exam.year or exam.exam_date.year),
-            exam_date=exam.exam_date.strftime("%d.%m.%Y"),
+            exam_year=exam_year,
+            exam_date=exam_date_label,
             measure_mode=mode,
             students_count=students_count,
             avg_score=avg_score,
@@ -751,7 +864,15 @@ class AnalyticsEngine:
         return groups
 
     def _load_dynamics(
-        self, school_id: int, exam_type: str, subject: str, exam_year: int, *, current_exam_id: int | None = None,
+        self,
+        exam_type: str,
+        subject: str,
+        exam_year: int,
+        *,
+        school_id: int | None = None,
+        district_id: int | None = None,
+        current_exam_id: int | None = None,
+        use_latest_per_student: bool = False,
     ) -> list[dict]:
         years = []
         if exam_year >= 2025:
@@ -760,34 +881,33 @@ class AnalyticsEngine:
             years = [2023, 2024]
         if not years:
             return []
-        base_qs = ExamResult.objects.filter(
-            student__school_id=school_id,
-            exam__exam_type=exam_type,
-            exam__subject=subject,
-            exam__year__in=years,
-        )
-        # For the current year, restrict to the same exam_id to avoid mixing
-        # results from multiple exams of the same subject in one year.
-        if current_exam_id is not None:
-            base_qs = base_qs.exclude(
-                exam__year=exam_year,
-            ) | ExamResult.objects.filter(
-                student__school_id=school_id,
-                exam_id=current_exam_id,
-            )
-        rows = (
-            base_qs
-            .values("exam__year")
-            .annotate(students=Count("id"), avg_score=Avg("score"), passed=Count("id", filter=Q(passed=True)))
-            .order_by("exam__year")
-        )
         dynamics = []
-        for row in rows:
+        for year in years:
+            qs = ExamResult.objects.filter(
+                exam__exam_type=exam_type,
+                exam__subject=subject,
+                exam__year=year,
+            )
+            if school_id is not None:
+                qs = qs.filter(student__school_id=school_id)
+            elif district_id is not None:
+                qs = qs.filter(student__school__district_id=district_id)
+            if use_latest_per_student:
+                qs = filter_latest_exam_results(qs)
+            elif year == exam_year and current_exam_id is not None:
+                qs = qs.filter(exam_id=current_exam_id)
+            row = qs.aggregate(
+                students=Count("id"),
+                avg_score=Avg("score"),
+                passed=Count("id", filter=Q(passed=True)),
+            )
             students = int(row["students"] or 0)
+            if not students:
+                continue
             passed = int(row["passed"] or 0)
             dynamics.append(
                 {
-                    "year": int(row["exam__year"]),
+                    "year": year,
                     "students": students,
                     "avg_score": round(float(row["avg_score"] or 0), 2),
                     "pass_rate": round((passed / students) * 100, 1) if students else 0.0,

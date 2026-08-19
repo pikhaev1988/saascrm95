@@ -12,6 +12,7 @@ from django.db.models import Avg, Count, Max, Min, Q
 from exams.models import EgePassingThreshold, ExamResult, TaskResult
 from exams.passing import is_gve_exam
 from organizations.models import District
+from analytics.engine.attempts import filter_latest_exam_results, task_results_for_exam_results
 from users.district_gigachat_analysis import enrich_district_report_with_ai
 
 
@@ -759,13 +760,22 @@ def _build_district_subject_note_payload(
     if not subject_name:
         return {"has_data": False, "message": "Выберите предмет для предметной справки."}
 
-    qs = ExamResult.objects.filter(
+    scope_qs = ExamResult.objects.filter(
         student__school__district_id=district_id,
         exam__exam_type=et,
         exam__subject=subject_name,
     )
     if year:
-        qs = qs.filter(exam__year=year)
+        scope_qs = scope_qs.filter(exam__year=year)
+        selected_year = int(year)
+    else:
+        selected_year = int(scope_qs.order_by("-exam__year").values_list("exam__year", flat=True).first() or 0)
+        if not selected_year:
+            return {"has_data": False, "message": f"Нет данных по предмету «{subject_name}» в муниципалитете."}
+        scope_qs = scope_qs.filter(exam__year=selected_year)
+
+    attempts_qs = scope_qs
+    qs = filter_latest_exam_results(attempts_qs)
     if not qs.exists():
         return {"has_data": False, "message": f"Нет данных по предмету «{subject_name}» в муниципалитете."}
 
@@ -781,13 +791,14 @@ def _build_district_subject_note_payload(
     high_count = qs.filter(score__gte=high_threshold).count()
     pass_count = _district_pass_count(qs, et) if et == "ege" else qs.filter(passed=True).count()
     pass_rate = round((pass_count / total) * 100, 1) if total else 0.0
-    selected_year = year if year else int(qs.order_by("-exam__year").values_list("exam__year", flat=True).first())
 
-    prev_qs = ExamResult.objects.filter(
-        student__school__district_id=district_id,
-        exam__exam_type=et,
-        exam__subject=subject_name,
-        exam__year=selected_year - 1,
+    prev_qs = filter_latest_exam_results(
+        ExamResult.objects.filter(
+            student__school__district_id=district_id,
+            exam__exam_type=et,
+            exam__subject=subject_name,
+            exam__year=selected_year - 1,
+        )
     )
     prev_avg = round(float(prev_qs.aggregate(v=Avg("score"))["v"] or 0), 2) if prev_qs.exists() else None
     avg_delta = round(avg_score - prev_avg, 2) if prev_avg is not None else None
@@ -801,15 +812,32 @@ def _build_district_subject_note_payload(
     # Место предмета среди предметов муниципалитета по среднему.
     subject_rank = None
     subjects_total = 0
-    district_subj_avgs = list(
+    district_subj_avgs = []
+    subject_names = (
         ExamResult.objects.filter(
             student__school__district_id=district_id,
             exam__exam_type=et,
             exam__year=selected_year,
         )
-        .values("exam__subject")
-        .annotate(avg=Avg("score"))
+        .values_list("exam__subject", flat=True)
+        .distinct()
     )
+    for subj in subject_names:
+        if not subj:
+            continue
+        subj_latest = filter_latest_exam_results(
+            ExamResult.objects.filter(
+                student__school__district_id=district_id,
+                exam__exam_type=et,
+                exam__subject=subj,
+                exam__year=selected_year,
+            )
+        )
+        if not subj_latest.exists():
+            continue
+        district_subj_avgs.append(
+            {"exam__subject": subj, "avg": float(subj_latest.aggregate(v=Avg("score"))["v"] or 0)}
+        )
     ranked = sorted(
         [r for r in district_subj_avgs if r.get("exam__subject")],
         key=lambda x: (-float(x.get("avg") or 0), str(x.get("exam__subject") or "")),
@@ -885,11 +913,14 @@ def _build_district_subject_note_payload(
             row["quality_rate"] = round((int(row["quality"] or 0) / p) * 100, 1) if p else 0.0
             row["high_count"] = int(row["high"] or 0)
 
-    task_qs = TaskResult.objects.filter(
-        student__school__district_id=district_id,
-        exam__exam_type=et,
-        exam__subject=subject_name,
-        exam__year=selected_year,
+    task_qs = task_results_for_exam_results(
+        TaskResult.objects.filter(
+            student__school__district_id=district_id,
+            exam__exam_type=et,
+            exam__subject=subject_name,
+            exam__year=selected_year,
+        ),
+        attempts_qs,
     )
     task_rows = list(
         task_qs.values("task_number")
@@ -903,6 +934,19 @@ def _build_district_subject_note_payload(
         row["topic"] = _topic_for_task(subject_name, int(row["task_number"]), et)
     weak_tasks = [r for r in task_rows if r["success_rate"] < 50]
 
+    from analytics.engine import AnalyticsEngine
+
+    engine_result = AnalyticsEngine().analyze_district_subject(
+        district_id, et, subject_name, selected_year
+    )
+    if engine_result.valid:
+        by_number = {task.task_number: task for task in engine_result.tasks}
+        for row in task_rows:
+            task = by_number.get(int(row["task_number"]))
+            if task:
+                row["topic"] = task.topic
+                row["skill_name"] = task.skill_name
+
     payload = {
         "has_data": True,
         "report_title": f"Предметная аналитическая справка: {subject_name}",
@@ -910,6 +954,7 @@ def _build_district_subject_note_payload(
         "exam_type": et,
         "year": selected_year,
         "generated_at": date.today().strftime("%d.%m.%Y"),
+        "aggregate_label": f"итоговые результаты за {selected_year} год",
         "subject": subject_name,
         "total": total,
         "participants": participants,
@@ -927,6 +972,8 @@ def _build_district_subject_note_payload(
         "task_rows": task_rows,
         "weak_tasks": weak_tasks,
     }
+    if engine_result.valid:
+        payload["subject_engine"] = engine_result
     if not with_ai:
         return payload
     return _append_ai_texts(

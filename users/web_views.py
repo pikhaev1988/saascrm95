@@ -4017,7 +4017,9 @@ class DownloadSchoolSubjectNoteDocxView(LoginRequiredMixin, View):
         )
         safe_subject = (subject or "subject").replace(" ", "_")
         suffix = f"_{year}" if year else ""
-        response["Content-Disposition"] = f'attachment; filename="subject_note_{safe_subject}_{exam_type}{suffix}.docx"'
+        response["Content-Disposition"] = (
+            f'attachment; filename="analysis_{safe_subject}{suffix}.docx"'
+        )
         return response
 
 
@@ -4225,9 +4227,10 @@ class DownloadDistrictSubjectNoteDocxView(LoginRequiredMixin, View):
         subject = (request.GET.get("subject") or "").strip()
         payload = generate_district_subject_note_docx(district_id, exam_type, subject, year)
         suffix = f"_{year}" if year else ""
+        safe_subject = (subject or "subject").replace(" ", "_")
         return attachment_response(
             payload.getvalue(),
-            f"district_subject_note_{exam_type}{suffix}.docx",
+            f"analysis_{safe_subject}_district{suffix}.docx",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
 
