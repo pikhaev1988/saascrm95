@@ -43,7 +43,7 @@ from analytics.knowledge.graph import (
 from analytics.engine.tokens import is_blank_token, is_error_token, is_success_token
 from analytics.engine.validation import validate_exam_metrics, validation_error_message
 from exams.models import ExamResult, TaskResult
-from users.task_topics import parse_long_answer_mask, part2_start_task, skill_for_task, subject_key
+from users.task_topics import parse_long_answer_mask, part2_start_task, skill_for_task, subject_key, topic_for_task
 from exams.passing import is_gve_exam
 
 
@@ -372,6 +372,12 @@ class AnalyticsEngine:
                 _cat_skills = list(_cat_rec.get("skills") or [])
                 if _cat_skills and not meta_skill_name:
                     meta_skill_name = _cat_skills[0]
+
+            topic_before_normalize = meta_topic
+            meta_topic = topic_for_task(subject, task_num, exam_type)
+            if meta_topic != topic_before_normalize:
+                meta_section = ""
+                meta_subsection = ""
 
             # Subject-specific skill normalization for final reporting text.
             meta_skill_name = skill_for_task(subject, task_num, exam_type, meta_skill_name or meta_topic)

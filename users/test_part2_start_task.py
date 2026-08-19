@@ -17,6 +17,14 @@ class Part2StartTaskCatalogTests(TestCase):
         self.assertEqual(part2_start_task("ege", "biology"), 22)
         self.assertEqual(part2_start_task("ege", "physics"), 21)
         self.assertEqual(part2_start_task("ege", "informatics"), 26)
+        self.assertEqual(part2_start_task("ege", "geography"), 22)
+        self.assertEqual(part2_start_task("ege", "social_studies"), 17)
+        self.assertEqual(part2_start_task("ege", "literature"), 11)
+        self.assertEqual(part2_start_task("ege", "english"), 37)
+        self.assertEqual(part2_start_task("ege", "german"), 37)
+        self.assertEqual(part2_start_task("ege", "french"), 37)
+        self.assertEqual(part2_start_task("ege", "spanish"), 37)
+        self.assertEqual(part2_start_task("ege", "chinese"), 28)
 
     def test_task_before_and_at_boundary(self):
         cases = (
@@ -26,6 +34,14 @@ class Part2StartTaskCatalogTests(TestCase):
             ("biology", 21, 22),
             ("physics", 20, 21),
             ("informatics", 25, 26),
+            ("geography", 21, 22),
+            ("social_studies", 16, 17),
+            ("literature", 10, 11),
+            ("english", 36, 37),
+            ("german", 36, 37),
+            ("french", 36, 37),
+            ("spanish", 36, 37),
+            ("chinese", 27, 28),
         )
         for subject_key, part1_task, part2_task in cases:
             with self.subTest(subject=subject_key):
@@ -48,6 +64,22 @@ class Part2StartTaskCatalogTests(TestCase):
         self.assertTrue(is_expanded_answer_task("ege", "physics", 21))
         self.assertFalse(is_expanded_answer_task("ege", "informatics", 25))
         self.assertTrue(is_expanded_answer_task("ege", "informatics", 26))
+        self.assertFalse(is_expanded_answer_task("ege", "geography", 21))
+        self.assertTrue(is_expanded_answer_task("ege", "geography", 22))
+        self.assertFalse(is_expanded_answer_task("ege", "social_studies", 16))
+        self.assertTrue(is_expanded_answer_task("ege", "social_studies", 17))
+        self.assertFalse(is_expanded_answer_task("ege", "literature", 10))
+        self.assertTrue(is_expanded_answer_task("ege", "literature", 11))
+        self.assertFalse(is_expanded_answer_task("ege", "english", 36))
+        self.assertTrue(is_expanded_answer_task("ege", "english", 37))
+        self.assertFalse(is_expanded_answer_task("ege", "german", 36))
+        self.assertTrue(is_expanded_answer_task("ege", "german", 37))
+        self.assertFalse(is_expanded_answer_task("ege", "french", 36))
+        self.assertTrue(is_expanded_answer_task("ege", "french", 37))
+        self.assertFalse(is_expanded_answer_task("ege", "spanish", 36))
+        self.assertTrue(is_expanded_answer_task("ege", "spanish", 37))
+        self.assertFalse(is_expanded_answer_task("ege", "chinese", 27))
+        self.assertTrue(is_expanded_answer_task("ege", "chinese", 28))
 
     def test_math_profile_unchanged(self):
         self.assertEqual(part2_start_task("ege", "math_profile"), 13)
@@ -55,7 +87,7 @@ class Part2StartTaskCatalogTests(TestCase):
         self.assertEqual(get_task_metadata("Математика профильная", 13, "ege").exam_part, 2)
 
     def test_subjects_without_catalog_keep_hardcoded_fallback(self):
-        self.assertEqual(part2_start_task("ege", "geography"), 13)
+        self.assertEqual(part2_start_task("ege", "literature"), 13)
         self.assertEqual(part2_start_task("oge", "math_basic"), 20)
         self.assertEqual(part2_start_task("oge", "russian"), 14)
 
@@ -172,6 +204,35 @@ class AnalyticsEngineKimPartBoundaryTests(TestCase):
         self.assertIn("1–25", narrative)
         self.assertIn("26+", narrative)
 
+    def test_geography_1_21_are_part_1(self):
+        school, exam = self._make_exam("География", 29, "07")
+        result = AnalyticsEngine().analyze_exam(school.id, exam.id)
+        self.assertTrue(result.valid, result.error_message)
+        parts = {task.task_number: task.exam_part for task in result.tasks}
+        for number in range(1, 22):
+            self.assertEqual(parts[number], 1, number)
+        for number in range(22, 30):
+            self.assertEqual(parts[number], 2, number)
+
+    def test_social_studies_1_16_are_part_1(self):
+        school, exam = self._make_exam("Обществознание", 25, "08")
+        result = AnalyticsEngine().analyze_exam(school.id, exam.id)
+        self.assertTrue(result.valid, result.error_message)
+        parts = {task.task_number: task.exam_part for task in result.tasks}
+        for number in range(1, 17):
+            self.assertEqual(parts[number], 1, number)
+        for number in range(17, 26):
+            self.assertEqual(parts[number], 2, number)
+
+    def test_literature_1_10_are_part_1(self):
+        school, exam = self._make_exam("Литература", 11, "09")
+        result = AnalyticsEngine().analyze_exam(school.id, exam.id)
+        self.assertTrue(result.valid, result.error_message)
+        parts = {task.task_number: task.exam_part for task in result.tasks}
+        for number in range(1, 11):
+            self.assertEqual(parts[number], 1, number)
+        self.assertEqual(parts[11], 2)
+
 
 def _subject_name(subject_key: str) -> str:
     return {
@@ -181,4 +242,12 @@ def _subject_name(subject_key: str) -> str:
         "biology": "Биология",
         "physics": "Физика",
         "informatics": "Информатика",
+        "geography": "География",
+        "social_studies": "Обществознание",
+        "literature": "Литература",
+        "english": "Английский язык",
+        "german": "Немецкий язык",
+        "french": "Французский язык",
+        "spanish": "Испанский язык",
+        "chinese": "Китайский язык",
     }[subject_key]
