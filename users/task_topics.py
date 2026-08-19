@@ -252,6 +252,8 @@ def static_task_topic(subject_name: str, task_number: int, exam_type: str) -> st
     sk = subject_key(subject_name, et)
     if et == "oge" and sk == "math_basic" and task_number in OGE_MATH_TASK_TOPICS:
         return OGE_MATH_TASK_TOPICS[task_number]
+    if et == "ege" and "рус" in title and task_number >= 28:
+        return "Критерии задания №27 (сочинение), не отдельная линия КИМ ФИПИ"
     if "математ" in title:
         if task_number <= 5:
             return "Числа, выражения и практико-ориентированные задачи"
