@@ -1,0 +1,50 @@
+name: Deploy to production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.DEPLOY_SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy on server
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_SERVER_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_SERVER_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_BRANCH: ${{ secrets.DEPLOY_BRANCH }}
+          PYTHON_BIN: ${{ secrets.DEPLOY_PYTHON_BIN }}
+          RESTART_FILE: ${{ secrets.DEPLOY_RESTART_FILE }}
+        run: |
+          ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "
+            set -e
+            cd '${DEPLOY_PATH}'
+            git fetch origin
+            git checkout '${DEPLOY_BRANCH:-main}'
+            git pull origin '${DEPLOY_BRANCH:-main}'
+            '${PYTHON_BIN}' -m pip install -r requirements.txt -q
+            '${PYTHON_BIN}' manage.py migrate --noinput
+            '${PYTHON_BIN}' manage.py collectstatic --noinput
+            touch '${RESTART_FILE}'
+            echo DEPLOY_OK
+          "
