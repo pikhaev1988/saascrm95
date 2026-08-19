@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block head_title %}Загрузка протоколов ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Кабинет ОО · ВПР</span>
+            <h2>Загрузка протоколов ВПР</h2>
+            <p>
+                Раздел загрузки протоколов ВПР для школы готовится к запуску.
+                Аналитика ВПР уже доступна в кабинете школы — после появления данных они отобразятся автоматически.
+            </p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'cabinet-school' %}?exam_type=vpr" class="ui-btn ui-btn-primary">Аналитика ВПР</a>
+                <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn">Обзор</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Статус</span>
+                <h3>Импорт протоколов ВПР</h3>
+            </div>
+        </div>
+        <p class="enterprise-empty">
+            Загрузка файлов ВПР пока недоступна. Как только формат протокола будет подключён,
+            здесь появится загрузка и история импорта по вашей ОО.
+        </p>
+    </section>
+</div>
+{% endblock %}

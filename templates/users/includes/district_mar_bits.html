@@ -1,0 +1,19 @@
+{# Общие фрагменты MAR-оболочки районных отчётов #}
+{% load static %}
+
+{% comment %}
+Использование:
+  {% include "users/includes/district_mar_bits.html" with bit="css" %}
+  {% include "users/includes/district_mar_bits.html" with bit="logo" %}
+{% endcomment %}
+
+{% if bit == "css" %}
+<link rel="stylesheet" href="{% static 'css/district-analytic-note.css' %}?v=mar7">
+{% elif bit == "logo" %}
+<div class="mar-logo" aria-hidden="true">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 22V10l10-5 10 5v12l-10 5-10-5z" stroke="#fff" stroke-width="1.6"/>
+        <path d="M16 12v12M11 14.5l5 2.5 5-2.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+</div>
+{% endif %}

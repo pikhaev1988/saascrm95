@@ -1,0 +1,698 @@
+{% extends "base.html" %}
+{% load static %}
+{% load vpr_labels %}
+{% block head_title %}Аналитика ВПР — {{ school.name|default:"Анализ ГИА" }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/school-ege-analytics.css' %}?v=sae3">
+<div class="content-stack content-stack--loose">
+<div class="sae" id="schoolVprCabinetAnalytics">
+    <header class="sae-header">
+        <div class="sae-header__brand">
+            <div class="sae-header__logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><path d="M4 19V7l8-4 8 4v12l-8 4-8-4z"/><path d="M12 11v8M8 9.5l4 2 4-2" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+                <p class="sae-header__eyebrow">{% if user_role == "district" or cabinet_kind == "district" %}Аналитика ВПР · кабинет района{% else %}Аналитика ВПР · кабинет школы{% endif %}</p>
+                <h1 class="sae-header__title">{% if school %}{{ school.name }}{% else %}Аналитика ВПР{% endif %}</h1>
+                <div class="sae-header__meta">
+                    {% if school %}<span>Код: <strong>{{ school.code|default:"—" }}</strong></span>{% endif %}
+                    {% if school and school.district %}<span>МО: <strong>{{ school.district.name }}</strong></span>{% elif district %}<span>МО: <strong>{{ district.name }}</strong></span>{% endif %}
+                    <span>Период: <strong>{{ selected_year|default:"—" }}</strong></span>
+                    <span>Экзамен: <strong>ВПР</strong></span>
+                    {% if analysis and analysis.overview.has_data %}
+                    <span>Протоколов: <strong>{{ analysis.overview.protocols_count }}</strong></span>
+                    <span>Участников: <strong>{{ analysis.overview.participants_total }}</strong></span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="sae-header__aside">
+            {% if analysis and analysis.overview.has_data %}
+            <span class="sae-status sae-status--{% if analysis.risk_profile.classification == 'low' or analysis.risk_profile.classification == 'stable' %}good{% elif analysis.risk_profile.classification == 'high' or analysis.risk_profile.classification == 'critical' %}risk{% else %}mid{% endif %}">{{ analysis.risk_profile.classification|vpr_school_risk }}</span>
+            {% endif %}
+            <div class="sae-header__actions">
+                {% if user_role == "district" or cabinet_kind == "district" %}
+                <a href="{% url 'cabinet-district' %}?exam_type=vpr{% if selected_year %}&amp;year={{ selected_year }}{% endif %}" class="sae-btn">← К району</a>
+                {% endif %}
+                {% if analysis and analysis.overview.has_data %}
+                <a href="{% url 'vpr-school-analytics-docx' %}?year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% endif %}" class="sae-btn sae-btn--primary">Скачать отчёт</a>
+                {% endif %}
+                <details class="vpr-service-menu">
+                    <summary class="sae-btn">Сервис</summary>
+                    <div class="vpr-service-menu__panel">
+                        <a href="{% url 'vpr-registry' %}" class="vpr-service-menu__link">Протоколы ВПР</a>
+                        <a href="{% url 'vpr-catalog-list' %}" class="vpr-service-menu__link">Справочник заданий ВПР</a>
+                        <a href="{% url 'cabinet-upload-vpr' %}" class="vpr-service-menu__link">Загрузить протокол</a>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </header>
+
+    {% if available_schools %}
+    <form class="sae-filter" method="get" action="{% url 'vpr-school-analytics' %}">
+        <input type="hidden" name="tab" value="{{ active_tab|default:'dashboard' }}">
+        {% if selected_year %}<input type="hidden" name="year" value="{{ selected_year }}">{% endif %}
+        <div class="sae-filter__field" style="min-width:280px">
+            <label for="vprSchoolPick">Школа района</label>
+            <select id="vprSchoolPick" name="school_id" onchange="this.form.submit()">
+                {% for s in available_schools %}
+                <option value="{{ s.id }}" {% if school and school.id == s.id %}selected{% endif %}>{{ s.name }}{% if s.code %} ({{ s.code }}){% endif %}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+    {% endif %}
+
+    {% if available_years %}
+    <div class="sae-years" aria-label="Учебные годы">
+        {% for year in available_years %}
+        <a class="sae-year {% if selected_year == year %}is-active{% endif %}"
+           href="?tab={{ active_tab|default:'dashboard' }}&amp;year={{ year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}{% if request.GET.protocol_id %}&amp;protocol_id={{ request.GET.protocol_id }}{% endif %}">{{ year }}</a>
+        {% endfor %}
+        {% if user_role == "district" or cabinet_kind == "district" %}
+        <a class="sae-year" href="{% url 'cabinet-district' %}?exam_type=ege">ЕГЭ</a>
+        <a class="sae-year" href="{% url 'cabinet-district' %}?exam_type=oge">ОГЭ</a>
+        <a class="sae-year is-active" href="{% url 'cabinet-district' %}?exam_type=vpr{% if selected_year %}&amp;year={{ selected_year }}{% endif %}">ВПР</a>
+        {% else %}
+        <a class="sae-year" href="{% url 'cabinet' %}?exam_type=ege">ЕГЭ</a>
+        <a class="sae-year" href="{% url 'cabinet' %}?exam_type=oge">ОГЭ</a>
+        <a class="sae-year is-active" href="{% url 'vpr-school-analytics' %}?year={{ selected_year }}">ВПР</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <nav class="sae-tabs" id="vpr-cabinet-tabs" aria-label="Разделы аналитики ВПР">
+        <a href="?tab=dashboard&amp;year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}" data-tab="dashboard" class="sae-tabs__item {% if active_tab == 'dashboard' %}is-active{% endif %}">Сводка</a>
+        <a href="?tab=school&amp;year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}" data-tab="school" class="sae-tabs__item {% if active_tab == 'school' %}is-active{% endif %}">Аналитика школы</a>
+        <a href="?tab=subjects&amp;year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}" data-tab="subjects" class="sae-tabs__item {% if active_tab == 'subjects' %}is-active{% endif %}">Предметы</a>
+        <a href="?tab=grades&amp;year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}" data-tab="grades" class="sae-tabs__item {% if active_tab == 'grades' %}is-active{% endif %}">Классы</a>
+        <a href="?tab=students&amp;year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}" data-tab="students" class="sae-tabs__item {% if active_tab == 'students' %}is-active{% endif %}">Учащиеся</a>
+        <a href="?tab=deficits&amp;year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}" data-tab="deficits" class="sae-tabs__item {% if active_tab == 'deficits' %}is-active{% endif %}">Образовательные дефициты</a>
+        <a href="?tab=topics-skills&amp;year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}" data-tab="topics-skills" class="sae-tabs__item {% if active_tab == 'topics-skills' %}is-active{% endif %}">Темы и умения</a>
+        <a href="?tab=conclusion&amp;year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}" data-tab="conclusion" class="sae-tabs__item {% if active_tab == 'conclusion' %}is-active{% endif %}">Аналитическое заключение</a>
+        <a href="?tab=recommendations&amp;year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}" data-tab="recommendations" class="sae-tabs__item {% if active_tab == 'recommendations' %}is-active{% endif %}">Рекомендации</a>
+        <a href="?tab=reports&amp;year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% elif school %}&amp;school_id={{ school.id }}{% endif %}" data-tab="reports" class="sae-tabs__item {% if active_tab == 'reports' %}is-active{% endif %}">Отчёты</a>
+    </nav>
+
+    {% if error %}
+    <div class="sae-state sae-state--error">
+        <p class="sae-state__title">Ошибка</p>
+        <p class="sae-state__text">{{ error }}</p>
+    </div>
+    {% elif not analysis or not analysis.overview.has_data %}
+    <div class="sae-state">
+        <p class="sae-state__title">Нет протоколов ВПР</p>
+        <p class="sae-state__text">Нет протоколов ВПР для выбранной школы и года.</p>
+        <p style="margin-top:0.85rem"><a class="sae-btn sae-btn--primary" href="{% url 'cabinet-upload-vpr' %}" style="color:#0b1f3a">Загрузить протокол ВПР</a></p>
+    </div>
+    {% else %}
+
+<div class="vpr-tab-panel" data-tab-panel="dashboard"{% if active_tab != "dashboard" %} hidden{% endif %}>
+    <section class="sae-panel">
+        <div class="sae-panel__head">
+            <div>
+                <span class="sae-section-label">Главная страница</span>
+                <h3 class="sae-panel__title">Краткая сводка по школе</h3>
+            </div>
+        </div>
+        <div class="sae-kpi sae-kpi--6">
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Протоколов</p><p class="sae-kpi__value">{{ analysis.overview.protocols_count }}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Предметов</p><p class="sae-kpi__value">{{ analysis.overview.subjects_count }}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Классов</p><p class="sae-kpi__value">{{ analysis.overview.grades_count }}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Участников</p><p class="sae-kpi__value">{{ analysis.overview.participants_total }}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Индекс качества</p><p class="sae-kpi__value">{% if analysis.overview.avg_quality_percent is not None %}{{ analysis.overview.avg_quality_percent }}%{% else %}—{% endif %}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Профиль риска</p><p class="sae-kpi__value">{{ analysis.risk_profile.classification|vpr_school_risk }}</p></article>
+        </div>
+    </section>
+    <section class="sae-panel">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Последние загрузки</span><h3 class="sae-panel__title">Последние протоколы</h3></div></div>
+        {% if protocols %}
+        <div class="sae-table-wrap">
+            <table class="sae-table">
+                <thead><tr><th>Предмет</th><th>Класс</th><th>Год</th><th>Дата загрузки</th><th></th></tr></thead>
+                <tbody>
+                    {% for protocol in protocols|slice:":5" %}
+                    <tr>
+                        <td>{{ protocol.subject }}</td>
+                        <td>{{ protocol.parallel }}</td>
+                        <td>{{ protocol.academic_year }}</td>
+                        <td>{{ protocol.upload.created_at|date:"d.m.Y H:i" }}</td>
+                        <td><a href="{% url 'vpr-protocol-overview' protocol_id=protocol.id %}" class="sae-btn" style="color:#0b1f3a;border-color:#d5dde5;background:#fff">Открыть</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="sae-state__text">Нет загруженных протоколов.</p>
+        {% endif %}
+    </section>
+    <section class="sae-panel">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Фокус внимания</span><h3 class="sae-panel__title">Основные проблемы и достижения</h3></div></div>
+        <div class="sae-kpi sae-kpi--4">
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">Проблемные направления</p>
+                <p class="sae-kpi__value" style="font-size:1rem">{% for item in analysis.weaknesses.subjects %}{{ item.name }}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</p>
+            </article>
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">Главные достижения</p>
+                <p class="sae-kpi__value" style="font-size:1rem">{% for item in analysis.strengths.subjects %}{{ item.name }}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</p>
+            </article>
+        </div>
+    </section>
+    </div>
+
+    <div class="vpr-tab-panel" data-tab-panel="school"{% if active_tab != "school" %} hidden{% endif %}>
+    <section class="sae-panel" id="school-overview">
+        <div class="sae-panel__head">
+            <div>
+                <span class="sae-section-label">Раздел 1</span>
+                <h3 class="sae-panel__title">Общая характеристика</h3>
+            </div>
+        </div>
+        <div class="sae-subject-kpi">
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Протоколов</p><p class="sae-kpi__value">{{ analysis.overview.protocols_count }}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Предметов</p><p class="sae-kpi__value">{{ analysis.overview.subjects_count }}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Классов</p><p class="sae-kpi__value">{{ analysis.overview.grades_count }}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Участников</p><p class="sae-kpi__value">{{ analysis.overview.participants_total }}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Средний % выполнения</p><p class="sae-kpi__value">{% if analysis.overview.avg_completion_percent is not None %}{{ analysis.overview.avg_completion_percent }}%{% else %}—{% endif %}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Качество знаний</p><p class="sae-kpi__value">{% if analysis.overview.avg_quality_percent is not None %}{{ analysis.overview.avg_quality_percent }}%{% else %}—{% endif %}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Успеваемость</p><p class="sae-kpi__value">{% if analysis.overview.avg_absolute_percent is not None %}{{ analysis.overview.avg_absolute_percent }}%{% else %}—{% endif %}</p></article>
+            <article class="sae-kpi__card"><p class="sae-kpi__label">Среднее число дефицитов</p><p class="sae-kpi__value">{% if analysis.overview.avg_deficits_count is not None %}{{ analysis.overview.avg_deficits_count }}{% else %}—{% endif %}</p></article>
+        </div>
+    </section>
+    <section class="sae-panel" id="school-subjects">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Раздел 2</span><h3 class="sae-panel__title">Предметы</h3></div></div>
+        {% if analysis.subjects %}
+        <div class="sae-table-wrap">
+            <table class="sae-table">
+                <thead>
+                    <tr>
+                        <th>Ранг</th><th>Предмет</th><th>% выполнения</th><th>Качество</th><th>Успеваемость</th><th>Дефициты</th><th>Риск</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in analysis.subjects %}
+                    <tr>
+                        <td>{{ row.rank }}</td>
+                        <td><strong>{{ row.subject }}</strong></td>
+                        <td>{% if row.avg_completion_percent is not None %}{{ row.avg_completion_percent }}{% else %}—{% endif %}</td>
+                        <td>{% if row.quality_percent is not None %}{{ row.quality_percent }}{% else %}—{% endif %}</td>
+                        <td>{% if row.absolute_percent is not None %}{{ row.absolute_percent }}{% else %}—{% endif %}</td>
+                        <td>{{ row.deficits_count }}</td>
+                        <td><span class="vpr-priority vpr-priority--{{ row.risk_level }}">{{ row.risk_level|vpr_risk }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="sae-state__text">Нет данных по предметам.</p>
+        {% endif %}
+    </section>
+
+    <section class="sae-panel" id="school-grades">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Раздел 3</span><h3 class="sae-panel__title">Параллели</h3></div></div>
+        {% if analysis.grades %}
+        <div class="sae-table-wrap">
+            <table class="sae-table">
+                <thead>
+                    <tr>
+                        <th>Класс</th><th>% выполнения</th><th>Качество</th><th>Риск</th><th>Основные темы</th><th>Основные умения</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in analysis.grades %}
+                    <tr>
+                        <td><strong>{{ row.parallel }}</strong></td>
+                        <td>{% if row.avg_completion_percent is not None %}{{ row.avg_completion_percent }}{% else %}—{% endif %}</td>
+                        <td>{% if row.quality_percent is not None %}{{ row.quality_percent }}{% else %}—{% endif %}</td>
+                        <td><span class="vpr-priority vpr-priority--{{ row.risk_level }}">{{ row.risk_level|vpr_risk }}</span></td>
+                        <td>{{ row.main_topics|join:", "|default:"—" }}</td>
+                        <td>{{ row.main_skills|join:", "|default:"—"|truncatechars:120 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="sae-state__text">Нет данных по параллелям.</p>
+        {% endif %}
+    </section>
+
+    <section class="sae-panel" id="school-strengths">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Раздел 4</span><h3 class="sae-panel__title">Сильные стороны</h3></div></div>
+        <div class="sae-kpi sae-kpi--4">
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">Лучшие предметы</p>
+                <p class="sae-kpi__value" style="font-size:1rem">{% for item in analysis.strengths.subjects %}{{ item.name }}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</p>
+            </article>
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">Лучшие темы</p>
+                <p class="sae-kpi__value" style="font-size:1rem">{% for item in analysis.strengths.topics %}{{ item.name }}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</p>
+            </article>
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">Лучшие умения</p>
+                <p class="sae-kpi__value" style="font-size:1rem">{% for item in analysis.strengths.skills %}{{ item.name|truncatechars:60 }}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</p>
+            </article>
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">Лучшие классы</p>
+                <p class="sae-kpi__value" style="font-size:1rem">{% for item in analysis.strengths.grades %}{{ item.name }}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="sae-panel" id="school-weaknesses">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Раздел 5</span><h3 class="sae-panel__title">Проблемные направления</h3></div></div>
+        <div class="sae-kpi sae-kpi--4">
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">Проблемные предметы</p>
+                <p class="sae-kpi__value" style="font-size:1rem">{% for item in analysis.weaknesses.subjects %}{{ item.name }}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</p>
+            </article>
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">Проблемные темы</p>
+                <p class="sae-kpi__value" style="font-size:1rem">{% for item in analysis.weaknesses.topics %}{{ item.name }}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</p>
+            </article>
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">Проблемные умения</p>
+                <p class="sae-kpi__value" style="font-size:1rem">{% for item in analysis.weaknesses.skills %}{{ item.name|truncatechars:60 }}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</p>
+            </article>
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">Проблемные классы</p>
+                <p class="sae-kpi__value" style="font-size:1rem">{% for item in analysis.weaknesses.grades %}{{ item.name }}{% if not forloop.last %}; {% endif %}{% empty %}—{% endfor %}</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="sae-panel" id="school-deficits">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Раздел 6</span><h3 class="sae-panel__title">Образовательные дефициты</h3></div></div>
+        <div class="sae-kpi sae-kpi--4">
+            {% for item in analysis.deficits.by_priority %}
+            <article class="sae-kpi__card">
+                <p class="sae-kpi__label">{{ item.priority|vpr_priority }}</p>
+                <p class="sae-kpi__value"><span class="vpr-priority vpr-priority--{{ item.priority|lower }}">{{ item.count }}</span></p>
+            </article>
+            {% endfor %}
+        </div>
+        {% if analysis.deficits.by_subject %}
+        <div class="sae-table-wrap" style="margin-top:1rem">
+            <table class="sae-table">
+                <thead><tr><th>Предмет</th><th>Критический</th><th>Высокий</th><th>Средний</th><th>Низкий</th><th>Всего</th></tr></thead>
+                <tbody>
+                    {% for row in analysis.deficits.by_subject %}
+                    <tr>
+                        <td>{{ row.name }}</td>
+                        <td>{{ row.Critical }}</td>
+                        <td>{{ row.High }}</td>
+                        <td>{{ row.Medium }}</td>
+                        <td>{{ row.Low }}</td>
+                        <td>{{ row.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="sae-panel" id="school-risk">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Раздел 7</span><h3 class="sae-panel__title">Профиль риска</h3></div></div>
+        <p><strong>{{ analysis.risk_profile.classification|vpr_school_risk }}</strong></p>
+        <ul>
+            {% for reason in analysis.risk_profile.reasons %}
+            <li>{{ reason }}</li>
+            {% empty %}
+            <li class="sae-state__text">Основания не сформированы.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="sae-panel" id="school-recommendations">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Раздел 8</span><h3 class="sae-panel__title">Рекомендации</h3></div></div>
+        {% if analysis.recommendations.actions %}
+        <ul>
+            {% for action in analysis.recommendations.actions|slice:":12" %}
+            <li>{{ action }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="sae-state__text">Рекомендации не сформированы.</p>
+        {% endif %}
+    </section>
+
+    <section class="sae-panel" id="school-dynamics">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Раздел 9</span><h3 class="sae-panel__title">Динамика</h3></div></div>
+        {% if analysis.dynamics.available %}
+        <div class="sae-table-wrap">
+            <table class="sae-table">
+                <thead><tr><th>Год</th><th>% выполнения</th><th>Качество</th><th>Участников</th><th>Протоколов</th><th>Тренд</th></tr></thead>
+                <tbody>
+                    {% for point in analysis.dynamics.points %}
+                    <tr>
+                        <td>{{ point.academic_year }}</td>
+                        <td>{% if point.avg_completion_percent is not None %}{{ point.avg_completion_percent }}{% else %}—{% endif %}</td>
+                        <td>{% if point.quality_percent is not None %}{{ point.quality_percent }}{% else %}—{% endif %}</td>
+                        <td>{{ point.participants }}</td>
+                        <td>{{ point.protocols_count }}</td>
+                        <td>{{ point.trend|vpr_trend }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="sae-state__text">{{ analysis.dynamics.message|default:"Недостаточно данных для анализа динамики." }}</p>
+        {% endif %}
+    </section>
+    </div>
+
+    <div class="vpr-tab-panel" data-tab-panel="subjects"{% if active_tab != "subjects" %} hidden{% endif %}>
+    <section class="sae-panel">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Фильтр</span><h3 class="sae-panel__title">Анализ по предметам</h3></div></div>
+        <form method="get" action="{% url 'vpr-school-analytics' %}" class="sae-filter">
+            <input type="hidden" name="tab" value="subjects">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+            {% if request.GET.school_id %}<input type="hidden" name="school_id" value="{{ request.GET.school_id }}">{% endif %}
+            <div class="sae-filter__field">
+                <label for="subject">Предмет</label>
+                <select id="subject" name="subject" onchange="this.form.submit()">
+                    <option value="">Все</option>
+                    {% for row in analysis.subjects %}
+                    <option value="{{ row.subject }}" {% if subject_filter == row.subject %}selected{% endif %}>{{ row.subject }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="sae-filter__field"><label>Год</label><input type="text" value="{{ selected_year }}" readonly></div>
+            <div class="sae-filter__field">
+                <label for="parallel">Класс</label>
+                <select id="parallel" name="parallel" onchange="this.form.submit()">
+                    <option value="">Все</option>
+                    {% for row in analysis.grades %}
+                    <option value="{{ row.parallel }}" {% if parallel_filter == row.parallel|stringformat:'s' %}selected{% endif %}>{{ row.parallel }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+        <div class="sae-table-wrap">
+            <table class="sae-table">
+                <thead><tr><th>Ранг</th><th>Предмет</th><th>% выполнения</th><th>Качество</th><th>Риск</th></tr></thead>
+                <tbody>
+                    {% for row in analysis.subjects %}
+                    {% if not subject_filter or subject_filter == row.subject %}
+                    <tr><td>{{ row.rank }}</td><td>{{ row.subject }}</td><td>{{ row.avg_completion_percent|default:"—" }}</td><td>{{ row.quality_percent|default:"—" }}</td><td><span class="vpr-priority vpr-priority--{{ row.risk_level }}">{{ row.risk_level|vpr_risk }}</span></td></tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    </div>
+
+    <div class="vpr-tab-panel" data-tab-panel="grades"{% if active_tab != "grades" %} hidden{% endif %}>
+    <section class="sae-panel">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Классы</span><h3 class="sae-panel__title">Рейтинг классов и группа риска</h3></div></div>
+        {% if analysis.grades %}
+        <div class="sae-table-wrap">
+            <table class="sae-table">
+                <thead><tr><th>Класс</th><th>% выполнения</th><th>Качество</th><th>Риск</th><th>Статус</th></tr></thead>
+                <tbody>
+                    {% for row in analysis.grades %}
+                    <tr>
+                        <td>{{ row.parallel }}</td>
+                        <td>{{ row.avg_completion_percent|default:"—" }}</td>
+                        <td>{{ row.quality_percent|default:"—" }}</td>
+                        <td><span class="vpr-priority vpr-priority--{{ row.risk_level }}">{{ row.risk_level|vpr_risk }}</span></td>
+                        <td>{% if forloop.counter <= 3 %}Лучшие классы{% elif row.risk_level == "high" or row.risk_level == "critical" %}Группа риска{% else %}Стабильно{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="sae-state__text">Нет данных по классам.</p>
+        {% endif %}
+    </section>
+    </div>
+
+    <div class="vpr-tab-panel" data-tab-panel="students"{% if active_tab != "students" %} hidden{% endif %}>
+    <section class="sae-panel">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Учащиеся</span><h3 class="sae-panel__title">Поиск и карточки учащихся</h3></div></div>
+        <form method="get" action="{% url 'vpr-school-analytics' %}" class="sae-filter">
+            <input type="hidden" name="tab" value="students">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+            {% if request.GET.school_id %}<input type="hidden" name="school_id" value="{{ request.GET.school_id }}">{% endif %}
+            <div class="sae-filter__field">
+                <label for="protocol_id">Протокол</label>
+                <select id="protocol_id" name="protocol_id" onchange="this.form.submit()">
+                    {% for protocol in protocols %}
+                    <option value="{{ protocol.id }}" {% if selected_protocol and selected_protocol.id == protocol.id %}selected{% endif %}>{{ protocol.subject }} · {{ protocol.parallel }} кл.</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="sae-filter__field">
+                <label for="student_q">Поиск</label>
+                <input id="student_q" type="search" name="student_q" value="{{ student_query }}" placeholder="ФИО или код">
+            </div>
+            <div class="sae-filter__actions"><button type="submit" class="sae-btn sae-btn--primary" style="color:#0b1f3a;border:0">Применить</button></div>
+        </form>
+        {% if protocol_analysis and protocol_analysis.student_rows %}
+        <div class="sae-table-wrap">
+            <table class="sae-table">
+                <thead><tr><th>Учащийся</th><th>Балл</th><th>%</th><th>Место</th><th>Критические задания</th><th>Невыполненные</th></tr></thead>
+                <tbody>
+                    {% for row in protocol_analysis.student_rows %}
+                    {% if not student_query or student_query|lower in row.full_name|default:row.participant_code|default:""|lower %}
+                    <tr>
+                        <td>{{ row.full_name|default:row.participant_code|default:"—" }}</td>
+                        <td>{{ row.primary_score|default:"—" }}</td>
+                        <td>{{ row.completion_percent|default:"—" }}</td>
+                        <td>{{ row.place_overall|default:"—" }}</td>
+                        <td>{{ row.critical_tasks_count|default:"—" }}</td>
+                        <td>{{ row.unfinished_tasks_count|default:"—" }}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="sae-state__text">Нет данных по учащимся.</p>
+        {% endif %}
+    </section>
+    </div>
+
+    <div class="vpr-tab-panel" data-tab-panel="deficits"{% if active_tab != "deficits" %} hidden{% endif %}>
+    <section class="sae-panel" id="school-deficits">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Дефициты школы</span><h3 class="sae-panel__title">Образовательные дефициты</h3></div></div>
+        <div class="sae-kpi sae-kpi--4">
+            {% for item in analysis.deficits.by_priority %}
+            <article class="sae-kpi__card"><p class="sae-kpi__label">{{ item.priority|vpr_priority }}</p><p class="sae-kpi__value"><span class="vpr-priority vpr-priority--{{ item.priority|lower }}">{{ item.count }}</span></p></article>
+            {% endfor %}
+        </div>
+        {% if analysis.deficits.by_subject %}
+        <div class="sae-table-wrap" style="margin-top:1rem">
+            <table class="sae-table">
+                <thead><tr><th>Предмет</th><th>Критический</th><th>Высокий</th><th>Средний</th><th>Низкий</th><th>Всего</th></tr></thead>
+                <tbody>
+                    {% for row in analysis.deficits.by_subject %}
+                    <tr><td>{{ row.name }}</td><td>{{ row.Critical }}</td><td>{{ row.High }}</td><td>{{ row.Medium }}</td><td>{{ row.Low }}</td><td>{{ row.total }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </section>
+    </div>
+
+    <div class="vpr-tab-panel" data-tab-panel="topics-skills"{% if active_tab != "topics-skills" %} hidden{% endif %}>
+    <section class="sae-panel">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Темы и умения</span><h3 class="sae-panel__title">Справочник заданий и выполнение</h3></div></div>
+        <form method="get" action="{% url 'vpr-school-analytics' %}" class="sae-filter">
+            <input type="hidden" name="tab" value="topics-skills">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+            {% if request.GET.school_id %}<input type="hidden" name="school_id" value="{{ request.GET.school_id }}">{% endif %}
+            <div class="sae-filter__field">
+                <label for="protocol_id_topics">Протокол</label>
+                <select id="protocol_id_topics" name="protocol_id" onchange="this.form.submit()">
+                    {% for protocol in protocols %}
+                    <option value="{{ protocol.id }}" {% if selected_protocol and selected_protocol.id == protocol.id %}selected{% endif %}>{{ protocol.subject }} · {{ protocol.parallel }} кл.</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+        {% if protocol_analysis %}
+        <div class="sae-table-wrap">
+            <table class="sae-table">
+                <thead><tr><th>Задание</th><th>Тема</th><th>Умение</th><th>Успешность</th><th>Верно (+)</th><th>Ошибок (-)</th><th>Всего</th><th>Риск</th></tr></thead>
+                <tbody>
+                    {% for row in protocol_analysis.task_rows %}
+                    <tr>
+                        <td>№{{ row.task_code }}</td>
+                        <td>{{ row.topic|default:"—" }}</td>
+                        <td>{{ row.checked_skill|default:"—" }}</td>
+                        <td class="{% if row.success_rate != None and row.success_rate < 50 %}is-danger{% endif %}">{% if row.success_rate != None %}{{ row.success_rate }}%{% elif row.completion_percent is not None %}{{ row.completion_percent }}%{% else %}—{% endif %}</td>
+                        <td>{{ row.plus|default:row.correct_count|default:0 }}</td>
+                        <td>{{ row.minus|default:row.incorrect_count|default:0 }}</td>
+                        <td>{{ row.total|default:row.answers_count|default:0 }}</td>
+                        <td>{% if row.priority %}<span class="vpr-priority vpr-priority--{{ row.priority|lower }}">{{ row.priority_label|default:row.priority }}</span>{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="sae-state__text">Нет данных по темам и умениям.</p>
+        {% endif %}
+    </section>
+    </div>
+
+    <div class="vpr-tab-panel" data-tab-panel="conclusion"{% if active_tab != "conclusion" %} hidden{% endif %}>
+    <section class="sae-panel">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Заключение</span><h3 class="sae-panel__title">Аналитическое заключение</h3></div></div>
+        <form method="get" action="{% url 'vpr-school-analytics' %}" class="sae-filter">
+            <input type="hidden" name="tab" value="conclusion">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+            {% if request.GET.school_id %}<input type="hidden" name="school_id" value="{{ request.GET.school_id }}">{% endif %}
+            <div class="sae-filter__field">
+                <label for="protocol_id_conclusion">Протокол</label>
+                <select id="protocol_id_conclusion" name="protocol_id" onchange="this.form.submit()">
+                    {% for protocol in protocols %}
+                    <option value="{{ protocol.id }}" {% if selected_protocol and selected_protocol.id == protocol.id %}selected{% endif %}>{{ protocol.subject }} · {{ protocol.parallel }} кл.</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+        {% if protocol_analysis and protocol_analysis.conclusion_sections %}
+            {% for section in protocol_analysis.conclusion_sections %}
+            <section class="vpr-conclusion__section">
+                <h4 class="vpr-conclusion__title">{{ forloop.counter }}. {{ section.title }}</h4>
+                {% for paragraph in section.paragraphs %}
+                <p class="vpr-conclusion__paragraph">{{ paragraph }}</p>
+                {% endfor %}
+            </section>
+            {% endfor %}
+        {% else %}
+        <p class="sae-state__text">Заключение недоступно для выбранного протокола.</p>
+        {% endif %}
+    </section>
+    </div>
+
+    <div class="vpr-tab-panel" data-tab-panel="recommendations"{% if active_tab != "recommendations" %} hidden{% endif %}>
+    <section class="sae-panel" id="school-recommendations">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Раздел 8</span><h3 class="sae-panel__title">Рекомендации</h3></div></div>
+        {% if analysis.recommendations.actions %}
+        <h4 class="sae-panel__title" style="font-size:0.95rem;margin:0.75rem 0 0.35rem">По школе</h4>
+        <ul>{% for action in analysis.recommendations.actions|slice:":12" %}<li>{{ action }}</li>{% endfor %}</ul>
+        <h4 class="sae-panel__title" style="font-size:0.95rem;margin:0.75rem 0 0.35rem">По предметам</h4>
+        <ul>{% for group in analysis.recommendations.by_subject|slice:":6" %}<li><strong>{{ group.title }}:</strong> {{ group.actions|join:"; "|truncatechars:220 }}</li>{% empty %}<li>—</li>{% endfor %}</ul>
+        <h4 class="sae-panel__title" style="font-size:0.95rem;margin:0.75rem 0 0.35rem">По темам</h4>
+        <ul>{% for group in analysis.recommendations.by_topic|slice:":6" %}<li><strong>{{ group.title }}:</strong> {{ group.actions|join:"; "|truncatechars:220 }}</li>{% empty %}<li>—</li>{% endfor %}</ul>
+        <h4 class="sae-panel__title" style="font-size:0.95rem;margin:0.75rem 0 0.35rem">По классам</h4>
+        <ul>{% for row in analysis.grades|slice:":6" %}<li>{{ row.parallel }} класс: {% if row.risk_level == "high" or row.risk_level == "critical" %}усилить работу с дефицитами{% else %}поддерживать стабильную динамику{% endif %}</li>{% endfor %}</ul>
+        {% else %}
+        <p class="sae-state__text">Рекомендации не сформированы.</p>
+        {% endif %}
+    </section>
+    </div>
+
+    <div class="vpr-tab-panel" data-tab-panel="reports"{% if active_tab != "reports" %} hidden{% endif %}>
+    <section class="sae-panel">
+        <div class="sae-panel__head"><div><span class="sae-section-label">Отчёты</span><h3 class="sae-panel__title">Экспорт и печать</h3></div></div>
+        <div class="sae-header__actions">
+            {% if analysis and analysis.overview.has_data %}
+            <a href="{% url 'vpr-school-analytics-docx' %}?year={{ selected_year }}{% if request.GET.school_id %}&amp;school_id={{ request.GET.school_id }}{% endif %}" class="sae-btn sae-btn--primary" style="color:#0b1f3a;border:0">Отчёт по школе (Word)</a>
+            {% endif %}
+            <a href="{% url 'cabinet-reports' %}" class="sae-btn" style="color:#0b1f3a;border-color:#d5dde5;background:#fff">Экспорт в PDF</a>
+            <button type="button" class="sae-btn" style="color:#0b1f3a;border-color:#d5dde5;background:#fff" onclick="window.print()">Печать</button>
+        </div>
+    </section>
+
+    <section class="sae-panel" id="reports-by-subject">
+        <div class="sae-panel__head">
+            <div>
+                <h3 class="sae-panel__title">Отчёты по предметам</h3>
+                <p>Аналитические справки по каждому предмету и параллели</p>
+            </div>
+        </div>
+        {% if protocols %}
+        {% regroup protocols|dictsort:"subject" by subject as subject_report_groups %}
+        {% for group in subject_report_groups %}
+        <div class="vpr-reports-group">
+            <h4 class="vpr-reports-group__title">{{ group.grouper }}</h4>
+            <div class="sae-table-wrap">
+                <table class="sae-table">
+                    <thead>
+                        <tr>
+                            <th>Класс</th>
+                            <th>Год</th>
+                            <th>Загружен</th>
+                            <th>Отчёт</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for protocol in group.list|dictsort:"parallel" %}
+                        <tr>
+                            <td><strong>{{ protocol.parallel }} класс</strong></td>
+                            <td>{{ protocol.academic_year }}</td>
+                            <td>{% if protocol.upload %}{{ protocol.upload.created_at|date:"d.m.Y" }}{% else %}—{% endif %}</td>
+                            <td>
+                                <div class="sae-header__actions">
+                                    <a href="{% url 'vpr-protocol-overview' protocol_id=protocol.id %}" class="sae-btn" style="color:#0b1f3a;border-color:#d5dde5;background:#fff">Открыть</a>
+                                    <a href="{% url 'vpr-protocol-overview-docx' protocol_id=protocol.id %}" class="sae-btn sae-btn--primary" style="color:#0b1f3a;border:0">Word</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="sae-state__text">Нет протоколов для формирования отчётов по предметам.</p>
+        {% endif %}
+    </section>
+    </div>
+
+    {% endif %}
+</div>
+</div>
+
+<script>
+(function () {
+  var nav = document.getElementById("vpr-cabinet-tabs");
+  if (!nav) return;
+  var links = Array.prototype.slice.call(nav.querySelectorAll("[data-tab]"));
+  var panels = Array.prototype.slice.call(document.querySelectorAll("[data-tab-panel]"));
+  if (!links.length || !panels.length) return;
+
+  function activate(tab) {
+    links.forEach(function (link) {
+      link.classList.toggle("is-active", link.getAttribute("data-tab") === tab);
+    });
+    panels.forEach(function (panel) {
+      var match = panel.getAttribute("data-tab-panel") === tab;
+      if (match) panel.removeAttribute("hidden");
+      else panel.setAttribute("hidden", "hidden");
+    });
+    var yearInput = document.querySelector('form.sae-filter input[name="tab"]');
+    if (yearInput) yearInput.value = tab;
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.set("tab", tab);
+      window.history.replaceState({}, "", url.toString());
+    } catch (e) {}
+  }
+
+  links.forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      var tab = link.getAttribute("data-tab");
+      if (!tab) return;
+      event.preventDefault();
+      activate(tab);
+    });
+  });
+})();
+</script>
+{% endblock %}

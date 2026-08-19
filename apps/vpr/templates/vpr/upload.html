@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block head_title %}Загрузка протоколов ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Модуль ВПР · автономный импорт</span>
+            <h2>Загрузка протоколов ВПР</h2>
+            <p>
+                Загрузите официальную выгрузку «Индивидуальные результаты» (файл .xlsx).
+                Система проверит структуру файла и покажет предпросмотр перед сохранением.
+                {% if school %}<br>ОО: <strong>{{ school.name }}</strong> (код {{ school.code }}).{% endif %}
+            </p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn">← К обзору</a>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="enterprise-panel enterprise-narrow">
+        <form method="post" enctype="multipart/form-data" class="ui-form-stack space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="id-vpr-file">Файл протокола ВПР (.xlsx)</label>
+                <input id="id-vpr-file" type="file" name="file" required accept=".xlsx,.xlsm">
+            </div>
+            <p class="enterprise-empty">
+                Поддерживается формат «Ф1 Индивидуальные результаты»:
+                предмет, класс, дата, ОО, задания, первичный балл, отметка ВПР и отметка по журналу.
+            </p>
+            <p class="enterprise-empty" style="color:#334155">
+                <a href="{% url 'vpr-upload-sample' %}" class="hub-link">Скачать пример реального протокола ВПР</a>
+                — Русский язык, 4 класс, 89 участников (выгрузка Ф1).
+            </p>
+            <div class="enterprise-form-actions">
+                <button type="submit" class="ui-btn ui-btn-primary">Проверить файл</button>
+            </div>
+        </form>
+    </div>
+
+    {% if recent_uploads %}
+    <div class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">История</span>
+                <h3>Недавние загрузки ВПР</h3>
+            </div>
+        </div>
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Файл</th>
+                        <th>Статус</th>
+                        <th>Участники</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in recent_uploads %}
+                    <tr>
+                        <td>{{ item.created_at|date:"d.m.Y H:i" }}</td>
+                        <td>{{ item.original_filename }}</td>
+                        <td>{{ item.get_status_display }}</td>
+                        <td>{{ item.students_imported }}</td>
+                        <td>
+                            {% if item.status == "preview" %}
+                            <a class="ui-btn" href="{% url 'vpr-preview' upload_id=item.id %}">Предпросмотр</a>
+                            {% elif item.status == "imported" %}
+                            <a class="ui-btn" href="{% url 'vpr-result' upload_id=item.id %}">Результат</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

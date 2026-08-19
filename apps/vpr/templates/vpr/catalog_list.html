@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block head_title %}Справочник заданий ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">ВПР · справочник заданий</span>
+            <h2>Справочник заданий ВПР</h2>
+            <p>Единый каталог заданий для будущей аналитики. Записей: <strong>{{ total_count }}</strong>.</p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                {% if can_manage %}
+                <a href="{% url 'vpr-catalog-create' %}" class="ui-btn ui-btn-primary">Добавить задание</a>
+                <a href="{% url 'vpr-catalog-import' %}" class="ui-btn">Импорт из JSON, Excel или CSV</a>
+                {% endif %}
+                <a href="{% url 'vpr-registry' %}" class="ui-btn">Протоколы ВПР</a>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% elif message.tags == 'warning' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form class="enterprise-filter-panel" method="get" action="{% url 'vpr-catalog-list' %}">
+        <div class="enterprise-field">
+            <label for="catQ">Поиск</label>
+            <input id="catQ" type="search" name="q" value="{{ filters.q }}" placeholder="Предмет, тема, умение, код">
+        </div>
+        <div class="enterprise-field">
+            <label for="catSubject">Предмет</label>
+            <select id="catSubject" name="subject">
+                <option value="">Все</option>
+                {% for item in choices.subjects %}
+                <option value="{{ item }}" {% if filters.subject == item %}selected{% endif %}>{{ item }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="enterprise-field">
+            <label for="catParallel">Класс</label>
+            <select id="catParallel" name="parallel">
+                <option value="">Все</option>
+                {% for item in choices.parallels %}
+                <option value="{{ item }}" {% if filters.parallel == item|stringformat:'s' %}selected{% endif %}>{{ item }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="enterprise-field">
+            <label for="catYear">Год</label>
+            <select id="catYear" name="year">
+                <option value="">Все</option>
+                {% for item in choices.years %}
+                <option value="{{ item }}" {% if filters.year == item|stringformat:'s' %}selected{% endif %}>{{ item }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="enterprise-field">
+            <label for="catDiff">Сложность</label>
+            <select id="catDiff" name="difficulty">
+                <option value="">Все</option>
+                {% for item in choices.difficulties %}
+                <option value="{{ item }}" {% if filters.difficulty == item %}selected{% endif %}>{{ item }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="enterprise-field">
+            <label for="catSort">Сортировка</label>
+            <select id="catSort" name="sort">
+                <option value="year" {% if sort == "year" %}selected{% endif %}>Год ↑</option>
+                <option value="-year" {% if sort == "-year" %}selected{% endif %}>Год ↓</option>
+                <option value="subject" {% if sort == "subject" %}selected{% endif %}>Предмет</option>
+                <option value="number" {% if sort == "number" %}selected{% endif %}>Номер задания</option>
+                <option value="topic" {% if sort == "topic" %}selected{% endif %}>Тема</option>
+            </select>
+        </div>
+        <div class="enterprise-filter-panel__actions">
+            <button type="submit" class="ui-btn ui-btn-primary">Применить</button>
+            <a href="{% url 'vpr-catalog-list' %}" class="ui-btn">Сбросить</a>
+        </div>
+    </form>
+
+    <section class="enterprise-panel">
+        {% if entries %}
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>№ задания</th>
+                        <th>Предмет</th>
+                        <th>Класс</th>
+                        <th>Год</th>
+                        <th>Тема</th>
+                        <th>Умение</th>
+                        <th>Раздел</th>
+                        <th>Сложность</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.display_code }}</td>
+                        <td><strong>{{ entry.subject }}</strong></td>
+                        <td>{{ entry.parallel }}</td>
+                        <td>{{ entry.academic_year }}</td>
+                        <td>{{ entry.topic|default:"—"|truncatechars:50 }}</td>
+                        <td>{{ entry.checked_skill|default:"—"|truncatechars:50 }}</td>
+                        <td>{{ entry.program_section|default:"—"|truncatechars:40 }}</td>
+                        <td>{{ entry.difficulty|default:"—" }}</td>
+                        <td><a class="ui-btn" href="{% url 'vpr-catalog-detail' entry_id=entry.id %}">Карточка</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if page_obj.has_other_pages %}
+        <div class="enterprise-actions" style="margin-top:1rem;justify-content:center">
+            {% if page_obj.has_previous %}
+            <a class="ui-btn" href="?{{ querystring }}&amp;page={{ page_obj.previous_page_number }}">← Назад</a>
+            {% endif %}
+            <span class="enterprise-empty">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a class="ui-btn" href="?{{ querystring }}&amp;page={{ page_obj.next_page_number }}">Вперёд →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="enterprise-empty">
+            Справочник пуст.
+            {% if can_manage %}
+            <a href="{% url 'vpr-catalog-import' %}" class="hub-link">Импортировать задания</a>
+            или <a href="{% url 'vpr-catalog-create' %}" class="hub-link">создать вручную</a>.
+            {% endif %}
+        </p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

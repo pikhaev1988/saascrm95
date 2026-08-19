@@ -1,0 +1,20 @@
+{
+  "status": "NEW_UPLOAD_PASS",
+  "test_file": "vpr_f1_sample.xlsx",
+  "format": "f1_individual",
+  "protocol_created": true,
+  "protocol_id": 141,
+  "analytics": "PASS",
+  "facts": "PASS",
+  "evidence": "PASS",
+  "html": "PASS",
+  "docx": "PASS",
+  "validator": "PASS",
+  "universal_pipeline": "PROVEN",
+  "notes": [
+    "New protocol used VprImportService → catalog sync → VprComprehensiveAnalysisEngine → facts/evidence/validate/HTML/DOCX without protocol_id patch.",
+    "test upload/protocol cleaned up after acceptance"
+  ],
+  "upload_id": 155,
+  "cleaned_up": true
+}

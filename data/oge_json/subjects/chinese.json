@@ -1,0 +1,402 @@
+{
+  "exam": "OGE_2026",
+  "subject": "chinese",
+  "tasks": [
+    {
+      "task": 1,
+      "topic": "Чтение и понимание текста",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched",
+      "skill": "1.3.1"
+    },
+    {
+      "task": 2,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 3,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 4,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 5,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 6,
+      "topic": "Грамматические конструкции",
+      "grade_range": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 7,
+      "topic": "Грамматические конструкции",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 8,
+      "topic": "Грамматические конструкции",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 9,
+      "topic": "Грамматические конструкции",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 10,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 11,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 12,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 13,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 14,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 15,
+      "topic": "Чтение и понимание текста",
+      "grade_range": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 16,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 17,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 18,
+      "topic": "Чтение и понимание текста",
+      "grade_range": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 19,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 20,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 21,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 22,
+      "topic": "Чтение и понимание текста",
+      "grade_range": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 23,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 24,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 25,
+      "topic": "Лексика и грамматика",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 26,
+      "topic": "Основы китайской фонетики",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 27,
+      "topic": "Чтение и понимание текста на китайском",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 28,
+      "topic": "Письмо иероглифов",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 29,
+      "topic": "Грамматические структуры в китайском языке",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 30,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    },
+    {
+      "task": 31,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    },
+    {
+      "task": 32,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    },
+    {
+      "task": 33,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    },
+    {
+      "task": 34,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    },
+    {
+      "task": 35,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    },
+    {
+      "task": 36,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    },
+    {
+      "task": 37,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    },
+    {
+      "task": 38,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    }
+  ]
+}

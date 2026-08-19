@@ -1,0 +1,25 @@
+{
+  "mastery_levels": [
+    {"code": "high", "label": "Высокий уровень", "min_percent": 90, "max_percent": 100},
+    {"code": "sufficient", "label": "Достаточный уровень", "min_percent": 75, "max_percent": 89.9999},
+    {"code": "acceptable", "label": "Допустимый уровень", "min_percent": 60, "max_percent": 74.9999},
+    {"code": "problem", "label": "Проблемная зона", "min_percent": 40, "max_percent": 59.9999},
+    {"code": "critical", "label": "Критический дефицит", "min_percent": 0, "max_percent": 39.9999}
+  ],
+  "priority_by_level": {
+    "critical": "critical",
+    "problem": "high",
+    "acceptable": "medium",
+    "sufficient": "low",
+    "high": "low"
+  },
+  "risk_by_level": {
+    "critical": "critical",
+    "problem": "high",
+    "acceptable": "medium",
+    "sufficient": "low",
+    "high": "low"
+  },
+  "problem_levels": ["problem", "critical"],
+  "critical_levels": ["critical"]
+}

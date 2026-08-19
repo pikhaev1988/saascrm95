@@ -1,0 +1,204 @@
+{
+  "exam": "OGE_2026",
+  "subject": "chemistry",
+  "tasks": [
+    {
+      "task": 1,
+      "topic": "Строение атома и периодическая таблица",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 2,
+      "topic": "Периодический закон",
+      "grade_range": [
+        8
+      ],
+      "source": "oge_from_ege_enriched",
+      "skill": "1.1.1"
+    },
+    {
+      "task": 3,
+      "topic": "Химические реакции и уравнения",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 4,
+      "topic": "Типы химических реакций",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 5,
+      "topic": "Строение и свойства веществ",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 6,
+      "topic": "Законы химии и стехиометрия",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 7,
+      "topic": "Кислоты, основания и соли",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 8,
+      "topic": "Органическая химия: углеводороды",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 9,
+      "topic": "Энергия и скорость химических реакций",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 10,
+      "topic": "Электрохимия и гальванические элементы",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 11,
+      "topic": "Химическая кинетика и равновесие",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 12,
+      "topic": "Строение и свойства металлов",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 13,
+      "topic": "Химия неметаллов",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 14,
+      "topic": "Растворы и их свойства",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 15,
+      "topic": "Кислотно-основные реакции",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 16,
+      "topic": "Окислительно-восстановительные реакции",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 17,
+      "topic": "Химическая термодинамика",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 18,
+      "topic": "Органика",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched",
+      "skill": "1.2.4"
+    },
+    {
+      "task": 19,
+      "topic": "Периодический закон и свойства элементов",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 20,
+      "topic": "Химическая связь и молекулярная структура",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 21,
+      "topic": "Классификация неорганических веществ",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 22,
+      "topic": "Основы органической химии",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 23,
+      "topic": "Ароматические соединения",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    }
+  ]
+}

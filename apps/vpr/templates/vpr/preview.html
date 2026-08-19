@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block head_title %}Предпросмотр ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Модуль ВПР · предпросмотр</span>
+            <h2>Проверка перед импортом</h2>
+            <p>Убедитесь, что данные распознаны верно, затем подтвердите сохранение.</p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'vpr-upload' %}" class="ui-btn">← К загрузке</a>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Параметры протокола</span>
+                <h3>{{ preview.source_title|default:"Протокол ВПР" }}</h3>
+            </div>
+        </div>
+        <div class="hub-kpi-grid hub-kpi-grid--compact">
+            <article class="hub-kpi"><p class="hub-kpi-label">Предмет</p><p class="hub-kpi-value" style="font-size:1.1rem">{{ preview.subject }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Класс</p><p class="hub-kpi-value">{{ preview.parallel }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Учебный год</p><p class="hub-kpi-value">{{ preview.academic_year }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Дата</p><p class="hub-kpi-value" style="font-size:1.1rem">{{ preview.exam_date|default:"—" }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Участники</p><p class="hub-kpi-value">{{ preview.participants_count }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Задания</p><p class="hub-kpi-value">{{ preview.tasks_count }}</p></article>
+        </div>
+        <p class="enterprise-empty" style="margin-top:1rem">
+            Организация: <strong>{{ preview.organization_name|default:preview.organization_code }}</strong>
+            {% if preview.municipality %}<br>Муниципалитет: {{ preview.municipality }}{% endif %}
+            {% if preview.max_primary_score %}<br>Максимальный первичный балл: {{ preview.max_primary_score }}{% endif %}
+        </p>
+        {% if preview.warnings %}
+        <div class="ui-alert ui-alert--error" style="margin-top:1rem">
+            {% for w in preview.warnings %}<div>{{ w }}</div>{% endfor %}
+        </div>
+        {% endif %}
+    </section>
+
+    {% if preview.sample_students %}
+    <section class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Пример строк</span>
+                <h3>Первые участники</h3>
+            </div>
+        </div>
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Код</th>
+                        <th>Класс</th>
+                        <th>Вариант</th>
+                        <th>Первичный балл</th>
+                        <th>Отметка ВПР</th>
+                        <th>По журналу</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in preview.sample_students %}
+                    <tr>
+                        <td>{{ row.participant_code }}</td>
+                        <td>{{ row.class_group }}</td>
+                        <td>{{ row.variant }}</td>
+                        <td>{{ row.primary_score }}</td>
+                        <td>{{ row.mark_vpr }}</td>
+                        <td>{{ row.mark_journal }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="enterprise-panel">
+        <form method="post" action="{% url 'vpr-confirm' upload_id=upload.id %}">
+            {% csrf_token %}
+            <div class="enterprise-form-actions">
+                <button type="submit" class="ui-btn ui-btn-primary">Подтвердить импорт</button>
+                <a href="{% url 'vpr-upload' %}" class="ui-btn">Отмена</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

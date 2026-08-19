@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block head_title %}ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Раздел ВПР</span>
+            <h2>Всероссийские проверочные работы</h2>
+            <p>
+                Для школ раздел ВПР открывается в кабинете ОО. Выберите аналитику ВПР
+                или вернитесь к обзору.
+            </p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                {% if user.role == "school" %}
+                <a href="{% url 'cabinet-school' %}?exam_type=vpr" class="ui-btn ui-btn-primary">Кабинет школы · ВПР</a>
+                {% elif user.role == "district" %}
+                <a href="{% url 'cabinet-district' %}?exam_type=vpr" class="ui-btn ui-btn-primary">Школы района · ВПР</a>
+                {% endif %}
+                <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn">Обзор</a>
+            </div>
+        </div>
+    </header>
+</div>
+{% endblock %}

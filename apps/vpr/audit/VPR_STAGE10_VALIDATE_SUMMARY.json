@@ -1,0 +1,26 @@
+{
+  "TOTAL": 138,
+  "PASS": 138,
+  "FAIL": 0,
+  "BLOCKED": 0,
+  "biology_11": {
+    "protocol_id": 11,
+    "school": "Муниципальное бюджетное общеобразовательное учреждение \"Средняя общеобразовательная школа №1 г.Урус-Мартан\"",
+    "subject": "Биология",
+    "class": 5,
+    "participants": 49,
+    "tasks_total": 29,
+    "tasks_below_50": 15,
+    "limited_sample": true,
+    "invalid_metrics": 0,
+    "consistency_status": "PASS",
+    "methodology_status": "PASS",
+    "report_status": "PASS",
+    "final": "PASS"
+  },
+  "limited_sample_values": {
+    "True": 119,
+    "False": 19
+  },
+  "with_invalid_metrics": 0
+}

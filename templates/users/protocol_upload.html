@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block head_title %}Загрузка протоколов {{ exam_type_label }} — Анализ ГИА{% endblock %}
+{% block content %}
+{% if upload_scope == "district" %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Районный центр аналитики ГИА</span>
+            <h2>Загрузить протоколы {{ exam_type_label }}</h2>
+            <p>
+                Район: <strong>{{ district.name }}</strong> (код: {{ district.code }}),
+                школ в районе: <strong>{{ district_schools_count }}</strong>.
+                Загружаются только строки с кодами ОО школ вашего района.
+            </p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'cabinet' %}?exam_type={{ exam_type }}" class="ui-btn">К аналитике {{ exam_type_label }}</a>
+                <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn">← К обзору</a>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+        <div class="space-y-2">
+            {% for message in messages %}
+                <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="enterprise-panel enterprise-narrow">
+        <form method="post" enctype="multipart/form-data" class="ui-form-stack space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="id-protocol-file">Файл протокола ({{ exam_type_label }})</label>
+                <input id="id-protocol-file" type="file" name="file" required accept=".xlsx,.xls{% if exam_type == 'oge' %},.csv{% endif %}">
+            </div>
+            <p class="enterprise-empty">
+                Используйте выгрузку протоколов в формате Excel, как в региональной отчётности
+                (с блоками предметов и кодом ОО в строках участников).
+            </p>
+            <p class="enterprise-empty" style="color:#334155">
+                <a href="{% url sample_url_name %}" class="hub-link">Скачать пример протокола {{ exam_type_label }}</a>
+                — в файле указан код одной из школ района, две тестовые строки и один предмет.
+            </p>
+            <div class="enterprise-form-actions">
+                <button type="submit" class="ui-btn ui-btn-primary">Загрузить</button>
+            </div>
+        </form>
+    </div>
+
+    {% if recent_uploads %}
+    <div class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">История</span>
+                <h3>Недавние загрузки {{ exam_type_label }}</h3>
+            </div>
+        </div>
+        <p class="enterprise-empty" style="margin-bottom:14px">
+            Если протокол загружен по ошибке, можно отменить загрузку —
+            из аналитики будут удалены результаты школ вашего района по экзаменам из этого файла.
+        </p>
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Статус</th>
+                        <th>Экзамены</th>
+                        <th>Записей</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for upload in recent_uploads %}
+                    <tr>
+                        <td>{{ upload.created_at|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            {% if upload.reverted_at %}Отменена
+                            {% elif upload.status == 'done' %}Загружена
+                            {% elif upload.status == 'failed' %}<span title="{{ upload.error_message }}">Ошибка</span>
+                            {% else %}{{ upload.get_status_display }}{% endif %}
+                        </td>
+                        <td>
+                            {% if upload.exams.all %}
+                                {% for exam in upload.exams.all %}{{ exam.subject }} ({{ exam.exam_date|date:"d.m.Y" }}){% if not forloop.last %}; {% endif %}{% endfor %}
+                            {% elif upload.status == 'failed' %}—{% else %}{{ upload.exams_processed }}{% endif %}
+                        </td>
+                        <td>{{ upload.results_imported }}</td>
+                        <td>
+                            {% if upload.status == 'done' and not upload.reverted_at %}
+                            <form method="post" action="{% url revert_url_name upload.id %}" onsubmit="return confirm('Отменить эту загрузку? Результаты школ вашего района по перечисленным экзаменам будут удалены из системы.');">
+                                {% csrf_token %}
+                                <button type="submit" class="ui-btn" style="color:#b91c1c;border-color:#fecaca;">Отменить</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if loaded_exams %}
+    <div class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Данные</span>
+                <h3>Загруженные экзамены {{ exam_type_label }}</h3>
+            </div>
+        </div>
+        <p class="enterprise-empty" style="margin-bottom:14px">
+            Показаны экзамены {{ exam_type_label }}, по которым у школ района есть результаты.
+            Удаление экзамена уберёт результаты всех школ района по нему.
+        </p>
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Предмет</th>
+                        <th>Дата</th>
+                        <th>Участников</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exam in loaded_exams %}
+                    <tr>
+                        <td>{{ exam.subject }}</td>
+                        <td>{{ exam.exam_date|date:"d.m.Y" }}</td>
+                        <td>{{ exam.school_results_count }}</td>
+                        <td>
+                            <form method="post" action="{% url delete_exam_url_name exam.id %}" onsubmit="return confirm('Удалить результаты школ района по экзамену «{{ exam.subject }}» ({{ exam.exam_date|date:'d.m.Y' }})?');">
+                                {% csrf_token %}
+                                <button type="submit" class="ui-btn" style="color:#b91c1c;border-color:#fecaca;">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="ui-narrow">
+    {% if messages %}
+        <div class="mb-4 space-y-2">
+            {% for message in messages %}
+                <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    <div class="ui-card">
+        <h2 class="page-hero-title" style="font-size: 1.2rem;">Загрузить протоколы {{ exam_type_label }}</h2>
+        <p class="ui-section-subtitle mb-4">
+            Организация: <strong>{{ school.name }}</strong> (код ОО: <strong>{{ school.code }}</strong>).
+            В систему попадут только строки с кодом вашей организации; данные других школ из файла не загружаются.
+        </p>
+        <form method="post" enctype="multipart/form-data" class="ui-form-stack space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="id-protocol-file">Файл протокола ({{ exam_type_label }})</label>
+                <input id="id-protocol-file" type="file" name="file" required accept=".xlsx,.xls{% if exam_type == 'oge' %},.csv{% endif %}">
+            </div>
+            <p class="text-sm text-slate-500">
+                Используйте выгрузку протоколов в формате Excel, как в региональной отчётности
+                (с блоками предметов и кодом ОО в строках участников).
+            </p>
+            <p class="text-sm text-slate-600">
+                <a href="{% url sample_url_name %}" class="text-violet-600 hover:text-violet-800 hover:underline">Скачать пример протокола {{ exam_type_label }}</a>
+                — в файле уже указан код вашей ОО ({{ school.code }}), две тестовые строки и один предмет.
+            </p>
+            <div class="flex flex-wrap items-center gap-2 pt-2">
+                <button type="submit" class="ui-btn ui-btn-primary">Загрузить</button>
+                <a href="{% url 'cabinet' %}?exam_type={{ exam_type }}" class="ui-btn">К аналитике {{ exam_type_label }}</a>
+                <a href="{% url 'cabinet-exam-choice' %}" class="text-slate-600 hover:underline text-sm pl-1">← К обзору</a>
+            </div>
+        </form>
+    </div>
+    {% if recent_uploads %}
+    <div class="ui-card mt-6">
+        <h3 class="page-hero-title" style="font-size: 1.05rem;">Недавние загрузки {{ exam_type_label }}</h3>
+        <p class="ui-section-subtitle mb-4 text-sm">
+            Если протокол загружен по ошибке, можно отменить загрузку —
+            из аналитики будут удалены только результаты вашей школы по экзаменам из этого файла.
+        </p>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm" style="border-collapse: collapse;">
+                <thead>
+                    <tr class="text-left text-slate-500 border-b border-slate-200">
+                        <th class="py-2 pr-3 font-medium">Дата</th>
+                        <th class="py-2 pr-3 font-medium">Статус</th>
+                        <th class="py-2 pr-3 font-medium">Экзамены</th>
+                        <th class="py-2 pr-3 font-medium">Записей</th>
+                        <th class="py-2 font-medium"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for upload in recent_uploads %}
+                    <tr class="border-b border-slate-100">
+                        <td class="py-2 pr-3 whitespace-nowrap">{{ upload.created_at|date:"d.m.Y H:i" }}</td>
+                        <td class="py-2 pr-3">
+                            {% if upload.reverted_at %}<span class="text-slate-500">Отменена</span>
+                            {% elif upload.status == 'done' %}<span class="text-emerald-700">Загружена</span>
+                            {% elif upload.status == 'failed' %}<span class="text-red-700" title="{{ upload.error_message }}">Ошибка</span>
+                            {% else %}{{ upload.get_status_display }}{% endif %}
+                        </td>
+                        <td class="py-2 pr-3">
+                            {% if upload.exams.all %}
+                                <ul class="list-none m-0 p-0 space-y-0.5">
+                                    {% for exam in upload.exams.all %}
+                                    <li>{{ exam.subject }} ({{ exam.exam_date|date:"d.m.Y" }})</li>
+                                    {% endfor %}
+                                </ul>
+                            {% elif upload.status == 'failed' %}—{% else %}{{ upload.exams_processed }}{% endif %}
+                        </td>
+                        <td class="py-2 pr-3">{{ upload.results_imported }}</td>
+                        <td class="py-2 text-right">
+                            {% if upload.status == 'done' and not upload.reverted_at %}
+                            <form method="post" action="{% url revert_url_name upload.id %}" onsubmit="return confirm('Отменить эту загрузку? Результаты вашей школы по перечисленным экзаменам будут удалены из системы.');">
+                                {% csrf_token %}
+                                <button type="submit" class="ui-btn text-red-700 border-red-200 hover:border-red-300" style="font-size: 0.85rem; padding: 0.35rem 0.65rem;">Отменить загрузку</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    {% if loaded_exams %}
+    <div class="ui-card mt-6">
+        <h3 class="page-hero-title" style="font-size: 1.05rem;">Загруженные экзамены {{ exam_type_label }} в системе</h3>
+        <p class="ui-section-subtitle mb-4 text-sm">
+            Здесь показаны все экзамены {{ exam_type_label }}, по которым у вашей школы есть результаты.
+        </p>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm" style="border-collapse: collapse;">
+                <thead>
+                    <tr class="text-left text-slate-500 border-b border-slate-200">
+                        <th class="py-2 pr-3 font-medium">Предмет</th>
+                        <th class="py-2 pr-3 font-medium">Дата</th>
+                        <th class="py-2 pr-3 font-medium">Участников</th>
+                        <th class="py-2 font-medium"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exam in loaded_exams %}
+                    <tr class="border-b border-slate-100">
+                        <td class="py-2 pr-3">{{ exam.subject }}</td>
+                        <td class="py-2 pr-3 whitespace-nowrap">{{ exam.exam_date|date:"d.m.Y" }}</td>
+                        <td class="py-2 pr-3">{{ exam.school_results_count }}</td>
+                        <td class="py-2 text-right">
+                            <form method="post" action="{% url delete_exam_url_name exam.id %}" onsubmit="return confirm('Удалить результаты вашей школы по экзамену «{{ exam.subject }}» ({{ exam.exam_date|date:'d.m.Y' }})?');">
+                                {% csrf_token %}
+                                <button type="submit" class="ui-btn text-red-700 border-red-200 hover:border-red-300" style="font-size: 0.85rem; padding: 0.35rem 0.65rem;">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

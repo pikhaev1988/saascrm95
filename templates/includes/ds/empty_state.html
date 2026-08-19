@@ -1,0 +1,11 @@
+{# Unified empty state — presentation only #}
+<div class="ds-empty{% if class %} {{ class }}{% endif %}" role="status">
+    <span class="ds-empty__icon" aria-hidden="true">{{ icon|default:"∅" }}</span>
+    <p class="ds-empty__title">{{ title|default:"Нет данных" }}</p>
+    {% if text %}<p class="ds-empty__text">{{ text }}</p>{% endif %}
+    {% if action_url and action_label %}
+    <div class="ds-empty__action">
+        <a href="{{ action_url }}" class="ui-btn ui-btn-primary">{{ action_label }}</a>
+    </div>
+    {% endif %}
+</div>

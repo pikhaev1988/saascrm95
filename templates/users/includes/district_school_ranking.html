@@ -1,0 +1,81 @@
+<section class="enterprise-ranking-grid" aria-label="Рейтинг школ">
+    <div class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">ТОП-5</span>
+                <h3>Лучшие результаты</h3>
+            </div>
+        </div>
+        {% if district_top_schools %}
+            <div class="enterprise-school-card-list">
+                {% for school in district_top_schools %}
+                <article class="enterprise-school-card is-success">
+                    <div class="enterprise-school-card__main">
+                        <h4>{{ school.school_name }}</h4>
+                        <p>Код ОО {{ school.school_code }} · {{ school.students }} участников</p>
+                    </div>
+                    <div class="enterprise-school-card__meta">
+                        <dl>
+                            <div>
+                                <dt>Средний балл</dt>
+                                <dd>{{ school.avg_score }}</dd>
+                            </div>
+                            <div>
+                                <dt>Сдаваемость</dt>
+                                <dd>{{ school.pass_rate }}%</dd>
+                            </div>
+                        </dl>
+                        <div class="enterprise-school-card__actions">
+                            <span class="enterprise-status is-success">Высокий результат</span>
+                            <a href="{% url 'cabinet-district-school' school_id=school.school_id %}?exam_type={{ selected_exam_type|default:'ege' }}{% if district_selected_year %}&amp;year={{ district_selected_year }}{% endif %}" class="ui-btn">Открыть анализ</a>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="enterprise-empty">Нет данных для рейтинга.</p>
+        {% endif %}
+    </div>
+
+    <div class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">ТОП-5 риска</span>
+                <h3>Школы риска</h3>
+            </div>
+        </div>
+        {% if district_risk_schools %}
+            <div class="enterprise-school-card-list">
+                {% for school in district_risk_schools %}
+                <article class="enterprise-school-card {% if school.pass_rate < 50 %}is-risk{% else %}is-warning{% endif %}">
+                    <div class="enterprise-school-card__main">
+                        <h4>{{ school.school_name }}</h4>
+                        <p>Код ОО {{ school.school_code }} · {{ school.students }} участников</p>
+                    </div>
+                    <div class="enterprise-school-card__meta">
+                        <dl>
+                            <div>
+                                <dt>Средний балл</dt>
+                                <dd>{{ school.avg_score }}</dd>
+                            </div>
+                            <div>
+                                <dt>Сдаваемость</dt>
+                                <dd>{{ school.pass_rate }}%</dd>
+                            </div>
+                        </dl>
+                        <div class="enterprise-school-card__actions">
+                            <span class="enterprise-status {% if school.pass_rate < 50 %}is-risk{% else %}is-warning{% endif %}">
+                                {% if school.pass_rate < 50 %}Требует внимания{% else %}Наблюдение{% endif %}
+                            </span>
+                            <a href="{% url 'cabinet-district-school' school_id=school.school_id %}?exam_type={{ selected_exam_type|default:'ege' }}{% if district_selected_year %}&amp;year={{ district_selected_year }}{% endif %}" class="ui-btn">Открыть анализ</a>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="enterprise-empty">Школы риска не найдены.</p>
+        {% endif %}
+    </div>
+</section>

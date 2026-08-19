@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block head_title %}Протоколы ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Модуль ВПР · реестр</span>
+            <h2>Протоколы ВПР</h2>
+            <p>
+                Список загруженных протоколов
+                {% if school %}для <strong>{{ school.name }}</strong>{% else %}вашей зоны ответственности{% endif %}.
+                Всего: <strong>{{ total_count }}</strong>.
+            </p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'vpr-upload' %}" class="ui-btn ui-btn-primary">Загрузить протокол</a>
+                <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn">← К обзору</a>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form class="enterprise-filter-panel vpr-registry-filters" method="get" action="{% url 'vpr-registry' %}">
+        <div class="enterprise-field">
+            <label for="vprSearch">Поиск</label>
+            <input id="vprSearch" type="search" name="q" value="{{ filters.q }}" placeholder="Предмет, класс, год, ОО">
+        </div>
+        <div class="enterprise-field">
+            <label for="vprSubject">Предмет</label>
+            <select id="vprSubject" name="subject">
+                <option value="">Все</option>
+                {% for item in choices.subjects %}
+                <option value="{{ item }}" {% if filters.subject == item %}selected{% endif %}>{{ item }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="enterprise-field">
+            <label for="vprParallel">Класс</label>
+            <select id="vprParallel" name="parallel">
+                <option value="">Все</option>
+                {% for item in choices.parallels %}
+                <option value="{{ item }}" {% if filters.parallel == item|stringformat:'s' %}selected{% endif %}>{{ item }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="enterprise-field">
+            <label for="vprYear">Год</label>
+            <select id="vprYear" name="year">
+                <option value="">Все</option>
+                {% for item in choices.years %}
+                <option value="{{ item }}" {% if filters.year == item|stringformat:'s' %}selected{% endif %}>{{ item }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="enterprise-field">
+            <label for="vprOrg">Организация</label>
+            <select id="vprOrg" name="organization">
+                <option value="">Все</option>
+                {% for item in choices.organizations %}
+                <option value="{{ item }}" {% if filters.organization == item %}selected{% endif %}>{{ item|truncatechars:60 }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="enterprise-field">
+            <label for="vprStatus">Статус</label>
+            <select id="vprStatus" name="status">
+                <option value="">Все</option>
+                {% for value, label in choices.statuses %}
+                <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="enterprise-field">
+            <label for="vprSort">Сортировка</label>
+            <select id="vprSort" name="sort">
+                <option value="-uploaded" {% if sort == "-uploaded" %}selected{% endif %}>Дата загрузки ↓</option>
+                <option value="uploaded" {% if sort == "uploaded" %}selected{% endif %}>Дата загрузки ↑</option>
+                <option value="-year" {% if sort == "-year" %}selected{% endif %}>Год ↓</option>
+                <option value="year" {% if sort == "year" %}selected{% endif %}>Год ↑</option>
+                <option value="subject" {% if sort == "subject" %}selected{% endif %}>Предмет А–Я</option>
+                <option value="-subject" {% if sort == "-subject" %}selected{% endif %}>Предмет Я–А</option>
+                <option value="class" {% if sort == "class" %}selected{% endif %}>Класс ↑</option>
+                <option value="-class" {% if sort == "-class" %}selected{% endif %}>Класс ↓</option>
+                <option value="-participants" {% if sort == "-participants" %}selected{% endif %}>Участники ↓</option>
+                <option value="participants" {% if sort == "participants" %}selected{% endif %}>Участники ↑</option>
+            </select>
+        </div>
+        <div class="enterprise-filter-panel__actions">
+            <button type="submit" class="ui-btn ui-btn-primary">Применить</button>
+            <a href="{% url 'vpr-registry' %}" class="ui-btn">Сбросить</a>
+        </div>
+    </form>
+
+    <section class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Реестр</span>
+                <h3>Загруженные протоколы</h3>
+            </div>
+        </div>
+        {% if protocols %}
+        <div class="vpr-registry-list">
+            {% for protocol in protocols %}
+            <article class="vpr-registry-card">
+                <div class="vpr-registry-card__main">
+                    <div class="vpr-registry-card__title-row">
+                        <h4 class="vpr-registry-card__title">
+                            {{ protocol.subject }}
+                            <span class="vpr-registry-card__badge">{{ protocol.parallel }} класс</span>
+                        </h4>
+                        <span class="vpr-registry-card__status">{{ protocol.upload.get_status_display }}</span>
+                    </div>
+                    <p class="vpr-registry-card__org" title="{{ protocol.organization_name|default:protocol.organization_code|default:'' }}">
+                        {{ protocol.organization_name|default:protocol.organization_code|default:"—" }}
+                    </p>
+                    <dl class="vpr-registry-card__meta">
+                        <div>
+                            <dt>Учебный год</dt>
+                            <dd>{{ protocol.academic_year }}</dd>
+                        </div>
+                        <div>
+                            <dt>Дата проведения</dt>
+                            <dd>{{ protocol.exam_date|date:"d.m.Y"|default:"—" }}</dd>
+                        </div>
+                        <div>
+                            <dt>Участники</dt>
+                            <dd>{{ protocol.participants_count }}</dd>
+                        </div>
+                        <div>
+                            <dt>Макс. балл</dt>
+                            <dd>{{ protocol.max_primary_score }}</dd>
+                        </div>
+                        <div>
+                            <dt>Загрузка</dt>
+                            <dd>{{ protocol.upload.created_at|date:"d.m.Y H:i" }}</dd>
+                        </div>
+                        <div>
+                            <dt>Пользователь</dt>
+                            <dd>{{ protocol.upload.uploaded_by.get_username|default:"—" }}</dd>
+                        </div>
+                    </dl>
+                </div>
+                <div class="vpr-registry-card__actions">
+                    <a class="ui-btn ui-btn-primary" href="{% url 'vpr-protocol-overview' protocol_id=protocol.id %}">Обзор</a>
+                    <a class="ui-btn" href="{% url 'vpr-protocol-conclusion' protocol_id=protocol.id %}">Заключение</a>
+                    <a class="ui-btn" href="{% url 'vpr-protocol-detail' protocol_id=protocol.id %}">Протокол</a>
+                    {% if protocol.upload.file %}
+                    <a class="ui-btn" href="{% url 'vpr-upload-file' upload_id=protocol.upload_id %}">Файл</a>
+                    {% endif %}
+                    <form method="post" action="{% url 'vpr-upload-reimport' upload_id=protocol.upload_id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="ui-btn" onclick="return confirm('Повторить импорт из сохранённого файла?');">Повторить</button>
+                    </form>
+                    <form method="post" action="{% url 'vpr-upload-delete' upload_id=protocol.upload_id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="ui-btn ui-btn--danger" onclick="return confirm('Удалить импорт и все данные протокола?');">Удалить</button>
+                    </form>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="enterprise-actions" style="margin-top:1rem;justify-content:center">
+            {% if page_obj.has_previous %}
+            <a class="ui-btn" href="?{{ querystring }}&amp;page={{ page_obj.previous_page_number }}">← Назад</a>
+            {% endif %}
+            <span class="enterprise-empty">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a class="ui-btn" href="?{{ querystring }}&amp;page={{ page_obj.next_page_number }}">Вперёд →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="enterprise-empty">Протоколы ВПР ещё не загружены. <a href="{% url 'vpr-upload' %}" class="hub-link">Загрузить первый протокол</a></p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

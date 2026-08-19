@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block head_title %}Удаление задания — Справочник ВПР{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Справочник заданий ВПР</span>
+            <h2>Удалить запись?</h2>
+            <p>{{ entry.subject }} · {{ entry.parallel }} класс · №{{ entry.display_code }} ({{ entry.academic_year }})</p>
+        </div>
+    </header>
+    <section class="enterprise-panel enterprise-narrow">
+        <form method="post">
+            {% csrf_token %}
+            <p class="enterprise-empty">Запись будет удалена из справочника. Результаты протоколов не изменятся.</p>
+            <div class="enterprise-form-actions">
+                <button type="submit" class="ui-btn ui-btn-primary">Удалить</button>
+                <a href="{% url 'vpr-catalog-detail' entry_id=entry.id %}" class="ui-btn">Отмена</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{{ year_dynamics|json_script:"hubYearDynamics" }}
+{{ hub_categories|json_script:"hubCategoriesData" }}
+<script>
+(function () {
+    const yearDynamics = JSON.parse(document.getElementById("hubYearDynamics").textContent);
+    const categoriesNode = document.getElementById("hubCategoriesData");
+    const hubCategories = categoriesNode ? JSON.parse(categoriesNode.textContent) : [];
+    const HUB_COLORS = (window.DS_CHART && window.DS_CHART.colors) || [
+        "#2563eb", "#06b6d4", "#16a34a", "#dc2626", "#7c3aed", "#db2777", "#d97706", "#ea580c", "#64748b"
+    ];
+
+    function nullSafe(values) {
+        return (values || []).map((v) => (v === null || v === undefined ? null : Number(v)));
+    }
+
+    function makeLineChart(canvasId, labels, values, color) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        if (!window.Chart) {
+            window.renderSimpleLineChart(canvasId, labels, nullSafe(values));
+            return;
+        }
+        new Chart(canvas, {
+            type: "line",
+            data: {
+                labels,
+                datasets: [{
+                    data: nullSafe(values),
+                    tension: 0.35,
+                    spanGaps: true,
+                    borderColor: color,
+                    backgroundColor: color + "22",
+                    fill: true,
+                    pointRadius: 3,
+                    borderWidth: 2,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: false, grid: { color: (window.DS_CHART && window.DS_CHART.grid) || "#eef2f7" }, ticks: { font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                },
+            },
+        });
+    }
+
+    function initHubCharts() {
+        if (yearDynamics && yearDynamics.labels && yearDynamics.labels.length) {
+            makeLineChart("hubAvgScoreChart", yearDynamics.labels, yearDynamics.avg_scores, HUB_COLORS[0]);
+            makeLineChart("hubParticipantsChart", yearDynamics.labels, yearDynamics.participants, HUB_COLORS[1]);
+            makeLineChart("hubPassRateChart", yearDynamics.labels, yearDynamics.pass_rates, HUB_COLORS[2]);
+            makeLineChart("hubFailedChart", yearDynamics.labels, yearDynamics.failed_counts, HUB_COLORS[3]);
+        }
+        if (hubCategories.length && document.getElementById("hubCategoriesChart")) {
+            const labels = hubCategories.map((item) => item.exam__subject);
+            const values = hubCategories.map((item) => item.students);
+            const colors = labels.map((_, idx) => HUB_COLORS[idx % HUB_COLORS.length]);
+            if (window.Chart) {
+                new Chart(document.getElementById("hubCategoriesChart"), {
+                    type: "doughnut",
+                    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: (window.DS_CHART && window.DS_CHART.border) || "#fff" }] },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: { legend: { display: false } } },
+                });
+                const barCanvas = document.getElementById("hubCategoriesBarChart");
+                if (barCanvas) {
+                    new Chart(barCanvas, {
+                        type: "bar",
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: "Участники",
+                                data: values,
+                                backgroundColor: colors,
+                                borderRadius: 8,
+                                maxBarThickness: 28,
+                            }],
+                        },
+                        options: {
+                            indexAxis: "y",
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { callbacks: { label: (ctx) => `Участники: ${ctx.parsed.x}` } },
+                            },
+                            scales: {
+                                x: { beginAtZero: true, grid: { color: "#eef2f7" }, ticks: { font: { size: 10 } } },
+                                y: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                            },
+                        },
+                    });
+                }
+            }
+            document.querySelectorAll(".hub-cat-dot").forEach((dot) => {
+                dot.style.background = HUB_COLORS[Number(dot.dataset.catIndex || 0) % HUB_COLORS.length];
+            });
+        }
+    }
+
+    function bootCharts() {
+        if (window.Chart) { initHubCharts(); return; }
+        let attempts = 0;
+        const timer = window.setInterval(() => {
+            attempts += 1;
+            if (window.Chart || attempts > 40) { window.clearInterval(timer); initHubCharts(); }
+        }, 50);
+    }
+    if (document.readyState === "complete") bootCharts();
+    else window.addEventListener("load", bootCharts);
+})();
+</script>

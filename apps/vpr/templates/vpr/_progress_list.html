@@ -1,0 +1,19 @@
+{% if items %}
+<ul class="vpr-progress-list">
+    {% for item in items %}
+    <li class="vpr-progress-item">
+        <div class="vpr-progress-item__head">
+            <strong>{{ item.title }}</strong>
+            <span>{% if item.percent is not None %}{{ item.percent }}%{% else %}—{% endif %}</span>
+        </div>
+        {% if item.meta %}<p class="vpr-progress-item__meta">{{ item.meta }}</p>{% endif %}
+        {% if item.detail %}<p class="vpr-progress-item__meta">{{ item.detail }}</p>{% endif %}
+        <div class="vpr-progress">
+            <div class="vpr-progress__bar vpr-progress__bar--{{ item.tone }}" style="width:{% if item.percent is not None %}{{ item.percent }}{% else %}0{% endif %}%"></div>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="enterprise-empty">{{ empty|default:"Нет данных." }}</p>
+{% endif %}

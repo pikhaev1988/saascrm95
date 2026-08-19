@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block head_title %}{{ selected_school.name|default:"Школа" }} — {{ role_title }}{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard hub-page">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Карточка школы · районный кабинет</span>
+            <h2>{{ selected_school.name|default:"Школа" }}</h2>
+            <p>
+                {% if selected_school %}Код ОО: {{ selected_school.code }} · {% endif %}
+                {{ selected_exam_type_label|default:"ЕГЭ" }} · просмотр из районного кабинета
+            </p>
+        </div>
+        <div class="enterprise-header__meta">
+            {% if hub_selected_year %}
+            <div class="enterprise-period">
+                <span>Период</span>
+                <strong>{{ hub_selected_year }}</strong>
+            </div>
+            {% endif %}
+            <div class="enterprise-actions">
+                <a href="{% url 'cabinet-district' %}?exam_type={{ selected_exam_type|default:'ege' }}{% if district_selected_year %}&amp;year={{ district_selected_year }}{% endif %}" class="ui-btn">← К школам района</a>
+                <a href="{% url 'cabinet-reports' %}?doc=gia-summary&amp;exam_type={{ selected_exam_type|default:'ege' }}" class="ui-btn ui-btn-primary">Отчёты района</a>
+            </div>
+        </div>
+    </header>
+
+    {% if school_not_found %}
+        <div class="enterprise-panel"><p class="enterprise-empty">Школа не найдена или недоступна.</p></div>
+    {% else %}
+        <form class="enterprise-filter-panel" method="get" action="{% url 'cabinet-district-school' school_id=selected_school_id %}">
+            <div class="enterprise-field">
+                <label for="dsExamType">Тип экзамена</label>
+                <select id="dsExamType" name="exam_type">
+                    <option value="ege" {% if selected_exam_type == "ege" %}selected{% endif %}>ЕГЭ</option>
+                    <option value="oge" {% if selected_exam_type == "oge" %}selected{% endif %}>ОГЭ</option>
+                    <option value="vpr" {% if selected_exam_type == "vpr" %}selected{% endif %}>ВПР</option>
+                </select>
+            </div>
+            <div class="enterprise-field">
+                <label for="dsYear">Период (год)</label>
+                <select id="dsYear" name="year">
+                    {% for year in hub_available_years %}
+                        <option value="{{ year }}" {% if hub_selected_year == year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="enterprise-field">
+                <label for="dsSchool">Школа</label>
+                <select id="dsSchool" disabled><option selected>{{ selected_school.name }}</option></select>
+            </div>
+            <div class="enterprise-field">
+                <label for="dsCompare">Сравнение</label>
+                <select id="dsCompare" disabled><option selected>2023–2025</option></select>
+            </div>
+            <div class="enterprise-filter-panel__actions">
+                {% if selected_subject_name %}<input type="hidden" name="subject" value="{{ selected_subject_name }}">{% endif %}
+                <button type="submit" class="ui-btn ui-btn-primary">Применить</button>
+            </div>
+        </form>
+
+        {% include "users/includes/hub_kpi_school.html" with school_subjects=selected_school_subject_results subject_menu_count=selected_school_subject_results|length %}
+        {% include "users/includes/hub_analytics_panel.html" %}
+
+        <section class="enterprise-panel">
+            <div class="enterprise-section-head">
+                <div>
+                    <span class="enterprise-eyebrow">Предметы</span>
+                    <h3>Результаты по предметам · {{ hub_selected_year }}</h3>
+                </div>
+            </div>
+            {% if selected_school_subject_results %}
+            <div class="enterprise-table-wrap">
+                <table class="enterprise-table">
+                    <thead>
+                        <tr><th>Предмет</th><th>Участников</th><th>Экзаменов</th><th>Средний балл</th><th>Сдаваемость</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in selected_school_subject_results %}
+                        <tr class="{% if selected_subject_name == item.subject %}hub-row-active{% endif %}">
+                            <td>
+                                <a href="{% url 'cabinet-district-school' school_id=selected_school_id %}?exam_type={{ selected_exam_type|default:'ege' }}&amp;year={{ hub_selected_year }}&amp;subject={{ item.subject|urlencode }}"
+                                   class="hub-link"><strong>{{ item.subject }}</strong></a>
+                            </td>
+                            <td>{{ item.students }}</td>
+                            <td>{{ item.exams }}</td>
+                            <td>{{ item.avg_score }}</td>
+                            <td>{{ item.pass_rate }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="enterprise-empty">Нет результатов по предметам.</p>
+            {% endif %}
+        </section>
+
+        {% if selected_subject_name %}
+        <section class="enterprise-panel">
+            <div class="enterprise-doc-head">
+                <div>
+                    <span class="enterprise-eyebrow">Детализация</span>
+                    <h3>Предмет: {{ selected_subject_name }}</h3>
+                    <p class="enterprise-empty" style="margin-top:6px">{{ selected_school_subject_students|length }} учеников</p>
+                </div>
+                <a href="{% url 'cabinet-district-school' school_id=selected_school_id %}?exam_type={{ selected_exam_type|default:'ege' }}&amp;year={{ hub_selected_year }}" class="ui-btn">Сбросить предмет</a>
+            </div>
+            {% if selected_school_subject_students %}
+            <div class="enterprise-table-wrap">
+                <table class="enterprise-table">
+                    <thead>
+                        <tr><th>ФИО</th><th>Дата</th><th>Код</th><th>Балл</th><th>Статус</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in selected_school_subject_students %}
+                        <tr class="{% if row.below_minimum %}hub-row-danger{% endif %}">
+                            <td>
+                                {% if row.result_id %}
+                                <a class="hub-link" href="{% url 'cabinet-district-student-work' result_id=row.result_id %}">
+                                    <strong>{{ row.student_name }}</strong>
+                                </a>
+                                {% else %}
+                                {{ row.student_name }}
+                                {% endif %}
+                            </td>
+                            <td>{{ row.exam_date|date:"d.m.Y" }}</td>
+                            <td>{{ row.exam_code }}</td>
+                            <td>{{ row.score }}</td>
+                            <td>{% if row.below_minimum %}<span class="hub-rate is-danger">Ниже минимума</span>{% else %}Порог пройден{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+            {% if selected_school_subject_task_rows %}
+            <h4 class="hub-section-label" style="margin-top:16px">Детализация по заданиям</h4>
+            <div class="enterprise-table-wrap">
+                <table class="enterprise-table">
+                    <thead><tr><th>Задание</th><th>Успешность</th><th>Верно</th><th>Ошибок</th><th>Всего</th></tr></thead>
+                    <tbody>
+                        {% for task in selected_school_subject_task_rows %}
+                        <tr>
+                            <td>№{{ task.task_number }}</td>
+                            <td><span class="hub-rate {% if task.success_rate < 50 %}is-danger{% endif %}">{{ task.success_rate }}%</span></td>
+                            <td>{{ task.plus }}</td>
+                            <td>{{ task.minus }}</td>
+                            <td>{{ task.total }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% include "users/includes/hub_charts_script.html" %}
+    {% endif %}
+</div>
+{% endblock %}

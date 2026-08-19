@@ -1,0 +1,14 @@
+{# Skeleton loading block — presentation only #}
+<div class="ds-stack{% if class %} {{ class }}{% endif %}" aria-busy="true" aria-live="polite">
+    <div class="ds-skeleton ds-skeleton--title"></div>
+    <div class="ds-skeleton ds-skeleton--text" style="width:72%"></div>
+    <div class="ds-metric-grid" style="margin-top:8px">
+        <div class="ds-skeleton ds-skeleton--card"></div>
+        <div class="ds-skeleton ds-skeleton--card"></div>
+        <div class="ds-skeleton ds-skeleton--card"></div>
+        <div class="ds-skeleton ds-skeleton--card"></div>
+    </div>
+    {% if with_chart %}
+    <div class="ds-skeleton ds-skeleton--chart" style="margin-top:8px"></div>
+    {% endif %}
+</div>

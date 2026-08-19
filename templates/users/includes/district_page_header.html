@@ -1,0 +1,26 @@
+<header class="enterprise-header ds-page-header">
+    <div class="enterprise-header__main">
+        <span class="enterprise-eyebrow ds-eyebrow">{{ eyebrow|default:"Районный центр аналитики ГИА" }}</span>
+        <h2>{{ title }}</h2>
+        {% if lead %}<p>{{ lead }}</p>{% endif %}
+    </div>
+    {% if period or show_exam_toggle or back_url %}
+    <div class="enterprise-header__meta">
+        {% if period %}
+        <div class="enterprise-period">
+            <span>Период</span>
+            <strong>{{ period }}</strong>
+        </div>
+        {% endif %}
+        <div class="enterprise-actions">
+            {% if show_exam_toggle %}
+            <a href="{{ ege_url }}" class="ui-btn {% if exam_type == 'ege' %}ui-btn-primary{% endif %}">ЕГЭ</a>
+            <a href="{{ oge_url }}" class="ui-btn {% if exam_type == 'oge' %}ui-btn-primary{% endif %}">ОГЭ</a>
+            {% endif %}
+            {% if back_url %}
+            <a href="{{ back_url }}" class="ui-btn">{{ back_label|default:"Назад" }}</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</header>

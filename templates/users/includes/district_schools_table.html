@@ -1,0 +1,108 @@
+<section class="enterprise-panel">
+    <div class="enterprise-section-head">
+        <div>
+            <span class="enterprise-eyebrow">Аналитическая таблица</span>
+            <h3>Школы района</h3>
+        </div>
+        <div class="enterprise-table-tools">
+            <input id="districtSchoolSearch" type="search" placeholder="Поиск школы">
+            <select id="districtRiskFilter">
+                <option value="all">Все статусы</option>
+                <option value="risk">Только риск</option>
+                <option value="ok">Без критического риска</option>
+            </select>
+        </div>
+    </div>
+    {% if district_school_results %}
+    <div class="enterprise-table-wrap">
+        <table class="enterprise-table" id="districtSchoolsTable">
+            <thead>
+                <tr>
+                    <th data-sort="text">Школа</th>
+                    <th data-sort="number">Участники</th>
+                    <th data-sort="number">Средний балл</th>
+                    <th data-sort="number">Сдаваемость</th>
+                    <th>Динамика</th>
+                    <th>Риск</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for school in district_school_results %}
+                <tr data-risk="{% if school.pass_rate < 50 %}risk{% else %}ok{% endif %}">
+                    <td>
+                        <a href="{% url 'cabinet-district-school' school_id=school.school_id %}?exam_type={{ selected_exam_type|default:'ege' }}{% if district_selected_year %}&amp;year={{ district_selected_year }}{% endif %}">
+                            <strong>{{ school.school_name }}</strong>
+                            <span>Код ОО {{ school.school_code }}</span>
+                        </a>
+                    </td>
+                    <td data-value="{{ school.students }}">{{ school.students }}</td>
+                    <td data-value="{{ school.avg_score }}">{{ school.avg_score }}</td>
+                    <td data-value="{{ school.pass_rate }}">{{ school.pass_rate }}%</td>
+                    <td><span class="enterprise-status is-neutral">по году</span></td>
+                    <td>
+                        {% if school.pass_rate < 50 %}
+                            <span class="enterprise-status is-risk">Критический</span>
+                        {% elif school.pass_rate < 75 %}
+                            <span class="enterprise-status is-warning">Наблюдение</span>
+                        {% else %}
+                            <span class="enterprise-status is-success">Стабильно</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="enterprise-empty">Для выбранного года и типа экзамена результаты не найдены.</p>
+    {% endif %}
+</section>
+
+<script>
+(function () {
+    const table = document.getElementById("districtSchoolsTable");
+    const search = document.getElementById("districtSchoolSearch");
+    const riskFilter = document.getElementById("districtRiskFilter");
+    if (!table) return;
+    const tbody = table.querySelector("tbody");
+
+    function applyFilters() {
+        const query = (search && search.value ? search.value : "").toLowerCase();
+        const risk = riskFilter ? riskFilter.value : "all";
+        tbody.querySelectorAll("tr").forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            const riskOk = risk === "all" || row.dataset.risk === risk;
+            row.hidden = !(text.includes(query) && riskOk);
+        });
+    }
+
+    function sortBy(th) {
+        const idx = Array.from(th.parentNode.children).indexOf(th);
+        const mode = th.dataset.sort;
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        const dir = th.dataset.dir === "asc" ? -1 : 1;
+        th.dataset.dir = dir === 1 ? "asc" : "desc";
+        rows.sort((a, b) => {
+            const ac = a.children[idx];
+            const bc = b.children[idx];
+            const av = mode === "number" ? Number(ac.dataset.value || ac.textContent.replace(",", ".")) : ac.textContent.trim().toLowerCase();
+            const bv = mode === "number" ? Number(bc.dataset.value || bc.textContent.replace(",", ".")) : bc.textContent.trim().toLowerCase();
+            if (av < bv) return -1 * dir;
+            if (av > bv) return 1 * dir;
+            return 0;
+        });
+        rows.forEach((row) => tbody.appendChild(row));
+        applyFilters();
+    }
+
+    if (search) search.addEventListener("input", applyFilters);
+    if (riskFilter) riskFilter.addEventListener("change", applyFilters);
+    table.querySelectorAll("th[data-sort]").forEach((th) => {
+        th.tabIndex = 0;
+        th.addEventListener("click", () => sortBy(th));
+        th.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") sortBy(th);
+        });
+    });
+})();
+</script>

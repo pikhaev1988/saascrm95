@@ -1,0 +1,15 @@
+{# Unified status badge — presentation only
+   level: excellent|good|attention|high|critical
+#}
+{% with level=level|default:"good" %}
+<span class="ds-status ds-status--{{ level }}"{% if title %} title="{{ title }}"{% endif %}>
+    {% if label %}{{ label }}{% else %}
+        {% if level == "excellent" %}Отлично
+        {% elif level == "good" %}Хорошо
+        {% elif level == "attention" %}Требует внимания
+        {% elif level == "high" %}Высокий риск
+        {% elif level == "critical" %}Критический риск
+        {% else %}{{ level }}{% endif %}
+    {% endif %}
+</span>
+{% endwith %}

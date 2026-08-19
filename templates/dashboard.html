@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block head_title %}Дашборд — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="content-stack content-stack--loose">
+<div class="ui-card">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="ui-kpi">
+        <p class="ui-kpi-label">Средний балл</p>
+        <p class="ui-kpi-value">{{ metrics.avg_score|floatformat:2 }}</p>
+    </div>
+    <div class="ui-kpi">
+        <p class="ui-kpi-label">Всего результатов</p>
+        <p class="ui-kpi-value">{{ metrics.total_results }}</p>
+    </div>
+    <div class="ui-kpi">
+        <p class="ui-kpi-label">Сложные задания</p>
+        <p class="ui-kpi-value">{{ metrics.hard_tasks|length }}</p>
+    </div>
+</div>
+</div>
+<div class="ui-card">
+    <h2 class="ui-section-title">Процент выполнения заданий</h2>
+    <canvas id="taskChart" height="120"></canvas>
+<script>
+const taskData = {{ metrics.task_success|safe }};
+const labels = taskData.map(item => `№${item.task_number}`);
+const percentages = taskData.map(item => item.total ? (item.plus / item.total * 100) : 0);
+if (window.Chart) {
+    new Chart(document.getElementById('taskChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{ label: '% выполнения', data: percentages }]
+        }
+    });
+} else {
+    window.renderSimpleBarChart("taskChart", labels, percentages, 100);
+}
+</script>
+</div>
+</div>
+{% endblock %}

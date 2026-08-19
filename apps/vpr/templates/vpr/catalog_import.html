@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block head_title %}Импорт справочника ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Справочник заданий ВПР</span>
+            <h2>Импорт справочника</h2>
+            <p>Загрузите файл JSON, Excel (.xlsx) или CSV с описанием заданий.</p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'vpr-catalog-list' %}" class="ui-btn">← К списку</a>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="enterprise-panel enterprise-narrow">
+        <form method="post" enctype="multipart/form-data" class="ui-form-stack space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+                {{ form.file }}
+                <p class="enterprise-empty">{{ form.file.help_text }}</p>
+            </div>
+            <p class="enterprise-empty">
+                Обязательные поля: учебный год, предмет, класс, номер задания (или код).
+                Остальные поля методического описания — по возможности.
+            </p>
+            <div class="enterprise-form-actions">
+                <button type="submit" class="ui-btn ui-btn-primary">Импортировать</button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

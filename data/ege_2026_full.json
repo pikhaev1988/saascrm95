@@ -1,0 +1,144 @@
+{
+    "exam": "EGE_2026",
+    "provider": "FIPI",
+  
+    "global_skills": [
+      {"code": "1.1.1", "name": "Классификация", "type": "cognitive"},
+      {"code": "1.2.4", "name": "Причинно-следственные связи", "type": "cognitive"},
+      {"code": "1.3.1", "name": "Работа с информацией", "type": "cognitive"},
+      {"code": "2.1.2", "name": "Аргументация", "type": "communication"},
+      {"code": "3.2.1", "name": "Самоконтроль", "type": "regulation"}
+    ],
+  
+    "subjects": [
+  
+      {
+        "subject": "russian",
+        "tasks": [
+          {"task": 1, "topic": "Текст", "grade_range": [5,7], "skill": "1.3.1"},
+          {"task": 8, "topic": "Орфография", "grade_range": [7], "skill": "1.1.1"},
+          {"task": 27, "topic": "Сочинение", "grade_range": [11], "skill": "2.1.2"}
+        ]
+      },
+  
+      {
+        "subject": "math_profile",
+        "tasks": [
+          {"task": 1, "topic": "Проценты", "grade_range": [6], "skill": "1.1.1"},
+          {"task": 5, "topic": "Тригонометрия", "grade_range": [10], "skill": "1.2.4"},
+          {"task": 19, "topic": "Параметры", "grade_range": [11], "skill": "1.2.4"}
+        ]
+      },
+  
+      {
+        "subject": "math_basic",
+        "tasks": [
+          {"task": 1, "topic": "Арифметика", "grade_range": [5,6], "skill": "1.1.1"},
+          {"task": 10, "topic": "Геометрия", "grade_range": [8], "skill": "1.2.4"}
+        ]
+      },
+  
+      {
+        "subject": "physics",
+        "tasks": [
+          {"task": 1, "topic": "Кинематика", "grade_range": [9], "skill": "1.2.4"},
+          {"task": 24, "topic": "Электродинамика", "grade_range": [11], "skill": "1.3.1"}
+        ]
+      },
+  
+      {
+        "subject": "chemistry",
+        "tasks": [
+          {"task": 2, "topic": "Периодический закон", "grade_range": [8], "skill": "1.1.1"},
+          {"task": 18, "topic": "Органика", "grade_range": [10], "skill": "1.2.4"},
+          {"task": 32, "topic": "Расчёты", "grade_range": [11], "skill": "1.3.1"}
+        ]
+      },
+  
+      {
+        "subject": "biology",
+        "tasks": [
+          {"task": 1, "topic": "Общая биология", "grade_range": [5,9], "skill": "1.3.1"},
+          {"task": 3, "topic": "Клетка", "grade_range": [10], "skill": "1.2.4"},
+          {"task": 13, "topic": "Человек", "grade_range": [9], "skill": "1.3.1"}
+        ]
+      },
+  
+      {
+        "subject": "geography",
+        "tasks": [
+          {"task": 1, "topic": "Координаты", "grade_range": [5], "skill": "1.3.1"},
+          {"task": 6, "topic": "Население", "grade_range": [8], "skill": "1.2.4"}
+        ]
+      },
+  
+      {
+        "subject": "history",
+        "tasks": [
+          {"task": 1, "topic": "Даты", "grade_range": [6], "skill": "1.1.1"},
+          {"task": 23, "topic": "Причины событий", "grade_range": [10], "skill": "1.2.4"}
+        ]
+      },
+  
+      {
+        "subject": "social_studies",
+        "tasks": [
+          {"task": 1, "topic": "Человек и общество", "grade_range": [8], "skill": "1.3.1"},
+          {"task": 25, "topic": "Эссе", "grade_range": [11], "skill": "2.1.2"}
+        ]
+      },
+  
+      {
+        "subject": "literature",
+        "tasks": [
+          {"task": 1, "topic": "Анализ текста", "grade_range": [9], "skill": "1.3.1"},
+          {"task": 17, "topic": "Сочинение", "grade_range": [11], "skill": "2.1.2"}
+        ]
+      },
+  
+      {
+        "subject": "informatics",
+        "tasks": [
+          {"task": 2, "topic": "Логика", "grade_range": [8], "skill": "1.1.1"},
+          {"task": 27, "topic": "Программирование", "grade_range": [11], "skill": "1.2.4"}
+        ]
+      },
+  
+      {
+        "subject": "english",
+        "tasks": [
+          {"task": 1, "topic": "Чтение", "grade_range": [5,9], "skill": "1.3.1"},
+          {"task": 40, "topic": "Письмо", "grade_range": [11], "skill": "2.1.2"}
+        ]
+      },
+  
+      {
+        "subject": "german",
+        "tasks": [
+          {"task": 1, "topic": "Чтение", "grade_range": [5,9], "skill": "1.3.1"}
+        ]
+      },
+  
+      {
+        "subject": "french",
+        "tasks": [
+          {"task": 1, "topic": "Чтение", "grade_range": [5,9], "skill": "1.3.1"}
+        ]
+      },
+  
+      {
+        "subject": "spanish",
+        "tasks": [
+          {"task": 1, "topic": "Чтение", "grade_range": [5,9], "skill": "1.3.1"}
+        ]
+      },
+  
+      {
+        "subject": "chinese",
+        "tasks": [
+          {"task": 1, "topic": "Чтение", "grade_range": [2,9], "skill": "1.3.1"}
+        ]
+      }
+  
+    ]
+  }

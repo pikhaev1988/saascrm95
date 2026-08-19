@@ -1,0 +1,19 @@
+{# Analytic chain blocks — presentation only #}
+<div class="mar-chain">
+{% for line in chain %}
+<article class="mar-stmt mar-stmt--{{ line.kind }}">
+    <div class="mar-stmt__icon" aria-hidden="true">
+        {% if line.kind == "fact" %}①
+        {% elif line.kind == "conclusion" %}②
+        {% elif line.kind == "hypothesis" %}③
+        {% elif line.kind == "decision" %}④
+        {% elif line.kind == "effect" %}⑤
+        {% else %}◆{% endif %}
+    </div>
+    <div>
+        <span class="mar-stmt__label">{{ line.label }}</span>
+        <p class="mar-stmt__text">{{ line.text }}</p>
+    </div>
+</article>
+{% endfor %}
+</div>

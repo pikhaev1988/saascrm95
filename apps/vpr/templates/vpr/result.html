@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block head_title %}Результат импорта ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Модуль ВПР · результат</span>
+            <h2>Импорт успешно завершён</h2>
+            <p>
+                {% if protocol %}
+                {{ protocol.subject }} · {{ protocol.parallel }} класс · {{ protocol.academic_year }}
+                {% else %}
+                Данные протокола ВПР сохранены в собственной базе модуля.
+                {% endif %}
+            </p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                {% if protocol %}
+                <a href="{% url 'vpr-protocol-detail' protocol_id=protocol.id %}" class="ui-btn ui-btn-primary">Открыть протокол</a>
+                {% endif %}
+                <a href="{% url 'vpr-registry' %}" class="ui-btn">Реестр протоколов ВПР</a>
+                <a href="{% url 'vpr-upload' %}" class="ui-btn">Загрузить ещё</a>
+                <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn">К обзору</a>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Итог</span>
+                <h3>Добавлено</h3>
+            </div>
+        </div>
+        <ul class="enterprise-empty" style="list-style:disc;padding-left:1.25rem;line-height:1.8">
+            <li>{{ upload.students_imported }} учащихся</li>
+            <li>{{ upload.results_imported }} результатов</li>
+            <li>{{ upload.tasks_imported }} заданий</li>
+        </ul>
+        <p class="enterprise-empty" style="margin-top:1rem">Ошибок: <strong>{{ upload.errors_count }}</strong>.</p>
+        {% if protocol %}
+        <p class="enterprise-empty">
+            ОО: {{ protocol.organization_name }}<br>
+            Дата проведения: {{ protocol.exam_date|date:"d.m.Y"|default:"—" }}<br>
+            Макс. первичный балл: {{ protocol.max_primary_score }}
+        </p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

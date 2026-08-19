@@ -1,0 +1,722 @@
+{% extends "base.html" %}
+{% block head_title %}Обзор — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="{% if user_role == 'district' %}enterprise-dashboard{% else %}content-stack content-stack--loose{% endif %} hub-page">
+    {% if user_role == "district" %}
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Районный центр аналитики ГИА</span>
+            <h2>Сводная аналитика</h2>
+            <p>
+                Агрегированные показатели ГИА{% if role_title %} — {{ role_title }}{% endif %}:
+                участники, сдаваемость, динамика по годам и зоны риска.
+            </p>
+        </div>
+        <div class="enterprise-header__meta">
+            {% if hub_selected_year %}
+            <div class="enterprise-period">
+                <span>Период</span>
+                <strong>{{ hub_selected_year }}</strong>
+            </div>
+            {% endif %}
+            <div class="enterprise-actions">
+                <a href="{% url 'cabinet' %}?exam_type=ege" class="ui-btn">Аналитика ЕГЭ</a>
+                <a href="{% url 'cabinet' %}?exam_type=oge" class="ui-btn">Аналитика ОГЭ</a>
+                <a href="{% url 'cabinet' %}?exam_type=vpr" class="ui-btn">Аналитика ВПР</a>
+                <a href="{% url 'cabinet-district' %}?exam_type=ege" class="ui-btn ui-btn-primary">Школы района</a>
+                <a href="{% url 'cabinet-reports' %}?doc=gia-summary&amp;exam_type=ege" class="ui-btn">Отчёты</a>
+            </div>
+        </div>
+    </header>
+    {% elif user_role == "school" %}
+    <header class="enterprise-header ds-page-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Кабинет школы{% if school_code %} · код ОО {{ school_code }}{% endif %}</span>
+            <h2>Сводная аналитика школы</h2>
+            <p>
+                Показатели ГИА вашей образовательной организации{% if school_code %} (код ОО {{ school_code }}){% endif %}:
+                участники, сдаваемость, динамика по годам и зоны риска.
+            </p>
+            {% if school_name %}
+            <p class="enterprise-header__org">{{ school_name }}</p>
+            {% endif %}
+        </div>
+        <div class="enterprise-header__meta">
+            {% if hub_selected_year %}
+            <div class="enterprise-period">
+                <span>Период</span>
+                <strong>{{ hub_selected_year }}</strong>
+            </div>
+            {% endif %}
+            <div class="enterprise-actions">
+                <a href="{% url 'cabinet' %}?exam_type=ege" class="ui-btn">Аналитика ЕГЭ</a>
+                <a href="{% url 'cabinet' %}?exam_type=oge" class="ui-btn">Аналитика ОГЭ</a>
+                <a href="{% url 'cabinet' %}?exam_type=vpr" class="ui-btn">Аналитика ВПР</a>
+                <a href="{% url 'cabinet-reports' %}" class="ui-btn">Отчёты</a>
+                <a href="{% url 'cabinet-school' %}?exam_type=ege" class="ui-btn ui-btn-primary">Кабинет школы</a>
+            </div>
+        </div>
+    </header>
+    {% else %}
+    <header class="enterprise-header ds-page-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Сводная аналитика</span>
+            <h2>Сводная аналитика</h2>
+            <p>
+                Агрегированные показатели ГИА{% if role_title %} — {{ role_title }}{% endif %}:
+                участники, сдаваемость, динамика по годам и зоны риска.
+            </p>
+        </div>
+        <div class="enterprise-header__meta">
+            {% if hub_selected_year %}
+            <div class="enterprise-period">
+                <span>Период</span>
+                <strong>{{ hub_selected_year }}</strong>
+            </div>
+            {% endif %}
+            <div class="enterprise-actions">
+                <a href="{% url 'cabinet' %}?exam_type=ege" class="ui-btn">Аналитика ЕГЭ</a>
+                <a href="{% url 'cabinet' %}?exam_type=oge" class="ui-btn">Аналитика ОГЭ</a>
+                <a href="{% url 'cabinet' %}?exam_type=vpr" class="ui-btn">Аналитика ВПР</a>
+                <a href="{% url 'cabinet-reports' %}" class="ui-btn">Отчёты</a>
+                {% if user_role == "ministry" %}
+                    <a href="{% url 'cabinet-ministry' %}?exam_type=ege" class="ui-btn ui-btn-primary">Кабинет МО</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+    {% endif %}
+
+    <form class="enterprise-filter-panel" method="get" action="{% url 'cabinet-exam-choice' %}">
+        {% if user_role == "district" %}
+            <div class="enterprise-field">
+                <label for="hubExamType">Тип экзамена</label>
+                <select id="hubExamType" name="exam_type">
+                    <option value="all" {% if hub_exam_filter == "all" %}selected{% endif %}>ЕГЭ и ОГЭ</option>
+                    <option value="ege" {% if hub_exam_filter == "ege" %}selected{% endif %}>ЕГЭ</option>
+                    <option value="oge" {% if hub_exam_filter == "oge" %}selected{% endif %}>ОГЭ</option>
+                    <option value="vpr" {% if hub_exam_filter == "vpr" %}selected{% endif %}>ВПР</option>
+                </select>
+            </div>
+            <div class="enterprise-field">
+                <label for="hubYear">Период (год)</label>
+                <select id="hubYear" name="year">
+                    {% if hub_available_years %}
+                        {% for year in hub_available_years %}
+                            <option value="{{ year }}" {% if hub_selected_year == year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="">Нет данных</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="enterprise-field">
+                <label for="hubScope">Охват</label>
+                <select id="hubScope" disabled>
+                    <option selected>{{ scope_label|default:role_title|default:"Текущая зона" }}</option>
+                </select>
+            </div>
+            <div class="enterprise-field">
+                <label for="hubCompare">Сравнение</label>
+                <select id="hubCompare" disabled>
+                    <option selected>2023–2025</option>
+                </select>
+            </div>
+            <div class="enterprise-filter-panel__actions">
+                <button type="submit" class="ui-btn ui-btn-primary">Применить</button>
+                <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn">Сбросить</a>
+            </div>
+        {% else %}
+        <div class="ds-filter-inline">
+            <div class="enterprise-field">
+                <label for="hubExamType">Тип экзамена</label>
+                <select id="hubExamType" name="exam_type">
+                    <option value="all" {% if hub_exam_filter == "all" %}selected{% endif %}>ЕГЭ и ОГЭ</option>
+                    <option value="ege" {% if hub_exam_filter == "ege" %}selected{% endif %}>ЕГЭ</option>
+                    <option value="oge" {% if hub_exam_filter == "oge" %}selected{% endif %}>ОГЭ</option>
+                    <option value="vpr" {% if hub_exam_filter == "vpr" %}selected{% endif %}>ВПР</option>
+                </select>
+            </div>
+            <div class="enterprise-field">
+                <label for="hubYear">Период (год)</label>
+                <select id="hubYear" name="year">
+                    {% if hub_available_years %}
+                        {% for year in hub_available_years %}
+                            <option value="{{ year }}" {% if hub_selected_year == year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="">Нет данных</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="enterprise-field">
+                <label for="hubScope">Охват</label>
+                <select id="hubScope" disabled>
+                    <option selected>{{ scope_label|default:role_title|default:"Текущая зона" }}</option>
+                </select>
+            </div>
+            <div class="enterprise-field">
+                <label for="hubCompare">Сравнение</label>
+                <select id="hubCompare" disabled>
+                    <option selected>2023–2025</option>
+                </select>
+            </div>
+            <div class="enterprise-filter-panel__actions">
+                <button type="submit" class="ui-btn ui-btn-primary">Применить</button>
+                <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn">Сбросить</a>
+            </div>
+        </div>
+        {% endif %}
+    </form>
+
+    <section class="hub-kpi-grid" aria-label="Ключевые показатели">
+        {% if user_role == "school" %}
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-blue" aria-hidden="true">OO</span>
+            <p class="hub-kpi-label">Код ОО</p>
+            <p class="hub-kpi-value" style="font-size: 1.35rem;">{{ school_code|default:"—" }}</p>
+            <p class="hub-kpi-meta">ваша образовательная организация</p>
+        </article>
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-cyan" aria-hidden="true">OK</span>
+            <p class="hub-kpi-label">Данные ГИА</p>
+            <p class="hub-kpi-value">{% if overview_extra.schools_with_data %}Есть{% else %}Нет{% endif %}</p>
+            <p class="hub-kpi-meta">протоколы в кабинете школы</p>
+        </article>
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-amber" aria-hidden="true">—</span>
+            <p class="hub-kpi-label">Предметов ЕГЭ/ОГЭ</p>
+            <p class="hub-kpi-value">{{ overview_extra.subjects_ege|add:overview_extra.subjects_oge }}</p>
+            <p class="hub-kpi-meta">ЕГЭ {{ overview_extra.subjects_ege }} · ОГЭ {{ overview_extra.subjects_oge }}</p>
+        </article>
+        {% else %}
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-blue" aria-hidden="true">OO</span>
+            <p class="hub-kpi-label">Всего организаций</p>
+            <p class="hub-kpi-value">{{ overview_extra.schools_total }}</p>
+            <p class="hub-kpi-meta">в зоне ответственности</p>
+        </article>
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-cyan" aria-hidden="true">OK</span>
+            <p class="hub-kpi-label">С данными ГИА</p>
+            <p class="hub-kpi-value">{{ overview_extra.schools_with_data }}</p>
+            <p class="hub-kpi-meta">школ в выборке</p>
+        </article>
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-amber" aria-hidden="true">—</span>
+            <p class="hub-kpi-label">Без данных</p>
+            <p class="hub-kpi-value">{{ overview_extra.schools_without_data }}</p>
+            <p class="hub-kpi-meta">ожидают протокол</p>
+        </article>
+        {% endif %}
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-green" aria-hidden="true">Σ</span>
+            <p class="hub-kpi-label">Участников всего</p>
+            <p class="hub-kpi-value">{{ overview_extra.total_participants }}</p>
+            <p class="hub-kpi-meta">детей · год {{ overview_extra.data_year_label }}</p>
+        </article>
+
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-blue" aria-hidden="true">E</span>
+            <p class="hub-kpi-label">ЕГЭ: участников</p>
+            <p class="hub-kpi-value">{{ ege_stats.unique_students }}</p>
+            <p class="hub-kpi-meta">детей за {{ hub_selected_year }} год · {{ overview_extra.subjects_ege }} предметов</p>
+        </article>
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-blue" aria-hidden="true">Ø</span>
+            <p class="hub-kpi-label">ЕГЭ: средний балл</p>
+            <p class="hub-kpi-value">{{ ege_stats.avg_score }}</p>
+            <p class="hub-kpi-meta">за {{ hub_selected_year }} год · сдаваемость {{ ege_stats.pass_rate }}%</p>
+        </article>
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-cyan" aria-hidden="true">O</span>
+            <p class="hub-kpi-label">ОГЭ: участников</p>
+            <p class="hub-kpi-value">{{ oge_stats.unique_students }}</p>
+            <p class="hub-kpi-meta">детей за {{ hub_selected_year }} год · {{ overview_extra.subjects_oge }} предметов</p>
+        </article>
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-cyan" aria-hidden="true">Ø</span>
+            <p class="hub-kpi-label">ОГЭ: средний балл</p>
+            <p class="hub-kpi-value">{{ oge_stats.avg_score }}</p>
+            <p class="hub-kpi-meta">за {{ hub_selected_year }} год · сдаваемость {{ oge_stats.pass_rate }}%</p>
+        </article>
+
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-amber" aria-hidden="true">!</span>
+            <p class="hub-kpi-label">Не преодолели порог</p>
+            <p class="hub-kpi-value">{{ overview_extra.failed_total }}</p>
+            <p class="hub-kpi-meta">ЕГЭ {{ overview_extra.ege_failed }} · ОГЭ {{ overview_extra.oge_failed }}</p>
+        </article>
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-red" aria-hidden="true">R</span>
+            <p class="hub-kpi-label">Зон риска (&lt;50%)</p>
+            <p class="hub-kpi-value">{{ overview_extra.risk_total }}</p>
+            <p class="hub-kpi-meta">ЕГЭ {{ overview_extra.ege_risk_count }} · ОГЭ {{ overview_extra.oge_risk_count }}</p>
+        </article>
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-slate" aria-hidden="true">Δ</span>
+            <p class="hub-kpi-label">Динамика 2023–2025</p>
+            <p class="hub-kpi-value">
+                {% if overview_extra.overall_delta or overview_extra.overall_delta == 0 %}
+                    {% if overview_extra.overall_delta > 0 %}+{% endif %}{{ overview_extra.overall_delta }}
+                {% else %}
+                    —
+                {% endif %}
+            </p>
+            <p class="hub-kpi-meta {% if overview_extra.overall_delta and overview_extra.overall_delta < 0 %}is-down{% elif overview_extra.overall_delta and overview_extra.overall_delta > 0 %}is-up{% endif %}">
+                {{ overview_extra.trend_label }}
+            </p>
+        </article>
+        <article class="hub-kpi">
+            <span class="hub-kpi-icon is-green" aria-hidden="true">+</span>
+            <p class="hub-kpi-label">Лучший предмет</p>
+            <p class="hub-kpi-value" style="font-size: 1.1rem;">
+                {{ overview_extra.best_subject|default:"Нет данных" }}
+            </p>
+            {% if overview_extra.best_subject_score %}
+                <span class="hub-kpi-badge is-success">{{ overview_extra.best_subject_score }} в {{ overview_extra.data_year_label }}</span>
+            {% endif %}
+        </article>
+    </section>
+
+    <section class="hub-analytics" aria-label="Динамика и структура">
+        <div class="hub-panel">
+            <h3 class="hub-panel-title">
+                Динамика
+                {% if hub_dynamics_years %}
+                    {% if hub_dynamics_years|length == 1 %}
+                        · {{ hub_dynamics_years.0 }}
+                    {% else %}
+                        · {{ hub_dynamics_years.0 }}–{{ hub_dynamics_years|last }}
+                    {% endif %}
+                {% endif %}
+            </h3>
+            <div class="hub-dyn-grid">
+                <div class="hub-dyn-card">
+                    <h4>Средний балл по годам</h4>
+                    <div class="hub-chart-box">
+                        <canvas id="hubAvgScoreChart"></canvas>
+                    </div>
+                </div>
+                <div class="hub-dyn-card">
+                    <h4>Участники по годам</h4>
+                    <div class="hub-chart-box">
+                        <canvas id="hubParticipantsChart"></canvas>
+                    </div>
+                </div>
+                <div class="hub-dyn-card">
+                    <h4>Сдаваемость, %</h4>
+                    <div class="hub-chart-box">
+                        <canvas id="hubPassRateChart"></canvas>
+                    </div>
+                </div>
+                <div class="hub-dyn-card">
+                    <h4>Не преодолели порог</h4>
+                    <div class="hub-chart-box">
+                        <canvas id="hubFailedChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="hub-insights-row">
+                <div class="hub-insight is-up">
+                    <p>Самый большой рост</p>
+                    <strong>{{ comparison_insights.top_growth_subject|default:"Нет данных" }}</strong>
+                    <em>{% if comparison_insights.top_growth_delta %}+{{ comparison_insights.top_growth_delta }}{% else %}—{% endif %}</em>
+                </div>
+                <div class="hub-insight is-down">
+                    <p>Наибольшая просадка</p>
+                    <strong>{{ comparison_insights.top_decline_subject|default:"Нет данных" }}</strong>
+                    <em>{% if comparison_insights.top_decline_delta or comparison_insights.top_decline_delta == 0 %}{{ comparison_insights.top_decline_delta }}{% else %}—{% endif %}</em>
+                </div>
+                <div class="hub-insight">
+                    <p>Участников (детей) в {{ comparison_years|last }}</p>
+                    <strong>{{ comparison_insights.participants_latest_year }}</strong>
+                    <em>ср. балл {{ comparison_insights.overall_avg }}</em>
+                </div>
+            </div>
+        </div>
+
+        <div class="hub-panel">
+            <h3 class="hub-panel-title">{{ hub_categories_title }}</h3>
+            {% if hub_categories %}
+            <div class="hub-donut-wrap">
+                <div class="hub-donut-canvas-box">
+                    <canvas id="hubCategoriesChart"></canvas>
+                </div>
+                <div class="hub-cat-list" id="hubCategoriesLegend">
+                    {% for item in hub_categories %}
+                    <div class="hub-cat-item">
+                        <span class="hub-cat-name">
+                            <i class="hub-cat-dot" data-cat-index="{{ forloop.counter0 }}"></i>
+                            <span>{{ item.exam__subject }}</span>
+                        </span>
+                        <strong>{{ item.students }} · {{ item.share }}%</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+                <p class="text-sm text-slate-500">Нет данных для структуры по предметам.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    {% if comparison_rows %}
+    <section class="hub-panel hub-compare" aria-labelledby="compare-heading">
+        <div class="hub-compare-head">
+            <div>
+                <h3 id="compare-heading" class="hub-panel-title">Сравнительный анализ 2023–2025</h3>
+                <p class="hub-compare-lead">Динамика среднего балла по предметам</p>
+            </div>
+            <select id="compareSubjectSelect" class="hub-select">
+                <option value="all">Все предметы</option>
+                {% for item in comparison_rows %}
+                    <option value="{{ item.subject }}">{{ item.subject }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="hub-compare-grid">
+            <div class="hub-compare-chart">
+                <h4>Динамика среднего балла по годам</h4>
+                <div class="hub-chart-box hub-chart-box--lg">
+                    <canvas id="subjectsYearTrendChart"></canvas>
+                </div>
+            </div>
+            <div class="hub-compare-side">
+                <h4>Ключевые выводы</h4>
+                <div class="hub-compare-insights">
+                    <div class="hub-compare-insight is-up">
+                        <p>Самый большой рост</p>
+                        <strong>{{ comparison_insights.top_growth_subject|default:"Нет данных" }}</strong>
+                        <em>{% if comparison_insights.top_growth_delta %}+{{ comparison_insights.top_growth_delta }}{% else %}—{% endif %}</em>
+                    </div>
+                    <div class="hub-compare-insight is-down">
+                        <p>Наибольшая просадка</p>
+                        <strong>{{ comparison_insights.top_decline_subject|default:"Нет данных" }}</strong>
+                        <em>{% if comparison_insights.top_decline_delta or comparison_insights.top_decline_delta == 0 %}{{ comparison_insights.top_decline_delta }}{% else %}—{% endif %}</em>
+                    </div>
+                    <div class="hub-compare-insight">
+                        <p>Лучший результат в {{ comparison_years|last }}</p>
+                        <strong>{{ comparison_insights.best_subject|default:"Нет данных" }}</strong>
+                        <em>{{ comparison_insights.best_subject_score|default:"—" }}</em>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="hub-panel">
+        <h3 class="hub-panel-title">Сравнение по предметам</h3>
+        <div class="hub-subject-grid">
+            {% for item in comparison_rows %}
+            <article class="hub-subject-card {% if user_role == 'district' %}hub-subject-card--link{% endif %}">
+                {% if user_role == "district" %}
+                    <a class="hub-subject-stretched-link" href="{% url 'cabinet-district-subject' %}?subject={{ item.subject|urlencode }}&amp;exam_type={{ hub_exam_filter|default:'all' }}" aria-label="Открыть подробный анализ: {{ item.subject }}"></a>
+                {% endif %}
+                <div class="hub-subject-head">
+                    <span class="hub-subject-badge">{% cycle "Р" "М" "Ч" "Б" "О" "Ф" "И" "Л" %}</span>
+                    <div class="hub-subject-info">
+                        <h4>{{ item.subject }}</h4>
+                        <div class="hub-subject-years">
+                            {% for year_item in item.years %}
+                            <span class="hub-year-pill">
+                                <small>{{ year_item.year }}</small>
+                                <strong>{% if year_item.avg_score %}{{ year_item.avg_score }}{% else %}—{% endif %}</strong>
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="hub-subject-tail">
+                    <div class="hub-sparkline-wrap">
+                        <canvas class="hub-sparkline comparison-sparkline" data-points="{% for year_item in item.years %}{% if forloop.first %}{% else %},{% endif %}{% if year_item.avg_score %}{{ year_item.avg_score }}{% else %}0{% endif %}{% endfor %}" height="44"></canvas>
+                    </div>
+                    <div class="hub-subject-delta {% if item.trend_delta and item.trend_delta < 0 %}is-down{% elif item.trend_delta and item.trend_delta > 0 %}is-up{% else %}is-flat{% endif %}">
+                        <strong>
+                            {% if item.trend_delta or item.trend_delta == 0 %}
+                                {% if item.trend_delta > 0 %}+{% endif %}{{ item.trend_delta }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </strong>
+                        <span>
+                            {% if item.trend_delta or item.trend_delta == 0 %}
+                                {% if item.trend_delta < 0 %}Спад{% elif item.trend_delta > 0 %}Рост{% else %}Стабильно{% endif %}
+                            {% else %}
+                                Нет данных
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {{ comparison_chart.labels|json_script:"comparisonChartLabels" }}
+        {{ comparison_chart.datasets|json_script:"comparisonChartDatasets" }}
+    </section>
+    {% endif %}
+
+    <p class="hub-section-label">Контроль качества подготовки</p>
+    <div class="hub-risk-grid">
+        <div class="hub-panel">
+            <h3 class="hub-panel-title">Зоны риска ЕГЭ (&lt;50%)</h3>
+            {% if ege_risks %}
+            <div class="hub-table-wrap">
+                <table class="hub-table">
+                    <thead>
+                        <tr>
+                            <th>Предмет</th>
+                            <th>Задание</th>
+                            <th>Успешность</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in ege_risks %}
+                        <tr>
+                            <td>{{ r.subject }}</td>
+                            <td>№{{ r.task_number }}</td>
+                            <td><span class="hub-rate is-danger">{{ r.success_rate }}%</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="hub-empty">Критических зон риска по ЕГЭ не найдено.</p>
+            {% endif %}
+        </div>
+        <div class="hub-panel">
+            <h3 class="hub-panel-title">Зоны риска ОГЭ (&lt;50%)</h3>
+            {% if oge_risks %}
+            <div class="hub-table-wrap">
+                <table class="hub-table">
+                    <thead>
+                        <tr>
+                            <th>Предмет</th>
+                            <th>Задание</th>
+                            <th>Успешность</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in oge_risks %}
+                        <tr>
+                            <td>{{ r.subject }}</td>
+                            <td>№{{ r.task_number }}</td>
+                            <td><span class="hub-rate is-danger">{{ r.success_rate }}%</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="hub-empty">Критических зон риска по ОГЭ не найдено.</p>
+            {% endif %}
+        </div>
+    </div>
+
+{{ year_dynamics|json_script:"hubYearDynamics" }}
+{{ hub_categories|json_script:"hubCategoriesData" }}
+{{ comparison_chart.labels|default_if_none:"[]"|json_script:"comparisonChartLabelsFallback" }}
+<script>
+(function () {
+    const yearDynamics = JSON.parse(document.getElementById("hubYearDynamics").textContent);
+    const categoriesNode = document.getElementById("hubCategoriesData");
+    const hubCategories = categoriesNode ? JSON.parse(categoriesNode.textContent) : [];
+    const comparisonLabelsNode = document.getElementById("comparisonChartLabels") || document.getElementById("comparisonChartLabelsFallback");
+    const comparisonDatasetsNode = document.getElementById("comparisonChartDatasets");
+    const comparisonLabels = comparisonLabelsNode ? JSON.parse(comparisonLabelsNode.textContent) : [];
+    const comparisonDatasets = comparisonDatasetsNode ? JSON.parse(comparisonDatasetsNode.textContent) : [];
+    const HUB_COLORS = ["#1677ff", "#f5222d", "#13c2c2", "#389e0d", "#722ed1", "#eb2f96", "#faad14", "#fa8c16", "#8c8c8c"];
+
+    function nullSafe(values) {
+        return (values || []).map((v) => (v === null || v === undefined ? null : Number(v)));
+    }
+
+    function makeLineChart(canvasId, labels, values, color) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return null;
+        if (!window.Chart) {
+            window.renderSimpleLineChart(canvasId, labels, nullSafe(values));
+            return null;
+        }
+        return new Chart(canvas, {
+            type: "line",
+            data: {
+                labels,
+                datasets: [{
+                    data: nullSafe(values),
+                    tension: 0.35,
+                    spanGaps: true,
+                    borderColor: color,
+                    backgroundColor: color + "22",
+                    fill: true,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 2,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: false, grid: { color: "#eef2f7" }, ticks: { font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                },
+            },
+        });
+    }
+
+    function initHubCharts() {
+        if (yearDynamics && yearDynamics.labels && yearDynamics.labels.length) {
+            makeLineChart("hubAvgScoreChart", yearDynamics.labels, yearDynamics.avg_scores, "#1677ff");
+            makeLineChart("hubParticipantsChart", yearDynamics.labels, yearDynamics.participants, "#13c2c2");
+            makeLineChart("hubPassRateChart", yearDynamics.labels, yearDynamics.pass_rates, "#389e0d");
+            makeLineChart("hubFailedChart", yearDynamics.labels, yearDynamics.failed_counts, "#f5222d");
+        }
+
+        if (hubCategories.length && document.getElementById("hubCategoriesChart")) {
+            const labels = hubCategories.map((item) => item.exam__subject);
+            const values = hubCategories.map((item) => item.students);
+            const colors = labels.map((_, idx) => HUB_COLORS[idx % HUB_COLORS.length]);
+            if (window.Chart) {
+                new Chart(document.getElementById("hubCategoriesChart"), {
+                    type: "doughnut",
+                    data: {
+                        labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: "#fff",
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: "62%",
+                        plugins: { legend: { display: false } },
+                    },
+                });
+            }
+            document.querySelectorAll(".hub-cat-dot").forEach((dot) => {
+                const idx = Number(dot.dataset.catIndex || 0);
+                dot.style.background = HUB_COLORS[idx % HUB_COLORS.length];
+            });
+        }
+
+        if (comparisonDatasets.length && document.getElementById("subjectsYearTrendChart")) {
+            const canvas = document.getElementById("subjectsYearTrendChart");
+            const selectNode = document.getElementById("compareSubjectSelect");
+
+            function buildOverallComparisonSeries() {
+                return comparisonLabels.map((_, yearIndex) => {
+                    const vals = comparisonDatasets
+                        .map((dataset) => dataset.data?.[yearIndex])
+                        .filter((value) => value !== null && value !== undefined);
+                    if (!vals.length) return 0;
+                    const total = vals.reduce((acc, value) => acc + Number(value), 0);
+                    return Number((total / vals.length).toFixed(2));
+                });
+            }
+
+            function pickSeries(subjectName) {
+                if (subjectName === "all") {
+                    return { label: "Все предметы", values: buildOverallComparisonSeries() };
+                }
+                const selected = comparisonDatasets.find((item) => item.label === subjectName);
+                return {
+                    label: selected ? selected.label : "Все предметы",
+                    values: selected ? selected.data : buildOverallComparisonSeries(),
+                };
+            }
+
+            if (!window.Chart) {
+                window.renderSimpleLineChart("subjectsYearTrendChart", comparisonLabels, buildOverallComparisonSeries());
+            } else {
+                const chartCtx = canvas.getContext("2d");
+                function makeGradient() {
+                    const gradientStroke = chartCtx.createLinearGradient(0, 0, 0, 320);
+                    gradientStroke.addColorStop(0, "rgba(22,119,255,0.9)");
+                    gradientStroke.addColorStop(1, "rgba(22,119,255,0.15)");
+                    return gradientStroke;
+                }
+                const initial = pickSeries("all");
+                const comparisonChart = new Chart(canvas, {
+                    type: "line",
+                    data: {
+                        labels: comparisonLabels,
+                        datasets: [{
+                            label: initial.label,
+                            data: initial.values,
+                            tension: 0.38,
+                            spanGaps: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 7,
+                            borderWidth: 2.6,
+                            borderColor: "#1677ff",
+                            backgroundColor: makeGradient(),
+                            fill: true,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 1000, easing: "easeOutQuart" },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { mode: "index", intersect: false },
+                        },
+                        interaction: { mode: "nearest", intersect: false },
+                        scales: {
+                            y: { beginAtZero: false, grid: { color: "#e5edf6" } },
+                            x: { grid: { display: false } },
+                        },
+                    },
+                });
+                if (selectNode) {
+                    selectNode.addEventListener("change", () => {
+                        const picked = pickSeries(selectNode.value);
+                        comparisonChart.data.datasets[0].label = picked.label;
+                        comparisonChart.data.datasets[0].data = picked.values;
+                        comparisonChart.update();
+                    });
+                }
+            }
+        }
+
+        document.querySelectorAll(".comparison-sparkline").forEach((sparkCanvas) => {
+            const raw = sparkCanvas.dataset.points || "";
+            const points = raw.split(",").map((v) => Number(v || 0));
+            if (!points.length) return;
+            const sparkId = sparkCanvas.id || `spark-${Math.random().toString(36).slice(2)}`;
+            sparkCanvas.id = sparkId;
+            window.renderSimpleLineChart(sparkId, points.map((_, i) => i + 1), points);
+        });
+    }
+
+    function bootCharts() {
+        if (window.Chart) {
+            initHubCharts();
+            return;
+        }
+        let attempts = 0;
+        const timer = window.setInterval(() => {
+            attempts += 1;
+            if (window.Chart || attempts > 40) {
+                window.clearInterval(timer);
+                initHubCharts();
+            }
+        }, 50);
+    }
+
+    if (document.readyState === "complete") {
+        bootCharts();
+    } else {
+        window.addEventListener("load", bootCharts);
+    }
+})();
+</script>
+</div>
+{% endblock %}

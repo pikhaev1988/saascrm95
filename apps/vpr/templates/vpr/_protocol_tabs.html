@@ -1,0 +1,19 @@
+{# Вкладки карточки протокола ВПР #}
+<nav class="vpr-protocol-tabs" aria-label="Разделы протокола">
+    <a
+        href="{% url 'vpr-protocol-detail' protocol_id=protocol.id %}"
+        class="vpr-protocol-tabs__item {% if active_tab == 'protocol' or not active_tab %}is-active{% endif %}"
+    >Протокол</a>
+    <a
+        href="{% url 'vpr-protocol-overview' protocol_id=protocol.id %}"
+        class="vpr-protocol-tabs__item {% if active_tab == 'overview' %}is-active{% endif %}"
+    >Обзор</a>
+    <a
+        href="{% url 'vpr-protocol-conclusion' protocol_id=protocol.id %}"
+        class="vpr-protocol-tabs__item {% if active_tab == 'conclusion' %}is-active{% endif %}"
+    >Аналитическое заключение</a>
+    <a
+        href="{% url 'vpr-protocol-info' protocol_id=protocol.id %}#info"
+        class="vpr-protocol-tabs__item {% if active_tab == 'info' %}is-active{% endif %}"
+    >Сведения</a>
+</nav>

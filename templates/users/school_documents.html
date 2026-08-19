@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block head_title %}Документы — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard ds-page">
+    <header class="enterprise-header ds-page-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Кабинет школы</span>
+            <h2>Документы</h2>
+            <p>
+                Пакет для руководителя и бухгалтерии: описание платформы, договор на
+                {{ access_years }} лет, акт и памятка. Исполнитель — физическое лицо
+                {{ operator_name }} (самозанятый, ИНН {{ operator_inn }}).
+            </p>
+        </div>
+    </header>
+
+    <div class="schooldocs">
+        {% for item in school_documents %}
+        <article class="schooldocs-card">
+            <div class="schooldocs-card__icon" aria-hidden="true">{{ item.icon }}</div>
+            <div class="schooldocs-card__body">
+                <p class="schooldocs-card__who">{{ item.for_whom }}</p>
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.description }}</p>
+            </div>
+            {% if item.available %}
+            <a class="ui-btn ui-btn-primary" href="{% url 'cabinet-documents-download' item.slug %}">Скачать Word</a>
+            {% else %}
+            <span class="ui-btn" aria-disabled="true">Файл готовится</span>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+
+    <section class="enterprise-panel" style="margin-top: 1.25rem;">
+        <h3 class="hub-panel-title">Публичные страницы</h3>
+        <p>Их можно открыть без скачивания и переслать ссылкой:</p>
+        <p>
+            <a href="{% url 'legal-privacy' %}">Политика обработки персональных данных</a>
+            ·
+            <a href="{% url 'legal-terms' %}">Условия доступа</a>
+        </p>
+        <p class="schooldocs-note">
+            Вопросы по договору: <a href="mailto:{{ operator_email }}">{{ operator_email }}</a>
+        </p>
+    </section>
+</div>
+{% endblock %}

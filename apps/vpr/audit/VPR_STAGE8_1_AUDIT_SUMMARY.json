@@ -1,0 +1,24 @@
+{
+  "TOTAL": 138,
+  "A": 0,
+  "B": 138,
+  "C": 0,
+  "D": 0,
+  "Critical": 0,
+  "High": 0,
+  "Medium": 12,
+  "Low": 38,
+  "forbidden_wording_count": 0,
+  "catalog_partial_count": 3,
+  "limited_sample_count": 133,
+  "html_docx_mismatch_count": 0,
+  "numeric_mismatch_count": 50,
+  "fioko_attribution_issues": 0,
+  "status": "QUALITY_AUDIT_PASS_WITH_WARNINGS",
+  "acceptance": {
+    "TOTAL": 138,
+    "PASS": 138,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}

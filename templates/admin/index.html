@@ -1,0 +1,32 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div class="module" style="margin-bottom: 16px;">
+    <table>
+        <caption>
+            <a href="{% url 'admin:uploads_uploadsession_changelist' %}" class="section">Загрузка результатов ГИА</a>
+        </caption>
+        <tbody>
+            <tr>
+                <th scope="row">
+                    <form method="post" action="{% url 'admin:uploads_uploadsession_upload_ege' %}" enctype="multipart/form-data" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        {% csrf_token %}
+                        <input type="file" name="file" required accept=".xlsx,.xls,.csv">
+                        <button type="submit" class="button">Загрузить ЕГЭ</button>
+                    </form>
+                </th>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <form method="post" action="{% url 'admin:uploads_uploadsession_upload_oge' %}" enctype="multipart/form-data" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        {% csrf_token %}
+                        <input type="file" name="file" required accept=".xlsx,.xls,.csv">
+                        <button type="submit" class="button">Загрузить ОГЭ</button>
+                    </form>
+                </th>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{{ block.super }}
+{% endblock %}

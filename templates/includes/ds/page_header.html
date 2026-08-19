@@ -1,0 +1,40 @@
+{# Unified page header — presentation only #}
+<header class="ds-page-header enterprise-header">
+    <div class="enterprise-header__main ds-page-header__main">
+        {% if breadcrumbs %}
+        <nav aria-label="Хлебные крошки">
+            <ol class="ds-breadcrumb">
+                {% for crumb in breadcrumbs %}
+                <li>
+                    {% if crumb.url %}<a href="{{ crumb.url }}">{{ crumb.label }}</a>{% else %}<span>{{ crumb.label }}</span>{% endif %}
+                    {% if not forloop.last %}<span class="ds-breadcrumb__sep" aria-hidden="true">/</span>{% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </nav>
+        {% endif %}
+        {% if eyebrow %}<span class="enterprise-eyebrow ds-eyebrow">{{ eyebrow }}</span>{% endif %}
+        <h2>{{ title }}</h2>
+        {% if lead %}<p>{{ lead }}</p>{% endif %}
+    </div>
+    {% if period or actions or show_exam_toggle or back_url %}
+    <div class="enterprise-header__meta ds-page-header__meta">
+        {% if period %}
+        <div class="enterprise-period ds-period">
+            <span>Период</span>
+            <strong>{{ period }}</strong>
+        </div>
+        {% endif %}
+        <div class="enterprise-actions ds-actions">
+            {% if show_exam_toggle %}
+            <a href="{{ ege_url }}" class="ui-btn {% if exam_type == 'ege' %}ui-btn-primary{% endif %}">ЕГЭ</a>
+            <a href="{{ oge_url }}" class="ui-btn {% if exam_type == 'oge' %}ui-btn-primary{% endif %}">ОГЭ</a>
+            {% endif %}
+            {% if actions %}{{ actions }}{% endif %}
+            {% if back_url %}
+            <a href="{{ back_url }}" class="ui-btn">{{ back_label|default:"Назад" }}</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</header>

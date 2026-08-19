@@ -1,0 +1,15 @@
+<section class="hub-kpi-grid hub-kpi-grid--school" aria-label="Ключевые показатели школы">
+    {% if selected_exam_type == "oge" %}
+        {% with active_stats=oge_stats active_risks=oge_risks active_label="ОГЭ" %}
+            {% include "users/includes/hub_kpi_school_cards.html" %}
+        {% endwith %}
+    {% elif selected_exam_type == "vpr" %}
+        {% with active_stats=vpr_stats active_risks=vpr_risks active_label="ВПР" %}
+            {% include "users/includes/hub_kpi_school_cards.html" %}
+        {% endwith %}
+    {% else %}
+        {% with active_stats=ege_stats active_risks=ege_risks active_label="ЕГЭ" %}
+            {% include "users/includes/hub_kpi_school_cards.html" %}
+        {% endwith %}
+    {% endif %}
+</section>

@@ -1,0 +1,230 @@
+{
+  "exam": "OGE_2026",
+  "subject": "history",
+  "tasks": [
+    {
+      "task": 1,
+      "topic": "Даты",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched",
+      "skill": "1.1.1"
+    },
+    {
+      "task": 2,
+      "topic": "Древняя история",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 3,
+      "topic": "Средневековая история России",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 4,
+      "topic": "История России в XVII-XVIII веках",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 5,
+      "topic": "История России в XIX веке",
+      "grade_range": [
+        5
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 6,
+      "topic": "История России в XX веке",
+      "grade_range": [
+        6
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 7,
+      "topic": "Великая Отечественная война",
+      "grade_range": [
+        7
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 8,
+      "topic": "История СССР",
+      "grade_range": [
+        8
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 9,
+      "topic": "История России в конце XX века",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 10,
+      "topic": "Мировая история: XX век",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 11,
+      "topic": "История России: ключевые события XX века",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 12,
+      "topic": "Древняя история",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 13,
+      "topic": "Культура России XVIII века",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 14,
+      "topic": "История России в XIX веке",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 15,
+      "topic": "История России в XX веке",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 16,
+      "topic": "История СССР",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 17,
+      "topic": "Международные отношения XX века",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 18,
+      "topic": "История России в 1990-е годы",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 19,
+      "topic": "История России в XIX-XX веках",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 20,
+      "topic": "Общество и культура России",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 21,
+      "topic": "История России",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 22,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    },
+    {
+      "task": 23,
+      "topic": "Причины событий",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched",
+      "skill": "1.2.4"
+    },
+    {
+      "task": 24,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    }
+  ]
+}

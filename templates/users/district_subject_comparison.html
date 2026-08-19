@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block head_title %}{{ subject_name|default:"Предмет" }} — сравнение по району{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard hub-page">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Сравнение по предметам · {{ exam_filter_label }}</span>
+            <h2>{{ subject_name|default:"Предмет не выбран" }}</h2>
+            <p>{{ role_title }}: динамика среднего балла, сдаваемость, сравнение школ и управленческий анализ.</p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-period">
+                <span>Период</span>
+                <strong>{{ comparison_years|first }}–{{ comparison_years|last }}</strong>
+            </div>
+            <div class="enterprise-actions">
+                <a href="{% url 'cabinet-exam-choice' %}?exam_type={{ exam_filter }}" class="ui-btn">← К обзору</a>
+                <a href="{% url 'cabinet-district' %}?exam_type={% if exam_filter == 'all' %}ege{% else %}{{ exam_filter }}{% endif %}" class="ui-btn">Школы района</a>
+            </div>
+        </div>
+    </header>
+
+    {% if not subject_name %}
+    <section class="enterprise-panel">
+        <p class="enterprise-empty">Предмет не выбран. Вернитесь к блоку «Сравнение по предметам» и откройте карточку предмета.</p>
+    </section>
+    {% else %}
+    <section class="enterprise-kpi-grid" aria-label="Показатели предмета">
+        <article class="enterprise-kpi-card">
+            <span class="enterprise-kpi-card__icon is-blue">С</span>
+            <p>Средний балл</p>
+            <strong>{{ latest_row.avg_score|default:"—" }}</strong>
+            <em>{{ latest_year }} год</em>
+        </article>
+        <article class="enterprise-kpi-card">
+            <span class="enterprise-kpi-card__icon is-cyan">%</span>
+            <p>Сдаваемость</p>
+            <strong>{% if latest_row.pass_rate or latest_row.pass_rate == 0 %}{{ latest_row.pass_rate }}%{% else %}—{% endif %}</strong>
+            <em>по результатам экзаменов</em>
+        </article>
+        <article class="enterprise-kpi-card">
+            <span class="enterprise-kpi-card__icon is-blue">Σ</span>
+            <p>Участники</p>
+            <strong>{{ latest_row.students_count|default:"0" }}</strong>
+            <em>уникальные обучающиеся</em>
+        </article>
+        <article class="enterprise-kpi-card {% if analysis.delta and analysis.delta < 0 %}is-risk{% elif analysis.delta and analysis.delta > 0 %}is-success{% endif %}">
+            <span class="enterprise-kpi-card__icon {% if analysis.delta and analysis.delta < 0 %}is-red{% elif analysis.delta and analysis.delta > 0 %}is-green{% else %}is-blue{% endif %}">Δ</span>
+            <p>Динамика</p>
+            <strong>{% if analysis.delta or analysis.delta == 0 %}{% if analysis.delta > 0 %}+{% endif %}{{ analysis.delta }}{% else %}—{% endif %}</strong>
+            <em>к первому году сравнения</em>
+        </article>
+        <article class="enterprise-kpi-card">
+            <span class="enterprise-kpi-card__icon is-blue">Р</span>
+            <p>Среднее по базе</p>
+            <strong>{{ republic_avg|default:"—" }}</strong>
+            <em>для сопоставления</em>
+        </article>
+        <article class="enterprise-kpi-card {% if weak_task_rows %}is-risk{% endif %}">
+            <span class="enterprise-kpi-card__icon {% if weak_task_rows %}is-red{% else %}is-green{% endif %}">!</span>
+            <p>Задания риска</p>
+            <strong>{{ weak_task_rows|length }}</strong>
+            <em>успешность ниже 50%</em>
+        </article>
+    </section>
+
+    <section class="enterprise-ranking-grid">
+        <div class="enterprise-panel">
+            <div class="enterprise-section-head">
+                <div>
+                    <span class="enterprise-eyebrow">Диаграмма</span>
+                    <h3>Динамика среднего балла и сдаваемости</h3>
+                </div>
+            </div>
+            <div class="hub-chart-box hub-chart-box--lg">
+                <canvas id="districtSubjectTrendChart"></canvas>
+            </div>
+        </div>
+        <div class="enterprise-panel">
+            <div class="enterprise-section-head">
+                <div>
+                    <span class="enterprise-eyebrow">Анализ</span>
+                    <h3>Ключевые выводы</h3>
+                </div>
+            </div>
+            <div class="enterprise-text-block" style="margin-top:0">
+                <ul>
+                    {% for item in analysis.insights %}
+                        <li>{{ item }}</li>
+                    {% empty %}
+                        <li>Недостаточно данных для автоматического вывода.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="enterprise-text-block">
+                <h4>Рекомендации</h4>
+                <ul>
+                    {% for item in analysis.recommendations %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Сравнение</span>
+                <h3>Показатели по годам</h3>
+            </div>
+        </div>
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Год</th>
+                        <th>Участников</th>
+                        <th>Экзаменов</th>
+                        <th>Средний балл</th>
+                        <th>Сдаваемость</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in year_rows %}
+                    <tr>
+                        <td>{{ row.year }}</td>
+                        <td>{{ row.students_count }}</td>
+                        <td>{{ row.results_count }}</td>
+                        <td>{{ row.avg_score|default:"—" }}</td>
+                        <td>{% if row.pass_rate or row.pass_rate == 0 %}{{ row.pass_rate }}%{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="enterprise-ranking-grid">
+        <div class="enterprise-panel">
+            <div class="enterprise-section-head">
+                <div>
+                    <span class="enterprise-eyebrow">ТОП-5</span>
+                    <h3>Лучшие школы по предмету</h3>
+                </div>
+            </div>
+            <div class="enterprise-school-card-list">
+                {% for school in top_school_rows %}
+                <article class="enterprise-school-card is-success">
+                    <div class="enterprise-school-card__main">
+                        <h4>{{ school.school_name }}</h4>
+                        <p>Код ОО {{ school.school_code }} · {{ school.students }} участников</p>
+                    </div>
+                    <div class="enterprise-school-card__meta">
+                        <dl>
+                            <div><dt>Средний</dt><dd>{{ school.avg_score }}</dd></div>
+                            <div><dt>Сдаваемость</dt><dd>{{ school.pass_rate }}%</dd></div>
+                            <div><dt>Отклонение</dt><dd>{% if school.delta > 0 %}+{% endif %}{{ school.delta }}</dd></div>
+                        </dl>
+                    </div>
+                </article>
+                {% empty %}
+                <p class="enterprise-empty">Нет данных по школам.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="enterprise-panel">
+            <div class="enterprise-section-head">
+                <div>
+                    <span class="enterprise-eyebrow">Зона внимания</span>
+                    <h3>Школы с низким результатом</h3>
+                </div>
+            </div>
+            <div class="enterprise-school-card-list">
+                {% for school in risk_school_rows %}
+                <article class="enterprise-school-card {% if school.status == 'Зона внимания' %}is-risk{% else %}is-warning{% endif %}">
+                    <div class="enterprise-school-card__main">
+                        <h4>{{ school.school_name }}</h4>
+                        <p>Код ОО {{ school.school_code }} · {{ school.students }} участников</p>
+                    </div>
+                    <div class="enterprise-school-card__meta">
+                        <dl>
+                            <div><dt>Средний</dt><dd>{{ school.avg_score }}</dd></div>
+                            <div><dt>Сдаваемость</dt><dd>{{ school.pass_rate }}%</dd></div>
+                            <div><dt>Отклонение</dt><dd>{% if school.delta > 0 %}+{% endif %}{{ school.delta }}</dd></div>
+                        </dl>
+                    </div>
+                </article>
+                {% empty %}
+                <p class="enterprise-empty">Нет данных по зоне внимания.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Задания</span>
+                <h3>Проблемные задания по предмету</h3>
+            </div>
+        </div>
+        {% if task_rows %}
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Задание</th>
+                        <th>Успешность</th>
+                        <th>Верно</th>
+                        <th>Ошибок</th>
+                        <th>Всего</th>
+                        <th>Тема</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in task_rows|slice:":15" %}
+                    <tr class="{% if task.success_rate < 50 %}hub-row-danger{% endif %}">
+                        <td>№{{ task.task_number }}</td>
+                        <td>{{ task.success_rate }}%</td>
+                        <td>{{ task.plus }}</td>
+                        <td>{{ task.minus }}</td>
+                        <td>{{ task.total }}</td>
+                        <td>{{ task.topic|default:"Тема не указана" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="enterprise-empty">Нет данных по заданиям для выбранного предмета.</p>
+        {% endif %}
+    </section>
+
+    {{ chart_data|json_script:"districtSubjectChartData" }}
+    <script>
+    (function () {
+        const node = document.getElementById("districtSubjectChartData");
+        const canvas = document.getElementById("districtSubjectTrendChart");
+        if (!node || !canvas) return;
+        const data = JSON.parse(node.textContent);
+        const labels = data.labels || [];
+        const avgScores = (data.avg_scores || []).map((v) => v === null ? null : Number(v));
+        const passRates = (data.pass_rates || []).map((v) => v === null ? null : Number(v));
+        if (window.Chart) {
+            new Chart(canvas, {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: "Средний балл",
+                            data: avgScores,
+                            borderColor: "#2563eb",
+                            backgroundColor: "rgba(37, 99, 235, 0.12)",
+                            tension: 0.35,
+                            fill: true,
+                            yAxisID: "y",
+                        },
+                        {
+                            label: "Сдаваемость, %",
+                            data: passRates,
+                            borderColor: "#16a34a",
+                            backgroundColor: "rgba(22, 163, 74, 0.08)",
+                            tension: 0.35,
+                            fill: false,
+                            yAxisID: "y1",
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: "index", intersect: false },
+                    plugins: { legend: { position: "bottom" } },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: "Средний балл" } },
+                        y1: {
+                            beginAtZero: true,
+                            max: 100,
+                            position: "right",
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: "Сдаваемость, %" },
+                        },
+                    },
+                },
+            });
+        } else if (window.renderSimpleLineChart) {
+            window.renderSimpleLineChart("districtSubjectTrendChart", labels, avgScores);
+        }
+    })();
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

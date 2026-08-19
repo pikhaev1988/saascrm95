@@ -1,0 +1,54 @@
+    <article class="hub-kpi">
+        <span class="hub-kpi-icon is-blue" aria-hidden="true">Σ</span>
+        <p class="hub-kpi-label">{{ active_label }}: участников</p>
+        <p class="hub-kpi-value">{{ active_stats.unique_students }}</p>
+        <p class="hub-kpi-meta">детей за {{ hub_selected_year }} год · {{ active_stats.total_exams }} предметов</p>
+    </article>
+    <article class="hub-kpi">
+        <span class="hub-kpi-icon is-blue" aria-hidden="true">Ø</span>
+        <p class="hub-kpi-label">{{ active_label }}: средний балл</p>
+        <p class="hub-kpi-value">{{ active_stats.avg_score }}</p>
+        <p class="hub-kpi-meta">за {{ hub_selected_year }} год · сдаваемость {{ active_stats.pass_rate }}%</p>
+    </article>
+    <article class="hub-kpi">
+        <span class="hub-kpi-icon is-green" aria-hidden="true">+</span>
+        <p class="hub-kpi-label">Сдавших</p>
+        <p class="hub-kpi-value">{{ active_stats.passed_count }}</p>
+        <p class="hub-kpi-meta">из {{ active_stats.total_results }} работ</p>
+    </article>
+    <article class="hub-kpi">
+        <span class="hub-kpi-icon is-amber" aria-hidden="true">!</span>
+        <p class="hub-kpi-label">Не преодолели порог</p>
+        <p class="hub-kpi-value">{{ active_stats.failed_count }}</p>
+        <p class="hub-kpi-meta">за {{ hub_selected_year }} год</p>
+    </article>
+    <article class="hub-kpi">
+        <span class="hub-kpi-icon is-red" aria-hidden="true">R</span>
+        <p class="hub-kpi-label">Зон риска (&lt;50%)</p>
+        <p class="hub-kpi-value">{{ active_risks|length }}</p>
+        <p class="hub-kpi-meta">по заданиям {{ active_label }}</p>
+    </article>
+    <article class="hub-kpi">
+        <span class="hub-kpi-icon is-slate" aria-hidden="true">Δ</span>
+        <p class="hub-kpi-label">Динамика 2023–2025</p>
+        <p class="hub-kpi-value">
+            {% if overview_extra.overall_delta or overview_extra.overall_delta == 0 %}
+                {% if overview_extra.overall_delta > 0 %}+{% endif %}{{ overview_extra.overall_delta }}
+            {% else %}—{% endif %}
+        </p>
+        <p class="hub-kpi-meta">{{ overview_extra.trend_label }}</p>
+    </article>
+    <article class="hub-kpi">
+        <span class="hub-kpi-icon is-green" aria-hidden="true">★</span>
+        <p class="hub-kpi-label">Лучший предмет</p>
+        <p class="hub-kpi-value" style="font-size: 1.05rem;">{{ overview_extra.best_subject|default:"Нет данных" }}</p>
+        {% if overview_extra.best_subject_score %}
+            <span class="hub-kpi-badge is-success">{{ overview_extra.best_subject_score }}</span>
+        {% endif %}
+    </article>
+    <article class="hub-kpi">
+        <span class="hub-kpi-icon is-cyan" aria-hidden="true">#</span>
+        <p class="hub-kpi-label">Экзаменов в меню</p>
+        <p class="hub-kpi-value">{{ subject_menu_count|default:school_subjects|length|default:0 }}</p>
+        <p class="hub-kpi-meta">{{ active_label }} · {{ hub_selected_year }}</p>
+    </article>

@@ -1,0 +1,130 @@
+{
+  "group_min": 10,
+  "limited_group_hits": 0,
+  "protocols_with_limited_group": 0,
+  "biology_11": {
+    "protocol_id": 11,
+    "participants": 49,
+    "tasks_below_50": 15,
+    "tasks_total": 29,
+    "sample_limited": true,
+    "has_le_50_phrase": true,
+    "has_below_50_count_15": true,
+    "report_keys_sample": "SubjectReport",
+    "expert_err": "cannot import name 'build_fioko_expert_report' from 'apps.vpr.expert_analysis.fioko_report' (/home/p/pikhae0x/analizgia.ru/public/analiz_gia/apps/vpr/expert_analysis/fioko_report.py)"
+  },
+  "thresholds": {
+    "basic": {
+      "sufficient_min": 60.0,
+      "insufficient_max": 57.0,
+      "uncertainty_delta": 3.0,
+      "uncertainty_upper": 63.0
+    },
+    "advanced_high": {
+      "sufficient_min": 30.0,
+      "insufficient_max": 28.5,
+      "uncertainty_delta": 1.5,
+      "uncertainty_upper": 31.5
+    },
+    "system_tasks": {
+      "below_50": 50.0,
+      "below_50_inclusive": true,
+      "below_40": 40.0,
+      "_source": "SYSTEM_ANALYTICS"
+    },
+    "sample": {
+      "groups_informative_min": 10,
+      "distribution_informative_min": 50,
+      "distribution_approximate_min": 20,
+      "very_limited_max": 19,
+      "high_uncertainty_max": 9
+    }
+  },
+  "limited_group_hits_count_lt10": 392,
+  "protocols_with_any_group_lt10": 133,
+  "mark_group_limited_hits": 0,
+  "bio11_groups": {
+    "high": {
+      "count": 2,
+      "percent": 4.1,
+      "group_type": "EXCLUSIVE",
+      "classification_origin": "SYSTEM_ANALYTICS",
+      "evidence_status": "LIMITED_SAMPLE",
+      "allow_management_conclusion": false,
+      "sample_size": 2
+    },
+    "medium": {
+      "count": 14,
+      "percent": 28.6,
+      "group_type": "EXCLUSIVE",
+      "classification_origin": "SYSTEM_ANALYTICS",
+      "evidence_status": "INFORMATIVE",
+      "allow_management_conclusion": true,
+      "sample_size": 14
+    },
+    "risk": {
+      "count": 33,
+      "percent": 67.3,
+      "group_type": "EXCLUSIVE",
+      "classification_origin": "SYSTEM_ANALYTICS",
+      "evidence_status": "INFORMATIVE",
+      "allow_management_conclusion": true,
+      "sample_size": 33
+    },
+    "stable": {
+      "count": 14,
+      "percent": 28.6,
+      "group_type": "EXCLUSIVE",
+      "classification_origin": "SYSTEM_ANALYTICS",
+      "evidence_status": "INFORMATIVE",
+      "allow_management_conclusion": true,
+      "sample_size": 14
+    },
+    "positive_potential": {
+      "count": 7,
+      "percent": 14.3,
+      "group_type": "OVERLAPPING",
+      "classification_origin": "SYSTEM_ANALYTICS",
+      "evidence_status": "LIMITED_SAMPLE",
+      "allow_management_conclusion": false,
+      "sample_size": 7
+    },
+    "_fioko_groups_type": "FiokoGroupsAnalysis",
+    "_fioko_groups_dir": [
+      "anomaly_crossings",
+      "anomaly_wording",
+      "buckets",
+      "easiest",
+      "hard_for_all",
+      "informational_only",
+      "sample_size",
+      "sample_warning",
+      "source",
+      "to_dict"
+    ]
+  },
+  "fioko_mark_group_lt10_hits": 367,
+  "protocols_with_fioko_mark_group_lt10": 136,
+  "bio11_buckets": [
+    {
+      "mark": "2",
+      "size": null,
+      "sample_status": "LIMITED_SAMPLE"
+    },
+    {
+      "mark": "3",
+      "size": null,
+      "sample_status": "INFORMATIVE"
+    },
+    {
+      "mark": "4",
+      "size": null,
+      "sample_status": "INFORMATIVE"
+    },
+    {
+      "mark": "5",
+      "size": null,
+      "sample_status": "LIMITED_SAMPLE"
+    }
+  ]
+}

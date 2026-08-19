@@ -1,0 +1,411 @@
+/* District GIA Summary — document center UI (scoped .dgs) */
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap");
+
+.dgs {
+  --navy: #0b1f3a;
+  --blue: #1b4f72;
+  --sky: #5b9bd5;
+  --gray: #5d6d7e;
+  --line: #d5dde5;
+  --bg: #f3f6f9;
+  --white: #fff;
+  --good: #1e7a4a;
+  --warn: #a85a1a;
+  --low: #9b2c2c;
+  --shadow: 0 14px 40px rgba(11, 31, 58, 0.08);
+  --font: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
+  --serif: "Source Serif 4", Georgia, serif;
+  font-family: var(--font);
+  color: #1a2332;
+  margin: 0;
+}
+.dgs *,
+.dgs *::before,
+.dgs *::after {
+  box-sizing: border-box;
+}
+
+.dgs-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  padding: 1.75rem 1.85rem 1.6rem;
+  background: linear-gradient(135deg, #0b1f3a 0%, #14304f 45%, #1b4f72 100%);
+  color: #eaf2f8;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.1rem;
+}
+.dgs-hero::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 1px solid rgba(91, 155, 213, 0.35);
+}
+.dgs-hero__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  position: relative;
+  z-index: 1;
+}
+.dgs-hero__mark {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+}
+.dgs-hero__icon {
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #2e75b6, #5b9bd5);
+  display: grid;
+  place-items: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+.dgs-hero__eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(234, 242, 248, 0.65);
+  font-weight: 700;
+}
+.dgs-hero__title {
+  margin: 0.2rem 0 0;
+  font-family: var(--serif);
+  font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.dgs-hero__desc {
+  margin: 0.55rem 0 0;
+  max-width: 52ch;
+  color: rgba(234, 242, 248, 0.78);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.dgs-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(30, 122, 74, 0.2);
+  border: 1px solid rgba(146, 210, 170, 0.45);
+  color: #c8f0d6;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.dgs-status--empty {
+  background: rgba(168, 90, 26, 0.2);
+  border-color: rgba(232, 180, 120, 0.45);
+  color: #f5d9b8;
+}
+.dgs-hero__meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.35rem;
+  position: relative;
+  z-index: 1;
+}
+.dgs-hero__meta div {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+}
+.dgs-hero__meta dt {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(234, 242, 248, 0.55);
+  font-weight: 700;
+}
+.dgs-hero__meta dd {
+  margin: 0.25rem 0 0;
+  font-size: 1rem;
+  font-weight: 650;
+  color: #fff;
+}
+
+.dgs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.1rem;
+}
+.dgs-actions label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--gray);
+  font-weight: 650;
+}
+.dgs-actions .ui-input {
+  min-height: 2.15rem;
+  font-size: 0.85rem;
+}
+.dgs-actions .ui-btn,
+.dgs-actions button.ui-btn,
+.dgs-actions a.ui-btn {
+  min-height: 2.15rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  border-radius: 10px;
+}
+.dgs-actions__sep {
+  width: 1px;
+  height: 1.6rem;
+  background: var(--line);
+  margin: 0 0.15rem;
+}
+.dgs-actions__grow {
+  flex: 1;
+  min-width: 0.5rem;
+}
+
+.dgs-kpi {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+}
+.dgs-kpi__card {
+  position: relative;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.1rem 1.05rem 1rem;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  min-height: 8rem;
+}
+.dgs-kpi__card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--sky);
+}
+.dgs-kpi__card--good::before {
+  background: var(--good);
+}
+.dgs-kpi__card--mid::before {
+  background: #c9a227;
+}
+.dgs-kpi__card--warn::before,
+.dgs-kpi__card--low::before {
+  background: var(--warn);
+}
+.dgs-kpi__card--risk::before {
+  background: var(--low);
+}
+.dgs-kpi__icon {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 9px;
+  background: #e8f1f8;
+  color: var(--blue);
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  margin-bottom: 0.7rem;
+  font-weight: 700;
+}
+.dgs-kpi__value {
+  display: block;
+  font-size: 1.85rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: var(--navy);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.dgs-kpi__label {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.dgs-kpi__hint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
+  color: var(--gray);
+}
+
+.dgs-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr;
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+}
+.dgs-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.15rem 1.2rem;
+  box-shadow: var(--shadow);
+}
+.dgs-card__title {
+  margin: 0 0 0.85rem;
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  color: var(--navy);
+}
+.dgs-check {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+.dgs-check li {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: #243447;
+}
+.dgs-check li::before {
+  content: "✓";
+  color: var(--good);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.dgs-info {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+.dgs-info li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #eef2f6;
+  font-size: 0.9rem;
+}
+.dgs-info li:last-child {
+  border-bottom: 0;
+}
+.dgs-info span {
+  color: var(--gray);
+}
+.dgs-info strong {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.dgs-preview {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.dgs-preview__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #f7fafc, #fff);
+}
+.dgs-preview__head h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  color: var(--navy);
+}
+.dgs-preview__body {
+  padding: 1.1rem 1.2rem 1.3rem;
+}
+.dgs-preview__lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+}
+.dgs-preview__lines li {
+  position: relative;
+  padding: 0.75rem 0.9rem 0.75rem 1rem;
+  border-left: 3px solid var(--sky);
+  background: #f7fafc;
+  border-radius: 0 10px 10px 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #243447;
+}
+.dgs-preview__note {
+  margin: 0.9rem 0 0;
+  font-size: 0.82rem;
+  color: var(--gray);
+}
+.dgs-empty {
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: var(--gray);
+  background: var(--white);
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+}
+
+@media (max-width: 1100px) {
+  .dgs-kpi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dgs-hero__meta,
+  .dgs-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 720px) {
+  .dgs-kpi,
+  .dgs-hero__meta,
+  .dgs-grid {
+    grid-template-columns: 1fr;
+  }
+  .dgs-actions__sep,
+  .dgs-actions__grow {
+    display: none;
+  }
+}
+
+.enterprise-dashboard:has(#districtGiaSummary) {
+  gap: 0.85rem;
+}
+
+@media print {
+  .dgs-actions {
+    display: none !important;
+  }
+}

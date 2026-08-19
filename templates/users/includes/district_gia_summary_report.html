@@ -1,0 +1,268 @@
+{# Свод результатов ГИА — реальные метрики и таблицы среза #}
+{% include "users/includes/district_mar_bits.html" with bit="css" %}
+
+{% with p=district_summary_payload %}
+{% if p and p.has_data %}
+<div class="mar" id="districtGiaSummary"
+     data-district="{{ p.district_name }}"
+     data-year="{{ p.year }}"
+     data-formed="{{ p.generated_at }}">
+
+    <div class="mar-toolbar">
+        <div class="mar-toolbar__left">
+            <a class="ui-btn" href="/cabinet/reports/?exam_type={{ report_nav_exam_type }}">← Каталог</a>
+            <p class="mar-toolbar__crumb">Свод результатов · <strong>{% if report_nav_exam_type == "oge" %}ОГЭ{% else %}ЕГЭ{% endif %}{% if p.year %} · {{ p.year }}{% endif %}</strong></p>
+        </div>
+        <div class="mar-toolbar__right">
+            <form method="get" class="mar-form">
+                <input type="hidden" name="doc" value="gia-summary">
+                <label>Год
+                    <select name="year" class="ui-input" onchange="this.form.submit()">
+                        {% for y in report_district_year_options %}
+                            <option value="{{ y }}" {% if report_selected_district_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Экзамен
+                    <select name="exam_type" class="ui-input" onchange="this.form.submit()">
+                        <option value="ege" {% if report_nav_exam_type == "ege" %}selected{% endif %}>ЕГЭ</option>
+                        <option value="oge" {% if report_nav_exam_type == "oge" %}selected{% endif %}>ОГЭ</option>
+                    </select>
+                </label>
+            </form>
+            <button type="button" class="ui-btn ui-btn-primary js-download-in-place"
+                data-download-url="{% url 'cabinet-district-export-gia-summary-docx' %}?exam_type={{ report_nav_exam_type }}&year={{ report_selected_district_year }}"
+                data-download-label="Скачать DOCX">Скачать DOCX</button>
+        </div>
+    </div>
+
+    <div class="mar-doc">
+        <section class="mar-cover" id="mar-cover">
+            <div class="mar-cover__inner">
+                <div class="mar-cover__brand">
+                    {% include "users/includes/district_mar_bits.html" with bit="logo" %}
+                    <div>
+                        <p class="mar-cover__org">Муниципальная система образования</p>
+                        <p class="mar-cover__org-name">Управление образования · {{ p.district_name|default:"—" }}</p>
+                    </div>
+                </div>
+                <p class="mar-cover__eyebrow">Официальный аналитический отчёт</p>
+                <h1 class="mar-cover__title">Свод результатов ГИА по району</h1>
+                <dl class="mar-cover__meta">
+                    <div><dt>Вид экзамена</dt><dd>{% if report_nav_exam_type == "oge" %}ОГЭ{% else %}ЕГЭ{% endif %}</dd></div>
+                    <div><dt>Отчётный период</dt><dd>{{ p.year|default:"—" }}</dd></div>
+                    <div><dt>Муниципалитет</dt><dd>{{ p.district_name|default:"—" }}</dd></div>
+                    <div><dt>Дата формирования</dt><dd>{{ p.generated_at|default:"—" }}</dd></div>
+                </dl>
+                <div class="mar-cover__foot">
+                    <span>Конфиденциально · данные загруженных протоколов</span>
+                    <span>Статус: <span class="mar-badge mar-badge--high">✓ Сформирован</span></span>
+                </div>
+            </div>
+        </section>
+
+        <div class="mar-body">
+            <nav class="mar-toc" aria-label="Содержание">
+                <h2 class="mar-toc__title">Содержание</h2>
+                <ol class="mar-toc__list">
+                    <li><a href="#dgs-kpi"><span class="mar-toc__n">01</span>Ключевые показатели<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#dgs-subjects"><span class="mar-toc__n">02</span>Предметы<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#dgs-schools"><span class="mar-toc__n">03</span>Образовательные организации<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#dgs-dist"><span class="mar-toc__n">04</span>Структура результатов<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#dgs-summary"><span class="mar-toc__n">05</span>Краткие выводы<span class="mar-toc__dots"></span></a></li>
+                </ol>
+            </nav>
+
+            <section class="mar-sec" id="dgs-kpi">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">01</div>
+                    <div>
+                        <h2 class="mar-sec__title">Ключевые показатели</h2>
+                        <p class="mar-sec__lead">Dashboard муниципалитета по итогам {% if report_nav_exam_type == "oge" %}ОГЭ{% else %}ЕГЭ{% endif %}.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-kpi">
+                        <div class="mar-kpi__card"><div class="mar-kpi__icon">👤</div><span class="mar-kpi__value">{{ p.participants }}</span><span class="mar-kpi__label">Участники</span><span class="mar-kpi__hint">уникальный контингент</span></div>
+                        <div class="mar-kpi__card mar-kpi__card--{% if p.avg_score >= 60 or report_nav_exam_type == 'oge' and p.avg_score >= 4 %}high{% elif p.avg_score < 45 or report_nav_exam_type == 'oge' and p.avg_score < 3.5 %}low{% else %}mid{% endif %}"><div class="mar-kpi__icon">Σ</div><span class="mar-kpi__value">{{ p.avg_score }}</span><span class="mar-kpi__label">{% if report_nav_exam_type == "oge" %}Средняя оценка{% else %}Средний балл{% endif %}</span></div>
+                        <div class="mar-kpi__card mar-kpi__card--{% if p.quality_rate >= 40 %}high{% elif p.quality_rate < 25 %}low{% else %}mid{% endif %}"><div class="mar-kpi__icon">Q</div><span class="mar-kpi__value">{{ p.quality_rate }}%</span><span class="mar-kpi__label">Качество знаний</span></div>
+                        <div class="mar-kpi__card mar-kpi__card--{% if p.pass_rate >= 85 %}high{% elif p.pass_rate < 70 %}low{% else %}mid{% endif %}"><div class="mar-kpi__icon">%</div><span class="mar-kpi__value">{{ p.pass_rate }}%</span><span class="mar-kpi__label">Успеваемость</span></div>
+                        <div class="mar-kpi__card mar-kpi__card--high"><div class="mar-kpi__icon">★</div><span class="mar-kpi__value">{{ p.high_count }}</span><span class="mar-kpi__label">Высокобалльники</span></div>
+                        <div class="mar-kpi__card {% if p.failed_count %}mar-kpi__card--low{% endif %}"><div class="mar-kpi__icon">!</div><span class="mar-kpi__value">{{ p.failed_count }}</span><span class="mar-kpi__label">Неудовлетворительные</span></div>
+                        <div class="mar-kpi__card mar-kpi__card--{% if p.avg_delta > 0 %}high{% elif p.avg_delta < 0 %}warn{% else %}mid{% endif %}"><div class="mar-kpi__icon">↗</div><span class="mar-kpi__value">{% if p.avg_delta or p.avg_delta == 0 %}{% if p.avg_delta > 0 %}+{% endif %}{{ p.avg_delta }}{% else %}—{% endif %}</span><span class="mar-kpi__label">Динамика</span></div>
+                        <div class="mar-kpi__card"><div class="mar-kpi__icon">⌂</div><span class="mar-kpi__value">{{ p.schools_count }}</span><span class="mar-kpi__label">ОО в срезе</span></div>
+                        <div class="mar-kpi__card"><div class="mar-kpi__icon">↔</div><span class="mar-kpi__value">{% if p.republic_avg or p.republic_avg == 0 %}{{ p.republic_avg }}{% else %}—{% endif %}</span><span class="mar-kpi__label">Республика (средний)</span></div>
+                        <div class="mar-kpi__card"><div class="mar-kpi__icon">%</div><span class="mar-kpi__value">{% if p.republic_pass_rate or p.republic_pass_rate == 0 %}{{ p.republic_pass_rate }}%{% else %}—{% endif %}</span><span class="mar-kpi__label">Республика (успев.)</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mar-sec" id="dgs-subjects">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">02</div>
+                    <div>
+                        <h2 class="mar-sec__title">Предметная статистика</h2>
+                        <p class="mar-sec__lead">Реальные показатели по предметам загруженного среза.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>Предмет</th>
+                                    <th class="num">Участ.</th>
+                                    <th class="num">{% if report_nav_exam_type == "oge" %}Ср. оценка{% else %}Ср. балл{% endif %}</th>
+                                    <th class="num">Усп., %</th>
+                                    <th class="num">Кач., %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in p.subject_rows %}
+                                <tr>
+                                    <td class="is-key">{{ row.exam__subject }}</td>
+                                    <td class="num">{{ row.participants }}</td>
+                                    <td class="num">{{ row.avg|floatformat:2 }}</td>
+                                    <td class="num {% if row.pass_rate >= 85 %}is-good{% elif row.pass_rate < 70 %}is-risk{% endif %}">{{ row.pass_rate }}</td>
+                                    <td class="num">{{ row.quality_rate }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="5">Нет предметных данных в срезе.</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mar-sec" id="dgs-schools">
+                <div class="mar-sec__bar mar-sec__bar--decision"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">03</div>
+                    <div>
+                        <h2 class="mar-sec__title">Образовательные организации</h2>
+                        <p class="mar-sec__lead">Свод по ОО муниципалитета.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>ОО</th>
+                                    <th class="num">Участ.</th>
+                                    <th class="num">{% if report_nav_exam_type == "oge" %}Ср. оценка{% else %}Ср. балл{% endif %}</th>
+                                    <th class="num">Усп., %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in p.school_rows %}
+                                <tr>
+                                    <td class="is-key">{{ row.student__school__name }}</td>
+                                    <td class="num">{{ row.participants }}</td>
+                                    <td class="num">{{ row.avg|floatformat:2 }}</td>
+                                    <td class="num {% if row.pass_rate >= 85 %}is-good{% elif row.pass_rate < 70 %}is-risk{% endif %}">{{ row.pass_rate }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="4">Нет данных по ОО.</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mar-sec" id="dgs-dist">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">04</div>
+                    <div>
+                        <h2 class="mar-sec__title">Структура результатов</h2>
+                        <p class="mar-sec__lead">Распределение по диапазонам баллов / оценок.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr><th>Диапазон</th><th class="num">Количество</th><th class="num">Доля, %</th></tr>
+                            </thead>
+                            <tbody>
+                            {% for band in p.distribution %}
+                                <tr>
+                                    <td class="is-key">{{ band.0 }}</td>
+                                    <td class="num">{{ band.1 }}</td>
+                                    <td class="num">{% widthratio band.1 p.total 100 %}%</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="3">Нет данных распределения.</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mar-sec" id="dgs-summary">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">05</div>
+                    <div>
+                        <h2 class="mar-sec__title">Краткие выводы</h2>
+                        <p class="mar-sec__lead">Фактические ориентиры по рассчитанным показателям.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-tile">
+                        <ul>
+                            {% for item in p.summary %}
+                            <li>{{ item }}</li>
+                            {% empty %}
+                            <li>Недостаточно данных для кратких выводов.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="mar-soft" style="padding:0 0 1.5rem;text-align:center">
+                Свод результатов ГИА · {{ p.district_name }} · {{ p.year }} · {{ p.generated_at }} · {{ p.subject_rows|length }} предм. · {{ p.school_rows|length }} ОО
+            </footer>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="mar" id="districtGiaSummary">
+    <div class="mar-toolbar">
+        <div class="mar-toolbar__left">
+            <a class="ui-btn" href="/cabinet/reports/?exam_type={{ report_nav_exam_type }}">← Каталог</a>
+            <p class="mar-toolbar__crumb">Свод результатов</p>
+        </div>
+        <div class="mar-toolbar__right">
+            <form method="get" class="mar-form">
+                <input type="hidden" name="doc" value="gia-summary">
+                <label>Год
+                    <select name="year" class="ui-input" onchange="this.form.submit()">
+                        {% for y in report_district_year_options %}
+                            <option value="{{ y }}" {% if report_selected_district_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Экзамен
+                    <select name="exam_type" class="ui-input" onchange="this.form.submit()">
+                        <option value="ege" {% if report_nav_exam_type == "ege" %}selected{% endif %}>ЕГЭ</option>
+                        <option value="oge" {% if report_nav_exam_type == "oge" %}selected{% endif %}>ОГЭ</option>
+                    </select>
+                </label>
+                <button type="submit" class="ui-btn ui-btn-primary">Сформировать</button>
+            </form>
+        </div>
+    </div>
+    <div class="mar-doc" style="padding:2rem">
+        <p class="mar-soft">{{ p.message|default:"Недостаточно данных для формирования отчёта." }}</p>
+    </div>
+</div>
+{% endif %}
+{% endwith %}

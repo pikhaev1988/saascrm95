@@ -1,0 +1,521 @@
+{# Информационно-статистический отчёт ГИА (ОО) — MAR document shell #}
+{% include "users/includes/district_mar_bits.html" with bit="css" %}
+
+{% if info_stat_ui and info_stat_ui.has_data %}
+{% with ui=info_stat_ui %}
+<div class="mar" id="schoolInfoStat"
+     data-school="{{ school_name|default:'' }}"
+     data-year="{{ ui.year }}"
+     data-formed="{{ ui.generated_at }}">
+
+    <div class="mar-toolbar">
+        <div class="mar-toolbar__left">
+            <a class="ui-btn" href="/cabinet/reports/?exam_type={{ report_nav_exam_type }}">← Каталог</a>
+            <p class="mar-toolbar__crumb">Информационно-статистический отчёт · <strong>{{ ui.exam_label }}{% if ui.year %} · {{ ui.year }}{% endif %}</strong></p>
+        </div>
+        <div class="mar-toolbar__right">
+            <form method="get" class="mar-form">
+                <input type="hidden" name="doc" value="info-stat">
+                <label>Год
+                    <select name="year" class="ui-input" onchange="this.form.submit()">
+                        {% for y in report_info_year_options %}
+                            <option value="{{ y }}" {% if report_selected_info_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Экзамен
+                    <select name="exam_type" class="ui-input" onchange="this.form.submit()">
+                        <option value="ege" {% if report_selected_info_exam_type == "ege" or not report_selected_info_exam_type and report_nav_exam_type == "ege" %}selected{% endif %}>ЕГЭ</option>
+                        <option value="oge" {% if report_selected_info_exam_type == "oge" or not report_selected_info_exam_type and report_nav_exam_type == "oge" %}selected{% endif %}>ОГЭ</option>
+                    </select>
+                </label>
+            </form>
+            <button type="button" class="ui-btn ui-btn-primary js-download-in-place"
+                data-download-url="{% url 'cabinet-school-export-info-stat-docx' %}?exam_type={{ report_selected_info_exam_type }}&year={{ report_selected_info_year }}"
+                data-download-label="Скачать DOCX">Скачать DOCX</button>
+        </div>
+    </div>
+
+    <div class="mar-doc">
+        <section class="mar-cover">
+            <div class="mar-cover__inner">
+                <div class="mar-cover__brand">
+                    {% include "users/includes/district_mar_bits.html" with bit="logo" %}
+                    <div>
+                        <p class="mar-cover__org">Система образования образовательной организации</p>
+                        <p class="mar-cover__org-name">{{ school_name|default:"Образовательная организация" }}</p>
+                    </div>
+                </div>
+                <p class="mar-cover__eyebrow">Официальный информационно-статистический отчёт</p>
+                <h1 class="mar-cover__title">Информационно-статистический отчёт</h1>
+                <dl class="mar-cover__meta">
+                    <div><dt>Вид экзамена</dt><dd>{{ ui.exam_label|default:"—" }}</dd></div>
+                    <div><dt>Отчётный период</dt><dd>{{ ui.year|default:"—" }}</dd></div>
+                    <div><dt>Образовательная организация</dt><dd>{{ school_name|default:"—" }}</dd></div>
+                    <div><dt>Дата формирования</dt><dd>{{ ui.generated_at|default:"—" }}</dd></div>
+                </dl>
+                <div class="mar-cover__foot">
+                    <span>Для служебного пользования · статистический бюллетень</span>
+                    <span>Статус: <span class="mar-badge mar-badge--high">✓ Сформирован</span></span>
+                </div>
+            </div>
+        </section>
+
+        <div class="mar-body">
+            <nav class="mar-toc" aria-label="Содержание">
+                <h2 class="mar-toc__title">Содержание</h2>
+                <ol class="mar-toc__list">
+                    <li><a href="#sis-passport"><span class="mar-toc__n">01</span>Общие сведения<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#sis-compare"><span class="mar-toc__n">02</span>Динамика и сравнение<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#sis-insights"><span class="mar-toc__n">03</span>Ключевые выводы<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#sis-dist"><span class="mar-toc__n">04</span>Распределение<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#sis-dyn"><span class="mar-toc__n">05</span>Динамика лет<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#sis-subjects"><span class="mar-toc__n">06</span>Предметы<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#sis-classes"><span class="mar-toc__n">07</span>Классы<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#sis-weak"><span class="mar-toc__n">08</span>Проблемные зоны<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#sis-reco"><span class="mar-toc__n">09</span>Рекомендации<span class="mar-toc__dots"></span></a></li>
+                </ol>
+            </nav>
+
+            {# 01. Общие сведения #}
+            <section class="mar-sec" id="sis-passport">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">01</div>
+                    <div>
+                        <h2 class="mar-sec__title">Общие сведения</h2>
+                        <p class="mar-sec__lead">Ключевые статистические показатели образовательной организации.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-kpi">
+                        <div class="mar-kpi__card mar-kpi__card--{% if ui.kpi.tones.participants == 'neutral' %}mid{% else %}{{ ui.kpi.tones.participants }}{% endif %}">
+                            <div class="mar-kpi__icon">👥</div>
+                            <span class="mar-kpi__value">{{ ui.kpi.participants }}</span>
+                            <span class="mar-kpi__label">Количество участников</span>
+                        </div>
+                        <div class="mar-kpi__card mar-kpi__card--{{ ui.kpi.tones.avg }}">
+                            <div class="mar-kpi__icon">📈</div>
+                            <span class="mar-kpi__value">{{ ui.kpi.avg_score }}</span>
+                            <span class="mar-kpi__label">{{ ui.avg_label }}</span>
+                        </div>
+                        <div class="mar-kpi__card mar-kpi__card--{{ ui.kpi.tones.quality }}">
+                            <div class="mar-kpi__icon">🎯</div>
+                            <span class="mar-kpi__value">{{ ui.kpi.quality_rate }}%</span>
+                            <span class="mar-kpi__label">Качество знаний</span>
+                        </div>
+                        <div class="mar-kpi__card mar-kpi__card--{{ ui.kpi.tones.pass }}">
+                            <div class="mar-kpi__icon">✅</div>
+                            <span class="mar-kpi__value">{{ ui.kpi.pass_rate }}%</span>
+                            <span class="mar-kpi__label">Успеваемость</span>
+                        </div>
+                    </div>
+                    {% if ui.extra %}
+                    <div class="mar-kpi" style="margin-top:0.85rem">
+                        {% for card in ui.extra %}
+                        <div class="mar-kpi__card mar-kpi__card--{% if card.tone == 'neutral' %}mid{% else %}{{ card.tone }}{% endif %}">
+                            <div class="mar-kpi__icon">{{ card.icon }}</div>
+                            <span class="mar-kpi__value">{{ card.value }}</span>
+                            <span class="mar-kpi__label">{{ card.label }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            {# 02. Динамика и сравнение #}
+            <section class="mar-sec" id="sis-compare">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">02</div>
+                    <div>
+                        <h2 class="mar-sec__title">Динамика и сравнение</h2>
+                        <p class="mar-sec__lead">Изменение к прошлому году и сопоставление с внешними уровнями.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-kpi">
+                        {% for card in ui.comparison %}
+                        <div class="mar-kpi__card mar-kpi__card--{% if card.tone == 'neutral' %}mid{% else %}{{ card.tone }}{% endif %}">
+                            <div class="mar-kpi__icon">{{ card.arrow }}</div>
+                            <span class="mar-kpi__value">{{ card.value }}</span>
+                            <span class="mar-kpi__label">{{ card.label }}</span>
+                            <span class="mar-kpi__hint">{{ card.text }}</span>
+                        </div>
+                        {% empty %}
+                        <p class="mar-soft">Нет данных сравнения.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            {# 03. Ключевые выводы #}
+            {% if ui.insights %}
+            <section class="mar-sec" id="sis-insights">
+                <div class="mar-sec__bar mar-sec__bar--decision"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">03</div>
+                    <div>
+                        <h2 class="mar-sec__title">Ключевые выводы</h2>
+                        <p class="mar-sec__lead">Фактические выводы по рассчитанной статистике.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-dash__grid">
+                        {% for note in ui.insights %}
+                        <div class="mar-tile {% if note.tone == 'high' %}mar-tile--good{% elif note.tone == 'low' %}mar-tile--risk{% endif %}">
+                            <h3 class="mar-tile__h">{{ note.title }}</h3>
+                            <ul><li>{{ note.text }}</li></ul>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# 04. Распределение по уровням #}
+            {% if ui.distribution %}
+            <section class="mar-sec" id="sis-dist">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">04</div>
+                    <div>
+                        <h2 class="mar-sec__title">Распределение по уровням</h2>
+                        <p class="mar-sec__lead">Структура результатов · всего {{ ui.distribution_total }}</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-dash__grid" style="grid-template-columns:1.1fr .9fr">
+                        <div>
+                            <div class="mar-chart"><canvas id="isr-dist-chart"></canvas></div>
+                            <p class="mar-soft">Всего результатов в распределении: {{ ui.distribution_total }}</p>
+                        </div>
+                        <div>
+                            {% for row in ui.distribution %}
+                            <div style="margin-bottom:0.7rem">
+                                <div style="display:flex;justify-content:space-between;font-size:0.86rem;margin-bottom:0.25rem">
+                                    <strong>{{ row.label }}</strong>
+                                    <span class="mar-soft">{{ row.value }} · {{ row.percent }}%</span>
+                                </div>
+                                <div class="mar-meter"><i style="width:{{ row.bar }}%"></i></div>
+                            </div>
+                            {% endfor %}
+                            <div class="mar-table-wrap" style="margin-top:1rem">
+                                <table class="mar-table">
+                                    <thead><tr><th>Диапазон</th><th class="num">Количество</th><th class="num">Доля</th></tr></thead>
+                                    <tbody>
+                                    {% for row in ui.distribution %}
+                                        <tr>
+                                            <td class="is-key">{{ row.label }}</td>
+                                            <td class="num">{{ row.value }}</td>
+                                            <td class="num">{{ row.percent }}%</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# 05. Динамика прошлых лет #}
+            {% if ui.dynamics %}
+            <section class="mar-sec" id="sis-dyn">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">05</div>
+                    <div>
+                        <h2 class="mar-sec__title">Динамика прошлых лет</h2>
+                        <p class="mar-sec__lead">Средний результат и успеваемость по годам.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-chart" style="height:280px"><canvas id="isr-dyn-chart"></canvas></div>
+                    <p class="mar-soft">Таблица — приложение к графику</p>
+                    <div class="mar-table-wrap" style="margin-top:0.75rem">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>Год</th>
+                                    <th class="num">Результатов</th>
+                                    <th class="num">Средний</th>
+                                    <th class="num">Успеваемость</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in ui.dynamics %}
+                                <tr>
+                                    <td class="is-key">{{ row.year }}</td>
+                                    <td class="num">{{ row.results }}</td>
+                                    <td class="num">{{ row.avg }}</td>
+                                    <td class="num">{{ row.pass_rate }}%</td>
+                                    <td><div class="mar-meter"><i style="width:{{ row.pass_bar }}%"></i></div></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# 06. Результаты по предметам #}
+            {% if ui.subjects %}
+            <section class="mar-sec" id="sis-subjects">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">06</div>
+                    <div>
+                        <h2 class="mar-sec__title">Результаты по предметам</h2>
+                        <p class="mar-sec__lead">Показатели по предметам среза.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>Предмет</th>
+                                    <th class="num">Участ.</th>
+                                    <th class="num">Средний</th>
+                                    <th class="num">Качество</th>
+                                    <th class="num">Мин</th>
+                                    <th class="num">Макс</th>
+                                    <th class="num">Неуд.</th>
+                                    <th>Уровень</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in ui.subjects %}
+                                <tr>
+                                    <td class="is-key">{{ row.name }}</td>
+                                    <td class="num">{{ row.participants }}</td>
+                                    <td class="num">{{ row.avg }}</td>
+                                    <td class="num">{{ row.quality_rate }}%</td>
+                                    <td class="num">{{ row.min_v|floatformat:2 }}</td>
+                                    <td class="num">{{ row.max_v|floatformat:2 }}</td>
+                                    <td class="num {% if row.failed %}is-risk{% endif %}">{{ row.failed }}</td>
+                                    <td><span class="mar-badge mar-badge--{{ row.tone }}">{{ row.status }}</span></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# 07. Поклассная статистика #}
+            {% if ui.classes %}
+            <section class="mar-sec" id="sis-classes">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">07</div>
+                    <div>
+                        <h2 class="mar-sec__title">Поклассная статистика</h2>
+                        <p class="mar-sec__lead">Результаты по классам образовательной организации.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>Класс</th>
+                                    <th class="num">Участ.</th>
+                                    <th class="num">Средний</th>
+                                    <th class="num">Успеваемость</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in ui.classes %}
+                                <tr>
+                                    <td class="is-key">{{ row.name }}</td>
+                                    <td class="num">{{ row.participants }}</td>
+                                    <td class="num">{{ row.avg }}</td>
+                                    <td class="num {% if row.pass_rate >= 85 %}is-good{% elif row.pass_rate < 70 %}is-risk{% endif %}">{{ row.pass_rate }}%</td>
+                                    <td><div class="mar-meter"><i style="width:{{ row.pass_bar }}%"></i></div></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# 08. Проблемные зоны #}
+            {% if ui.weak_zones %}
+            <section class="mar-sec" id="sis-weak">
+                <div class="mar-sec__bar mar-sec__bar--decision"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">08</div>
+                    <div>
+                        <h2 class="mar-sec__title">Проблемные зоны</h2>
+                        <p class="mar-sec__lead">Предметы, требующие методического внимания.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-dash__grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+                        {% for card in ui.weak_zones %}
+                        <div class="mar-tile {% if card.tone == 'low' %}mar-tile--risk{% elif card.tone == 'high' %}mar-tile--good{% endif %}">
+                            <h3 class="mar-tile__h">{{ card.name }}</h3>
+                            <ul>
+                                <li>{{ ui.avg_label }}: <strong>{{ card.avg }}</strong></li>
+                                <li>Успеваемость: <strong>{{ card.pass_rate }}%</strong></li>
+                                <li><span class="mar-badge mar-badge--{{ card.tone }}">{{ card.risk }}</span></li>
+                            </ul>
+                            <div class="mar-meter" style="margin-top:0.55rem"><i style="width:{{ card.pass_bar }}%"></i></div>
+                            <p class="mar-soft" style="margin-top:0.55rem">{{ card.description }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# 09. Рекомендации #}
+            {% if ui.reco_groups %}
+            <section class="mar-sec" id="sis-reco">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">09</div>
+                    <div>
+                        <h2 class="mar-sec__title">Рекомендации</h2>
+                        <p class="mar-sec__lead">Меры по итогам информационно-статистического анализа.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-dash__grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+                        {% for group in ui.reco_groups %}
+                        <div class="mar-tile">
+                            <h3 class="mar-tile__h">{{ group.icon }} {{ group.title }}</h3>
+                            <ul>{% for item in group.items %}<li>{{ item }}</li>{% endfor %}</ul>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            <footer class="mar-soft" style="padding:0 0 1.5rem;text-align:center">
+                Информационно-статистический отчёт · {{ school_name|default:"ОО" }} · {{ ui.year }} · {{ ui.generated_at }}
+            </footer>
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="isr-data">{{ ui.charts_json|safe }}</script>
+<script>
+(function () {
+  function boot() {
+    var node = document.getElementById("isr-data");
+    if (!node || typeof Chart === "undefined") return;
+    var d; try { d = JSON.parse(node.textContent); } catch (e) { return; }
+    var distEl = document.getElementById("isr-dist-chart");
+    if (distEl && d.distLabels && d.distLabels.length) {
+      new Chart(distEl, {
+        type: "bar",
+        data: {
+          labels: d.distLabels,
+          datasets: [{
+            data: d.distValues,
+            backgroundColor: ["#805ad5","#38a169","#3182ce","#d69e2e","#dd6b20","#e53e3e"].slice(0, d.distLabels.length),
+            borderRadius: 8,
+            barThickness: 22
+          }]
+        },
+        options: {
+          indexAxis: "y", responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: "#1a365d", cornerRadius: 8 } },
+          scales: {
+            x: { beginAtZero: true, grid: { color: "rgba(160,174,192,.3)" }, ticks: { color: "#718096" } },
+            y: { grid: { display: false }, ticks: { color: "#2d3748", font: { weight: "600", size: 11 } } }
+          }
+        }
+      });
+    }
+    var dynEl = document.getElementById("isr-dyn-chart");
+    if (dynEl && d.dynYears && d.dynYears.length) {
+      new Chart(dynEl, {
+        type: "line",
+        data: {
+          labels: d.dynYears,
+          datasets: [
+            {
+              label: "Средний",
+              data: d.dynAvg,
+              borderColor: "#2b6cb0",
+              backgroundColor: "rgba(43,108,176,.12)",
+              tension: 0.3,
+              fill: true,
+              pointRadius: 4,
+              yAxisID: "y"
+            },
+            {
+              label: "Успеваемость, %",
+              data: d.dynPass,
+              borderColor: "#2f855a",
+              backgroundColor: "rgba(47,133,90,.08)",
+              tension: 0.3,
+              fill: false,
+              pointRadius: 4,
+              yAxisID: "y1"
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom", labels: { boxWidth: 12, usePointStyle: true } }, tooltip: { backgroundColor: "#1a365d", cornerRadius: 8 } },
+          scales: {
+            y: { position: "left", beginAtZero: true, suggestedMax: d.avgMax || undefined, grid: { color: "rgba(160,174,192,.25)" }, ticks: { color: "#718096" } },
+            y1: { position: "right", beginAtZero: true, max: 100, grid: { drawOnChartArea: false }, ticks: { color: "#718096" } },
+            x: { grid: { display: false }, ticks: { color: "#2d3748", font: { weight: "600" } } }
+          }
+        }
+      });
+    }
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { setTimeout(boot, 40); });
+  else setTimeout(boot, 40);
+  window.addEventListener("load", boot);
+})();
+</script>
+{% endwith %}
+{% else %}
+<div class="mar" id="schoolInfoStat">
+    <div class="mar-toolbar">
+        <div class="mar-toolbar__left">
+            <a class="ui-btn" href="/cabinet/reports/?exam_type={{ report_nav_exam_type }}">← Каталог</a>
+            <p class="mar-toolbar__crumb">Информационно-статистический отчёт</p>
+        </div>
+        <div class="mar-toolbar__right">
+            <form method="get" class="mar-form">
+                <input type="hidden" name="doc" value="info-stat">
+                <label>Год
+                    <select name="year" class="ui-input" onchange="this.form.submit()">
+                        {% for y in report_info_year_options %}
+                            <option value="{{ y }}" {% if report_selected_info_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Экзамен
+                    <select name="exam_type" class="ui-input" onchange="this.form.submit()">
+                        <option value="ege" {% if report_selected_info_exam_type == "ege" or not report_selected_info_exam_type and report_nav_exam_type == "ege" %}selected{% endif %}>ЕГЭ</option>
+                        <option value="oge" {% if report_selected_info_exam_type == "oge" or not report_selected_info_exam_type and report_nav_exam_type == "oge" %}selected{% endif %}>ОГЭ</option>
+                    </select>
+                </label>
+                <button type="submit" class="ui-btn ui-btn-primary">Сформировать</button>
+            </form>
+        </div>
+    </div>
+    <div class="mar-doc" style="padding:2rem">
+        <p class="mar-soft">{{ info_stat_ui.message|default:info_stat_payload.message|default:"Недостаточно данных для формирования отчёта." }}</p>
+    </div>
+</div>
+{% endif %}

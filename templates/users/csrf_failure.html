@@ -1,0 +1,30 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ошибка входа | Анализ ГИА</title>
+    <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
+    <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+    <div class="ui-login-wrap">
+        <div class="ui-login-card ui-form-stack">
+            <h1 class="ui-login-brand" style="font-size: 1.2rem;">Не удалось выполнить вход</h1>
+            <p class="ui-login-lead">
+                Сессия безопасности не была установлена или устарела. Это часто случается при первом
+                входе с нового устройства или после долгого простоя на странице входа.
+            </p>
+            <p class="text-sm text-slate-600">
+                Обновите страницу и войдите снова. Если ошибка повторяется, откройте сайт по адресу
+                <strong>https://analizgia.ru</strong> (без сохранённых закладок на http).
+            </p>
+            <a href="{% url 'home-login' %}" class="ui-btn ui-btn-primary w-full" style="text-align: center; margin-top: 12px;">
+                Вернуться ко входу
+            </a>
+        </div>
+    </div>
+</body>
+</html>

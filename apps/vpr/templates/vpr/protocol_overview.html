@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+{% load vpr_labels %}
+{% block head_title %}Аналитика предмета · {{ protocol.subject }} · ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard vpr-subject-report">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Аналитическая справка по методологии ФИОКО</span>
+            <h2>Анализ результатов ВПР на уровне общеобразовательной организации</h2>
+            <p>{{ report.subject }} · {{ report.parallel }} класс · {{ report.academic_year }} учебный год</p>
+            {% if report.school_name %}<p class="hub-kpi-sub">{{ report.school_name }}</p>{% endif %}
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'vpr-registry' %}" class="ui-btn">← К реестру</a>
+                <a href="{% url 'vpr-protocol-detail' protocol_id=protocol.id %}" class="ui-btn">К протоколу</a>
+                <a href="{% url 'vpr-protocol-overview-docx' protocol_id=protocol.id %}" class="ui-btn ui-btn-primary">Скачать справку</a>
+            </div>
+        </div>
+    </header>
+
+    {% include "vpr/_protocol_tabs.html" with active_tab="overview" %}
+
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# 1. Паспорт анализа #}
+    <section class="enterprise-panel" id="fioko-1">
+        <div class="enterprise-section-head">
+            <div><span class="enterprise-eyebrow">Раздел 1</span><h3>Паспорт анализа</h3></div>
+            <span class="vpr-status-chip vpr-status-chip--{{ report.quality_tone }}">{{ report.quality_level }}</span>
+        </div>
+        <div class="hub-kpi-grid hub-kpi-grid--compact">
+            {% for item in report.passport %}
+            <article class="hub-kpi vpr-kpi-tone--{{ item.tone }}"{% if item.hint %} title="{{ item.hint }}"{% endif %}>
+                <p class="hub-kpi-label">{{ item.label }}</p>
+                <p class="hub-kpi-value" style="font-size:1.05rem">{{ item.value }}</p>
+            </article>
+            {% endfor %}
+        </div>
+        {% if report.passport_assessment %}
+        <div class="vpr-analytic-text" style="margin-top:1rem">
+            <h4 class="vpr-insight-col__title">Экспертная оценка общего состояния качества образования</h4>
+            {% for p in report.passport_assessment %}<p>{{ p }}</p>{% endfor %}
+        </div>
+        {% endif %}
+    </section>
+
+    {# 2. Индивидуальные результаты #}
+    <section class="enterprise-panel" id="fioko-2">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 2</span><h3>Анализ индивидуальных результатов</h3></div></div>
+        <div class="hub-kpi-grid hub-kpi-grid--compact">
+            {% for group in report.individual_groups %}
+            <article class="hub-kpi vpr-kpi-tone--{{ group.tone }}">
+                <p class="hub-kpi-label">{{ group.title }}</p>
+                <p class="hub-kpi-value">{{ group.count }}{% if group.percent %}<span class="hub-kpi-sub"> ({{ group.percent }}%)</span>{% endif %}</p>
+                <p class="hub-kpi-sub">{{ group.characteristic }}</p>
+                {% if group.sample_names %}<p class="hub-kpi-sub">{{ group.sample_names|join:", " }}</p>{% endif %}
+            </article>
+            {% empty %}
+            <p class="enterprise-empty">Группы не сформированы.</p>
+            {% endfor %}
+        </div>
+        {% include "vpr/_fioko_cycle.html" with cycle=report.individual_cycle %}
+        <h4 class="vpr-insight-col__title" style="margin-top:1rem">Индивидуальные образовательные маршруты</h4>
+        <div class="vpr-insight-grid">
+            {% for block in report.iom_blocks %}
+            <div class="vpr-insight-col">
+                <h4 class="vpr-insight-col__title">{{ block.group }}</h4>
+                <p class="hub-kpi-sub">{{ block.focus }}</p>
+                <ul class="vpr-bullet-list">{% for a in block.actions %}<li>{{ a }}</li>{% endfor %}</ul>
+            </div>
+            {% endfor %}
+        </div>
+        {% if report.gifted_actions %}
+        <h4 class="vpr-insight-col__title" style="margin-top:1rem">Мероприятия для одарённых детей</h4>
+        <ul class="vpr-bullet-list">{% for a in report.gifted_actions %}<li>{{ a }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% if report.parent_support_actions %}
+        <h4 class="vpr-insight-col__title" style="margin-top:1rem">Работа с родителями (сопровождение)</h4>
+        <ul class="vpr-bullet-list">{% for a in report.parent_support_actions %}<li>{{ a }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% if report.attendance_control %}
+        <h4 class="vpr-insight-col__title" style="margin-top:1rem">Контроль посещаемости</h4>
+        <ul class="vpr-bullet-list">{% for a in report.attendance_control %}<li>{{ a }}</li>{% endfor %}</ul>
+        {% endif %}
+    </section>
+
+    {# 3. Статистика отметок #}
+    <section class="enterprise-panel" id="fioko-3">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 3</span><h3>Анализ статистики отметок</h3></div></div>
+        {% if report.marks_rows %}
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead><tr><th>Отметка</th><th>Количество</th><th>Доля</th></tr></thead>
+                <tbody>
+                    {% for row in report.marks_rows %}
+                    <tr><td><strong>{{ row.mark }}</strong></td><td>{{ row.count }}</td><td>{{ row.percent }}%</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% include "vpr/_fioko_cycle.html" with cycle=report.marks_cycle %}
+    </section>
+
+    {# 4. Объективность #}
+    <section class="enterprise-panel" id="fioko-4">
+        <div class="enterprise-section-head">
+            <div><span class="enterprise-eyebrow">Раздел 4</span><h3>Сравнение отметок ВПР и журнала</h3></div>
+            {% if report.objectivity_risk %}<span class="vpr-status-chip">Риск необъективности: {{ report.objectivity_risk }}</span>{% endif %}
+        </div>
+        {% if report.objectivity_rows %}
+        <div class="hub-kpi-grid hub-kpi-grid--compact">
+            {% for row in report.objectivity_rows %}
+            <article class="hub-kpi">
+                <p class="hub-kpi-label">{{ row.label }}</p>
+                <p class="hub-kpi-value" style="font-size:1.05rem">{{ row.value }}</p>
+            </article>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% include "vpr/_fioko_cycle.html" with cycle=report.objectivity_cycle %}
+    </section>
+
+    {# 5. Первичные баллы #}
+    <section class="enterprise-panel" id="fioko-5">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 5</span><h3>Анализ распределения первичных баллов</h3></div></div>
+        {% if report.scores_rows %}
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead><tr><th>Первичный балл</th><th>Количество</th><th>Доля</th></tr></thead>
+                <tbody>
+                    {% for row in report.scores_rows %}
+                    <tr><td>{{ row.score }}</td><td>{{ row.count }}</td><td>{{ row.percent }}%</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% include "vpr/_fioko_cycle.html" with cycle=report.scores_cycle %}
+    </section>
+
+    {# 6. Выполнение заданий #}
+    <section class="enterprise-panel" id="fioko-6">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 6</span><h3>Анализ выполнения заданий</h3></div></div>
+        {% if report.task_performance_rows %}
+        <p class="hub-kpi-sub" style="margin-top:0.5rem">Количество обучающихся, выполнивших каждое задание верно (полный балл) и с ошибкой:</p>
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Задание</th>
+                        <th>Тема / умение</th>
+                        <th>Успешность</th>
+                        <th>Верно (+)</th>
+                        <th>Ошибок (-)</th>
+                        <th>Всего</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report.task_performance_rows %}
+                    <tr>
+                        <td>№{{ row.task_code }}</td>
+                        <td>
+                            {{ row.topic|default:"—" }}
+                            {% if row.skill %}<br><span class="hub-kpi-sub">{{ row.skill }}</span>{% endif %}
+                        </td>
+                        <td>{% if row.completion_percent is not None %}{{ row.completion_percent }}%{% else %}—{% endif %}</td>
+                        <td>{{ row.correct_count }}</td>
+                        <td>{{ row.incorrect_count }}</td>
+                        <td>{{ row.answers_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        <div class="vpr-analytic-text" style="margin-top:1rem">
+            {% for p in report.content_pipeline %}<p>{{ p }}</p>{% endfor %}
+        </div>
+        {% if report.content_lines %}
+        <div class="enterprise-table-wrap" style="margin-top:1rem">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Содержательная линия / тема</th>
+                        <th>Уровень освоения</th>
+                        <th>%</th>
+                        <th>Основные ошибки</th>
+                        <th>Вероятные причины</th>
+                        <th>Изменения методики</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report.content_lines %}
+                    <tr>
+                        <td>{{ row.name }}</td>
+                        <td><span class="vpr-status-chip vpr-status-chip--{{ row.tone }}">{{ row.mastery_label }}</span></td>
+                        <td>{% if row.average_percent is not None %}{{ row.average_percent }}%{% else %}—{% endif %}</td>
+                        <td>{{ row.typical_errors|join:"; " }}</td>
+                        <td>{{ row.probable_causes|join:"; " }}</td>
+                        <td>{{ row.method_changes|join:"; " }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% include "vpr/_fioko_cycle.html" with cycle=report.content_cycle %}
+    </section>
+
+    {# 7. Планируемые результаты #}
+    <section class="enterprise-panel" id="fioko-7">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 7</span><h3>Анализ достижения планируемых результатов</h3></div></div>
+        {% if report.planned_results %}
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Планируемый результат</th>
+                        <th>Статус</th>
+                        <th>%</th>
+                        <th>Предметные действия</th>
+                        <th>УУД</th>
+                        <th>Корректировка содержания</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report.planned_results %}
+                    <tr>
+                        <td>{{ row.result }}</td>
+                        <td><span class="vpr-status-chip vpr-status-chip--{{ row.tone }}">{{ row.status_label }}</span></td>
+                        <td>{% if row.average_percent is not None %}{{ row.average_percent }}%{% else %}—{% endif %}</td>
+                        <td>{{ row.subject_actions }}</td>
+                        <td>{{ row.meta_actions }}</td>
+                        <td>{{ row.content_adjustments }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% include "vpr/_fioko_cycle.html" with cycle=report.planned_cycle %}
+    </section>
+
+    {# 8. Группы участников #}
+    <section class="enterprise-panel" id="fioko-8">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 8</span><h3>Анализ выполнения заданий различными группами участников</h3></div></div>
+        {% for item in report.group_task_insights %}
+        <div class="vpr-cause-chain">
+            <p class="vpr-cause-chain__summary">{{ item.title }}</p>
+            <p>{{ item.explanation }}</p>
+            {% if item.evidence %}<p class="hub-kpi-sub">{{ item.evidence|join:"; " }}</p>{% endif %}
+        </div>
+        {% endfor %}
+        {% include "vpr/_fioko_cycle.html" with cycle=report.group_task_cycle %}
+    </section>
+
+    {# 9. Образовательные дефициты #}
+    <section class="enterprise-panel" id="fioko-9">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 9</span><h3>Образовательные дефициты</h3></div></div>
+        {% if report.deficit_items %}
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Дефицит</th>
+                        <th>Вид</th>
+                        <th>Приоритет</th>
+                        <th>Влияние на результаты</th>
+                        <th>Влияние на качество</th>
+                        <th>Влияние на программу</th>
+                        <th>Управленческие решения</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in report.deficit_items %}
+                    <tr>
+                        <td>{{ d.name }}</td>
+                        <td>{{ d.kind }}</td>
+                        <td><span class="vpr-status-chip vpr-status-chip--{{ d.tone }}">{{ d.priority }}</span></td>
+                        <td>{{ d.impact_results }}</td>
+                        <td>{{ d.impact_quality }}</td>
+                        <td>{{ d.impact_program }}</td>
+                        <td>{{ d.management_decisions|join:"; " }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% include "vpr/_fioko_cycle.html" with cycle=report.deficits_cycle %}
+    </section>
+
+    {# 10. Администрация #}
+    <section class="enterprise-panel" id="fioko-10">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 10</span><h3>Работа администрации</h3></div></div>
+        <h4 class="vpr-insight-col__title">Директор</h4>
+        <ul class="vpr-bullet-list">{% for a in report.admin_director %}<li>{{ a }}</li>{% endfor %}</ul>
+        <h4 class="vpr-insight-col__title">Заместитель директора</h4>
+        <ul class="vpr-bullet-list">{% for a in report.admin_deputy %}<li>{{ a }}</li>{% endfor %}</ul>
+        {% include "vpr/_fioko_cycle.html" with cycle=report.admin_cycle %}
+    </section>
+
+    {# 11. ШМО #}
+    <section class="enterprise-panel" id="fioko-11">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 11</span><h3>Работа школьных методических объединений</h3></div></div>
+        <ul class="vpr-bullet-list">{% for a in report.smo_actions %}<li>{{ a }}</li>{% endfor %}</ul>
+        {% include "vpr/_fioko_cycle.html" with cycle=report.smo_cycle %}
+    </section>
+
+    {# 12. Педагоги #}
+    <section class="enterprise-panel" id="fioko-12">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 12</span><h3>Работа с педагогами</h3></div></div>
+        <h4 class="vpr-insight-col__title">Профессиональные дефициты педагогов</h4>
+        <ul class="vpr-bullet-list">{% for a in report.teacher_deficits %}<li>{{ a }}</li>{% endfor %}</ul>
+        <h4 class="vpr-insight-col__title">Мероприятия (семинары, мастер-классы, курсы, вебинары, консультации, наставничество)</h4>
+        <ul class="vpr-bullet-list">{% for a in report.teacher_actions %}<li>{{ a }}</li>{% endfor %}</ul>
+        {% include "vpr/_fioko_cycle.html" with cycle=report.teachers_cycle %}
+    </section>
+
+    {# 13. Родители #}
+    <section class="enterprise-panel" id="fioko-13">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 13</span><h3>Работа с родителями</h3></div></div>
+        <ul class="vpr-bullet-list">{% for a in report.parent_actions %}<li>{{ a }}</li>{% endfor %}</ul>
+        {% include "vpr/_fioko_cycle.html" with cycle=report.parents_cycle %}
+    </section>
+
+    {# 14. Методические рекомендации #}
+    <section class="enterprise-panel" id="fioko-14">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 14</span><h3>Методические рекомендации</h3></div></div>
+        <ul class="vpr-bullet-list">{% for a in report.method_recommendations %}<li>{{ a }}</li>{% endfor %}</ul>
+        {% include "vpr/_fioko_cycle.html" with cycle=report.method_cycle %}
+    </section>
+
+    {# 15. План мероприятий #}
+    <section class="enterprise-panel" id="fioko-15">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 15</span><h3>План мероприятий</h3></div></div>
+        {% if report.action_plan %}
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Мероприятие</th>
+                        <th>Исполнитель</th>
+                        <th>Срок</th>
+                        <th>Ожидаемый результат</th>
+                        <th>Показатель эффективности</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report.action_plan %}
+                    <tr>
+                        <td>{{ row.action }}</td>
+                        <td>{{ row.executor }}</td>
+                        <td>{{ row.deadline }}</td>
+                        <td>{{ row.expected_result }}</td>
+                        <td>{{ row.efficiency_indicator }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </section>
+
+    {# 16. Итоговое заключение #}
+    <section class="enterprise-panel" id="fioko-16">
+        <div class="enterprise-section-head"><div><span class="enterprise-eyebrow">Раздел 16</span><h3>Итоговое экспертное заключение</h3></div></div>
+        <div class="vpr-analytic-text vpr-analytic-text--lead">
+            {% for p in report.final_conclusion %}<p>{{ p }}</p>{% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

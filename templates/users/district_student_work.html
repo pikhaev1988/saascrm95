@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block head_title %}{{ student_name|default:"Ученик" }} — анализ работы{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard hub-page">
+    {% if result_not_found %}
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Районный кабинет</span>
+            <h2>Результат не найден</h2>
+            <p>{{ not_found_hint|default:"Работа ученика недоступна." }}</p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                {% if cabinet_kind == "school" %}
+                <a href="{% url 'cabinet-school' %}" class="ui-btn">← К кабинету школы</a>
+                {% else %}
+                <a href="{% url 'cabinet-district' %}" class="ui-btn">← К школам района</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+    {% else %}
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">{{ page_eyebrow|default:"Анализ работы ученика" }}</span>
+            <h2>{{ student_name }}</h2>
+            <p>
+                {{ school.name }} · код ОО {{ school.code }}
+                {% if student_grade %} · класс {{ student_grade }}{% endif %}
+                · {{ subject_label }} · {{ exam_result.exam.exam_date|date:"d.m.Y" }}
+            </p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-period">
+                <span>Год</span>
+                <strong>{{ exam_result.exam.year }}</strong>
+            </div>
+            <div class="enterprise-actions">
+                <a href="{{ back_url }}" class="ui-btn">{{ back_label|default:"← Назад" }}</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="enterprise-kpi-grid" aria-label="Показатели работы">
+        <article class="enterprise-kpi-card">
+            <span class="enterprise-kpi-card__icon is-blue">Б</span>
+            <p>Балл</p>
+            <strong>{{ exam_result.score }}</strong>
+            <em>первичный {{ exam_result.primary_score }}</em>
+        </article>
+        <article class="enterprise-kpi-card {% if below_minimum %}is-risk{% else %}is-success{% endif %}">
+            <span class="enterprise-kpi-card__icon {% if below_minimum %}is-red{% else %}is-green{% endif %}">С</span>
+            <p>Статус</p>
+            <strong>{% if below_minimum %}Ниже минимума{% else %}Порог пройден{% endif %}</strong>
+            <em>{{ subject_label }}</em>
+        </article>
+        <article class="enterprise-kpi-card">
+            <span class="enterprise-kpi-card__icon is-cyan">%</span>
+            <p>Успешность заданий</p>
+            <strong>{{ analysis.success_rate }}%</strong>
+            <em>{{ analysis.correct }} из {{ analysis.total }}</em>
+        </article>
+        <article class="enterprise-kpi-card {% if analysis.wrong or analysis.blank %}is-risk{% endif %}">
+            <span class="enterprise-kpi-card__icon {% if analysis.wrong or analysis.blank %}is-red{% else %}is-green{% endif %}">!</span>
+            <p>Ошибки / пропуски</p>
+            <strong>{{ analysis.wrong }} / {{ analysis.blank }}</strong>
+            <em>по протоколу КИМ</em>
+        </article>
+    </section>
+
+    <section class="enterprise-ranking-grid">
+        <div class="enterprise-panel">
+            <div class="enterprise-section-head">
+                <div>
+                    <span class="enterprise-eyebrow">Диаграмма</span>
+                    <h3>Выполнение заданий</h3>
+                </div>
+            </div>
+            <div class="hub-chart-box hub-chart-box--lg">
+                <canvas id="studentWorkChart"></canvas>
+            </div>
+            <p class="enterprise-empty" style="margin-top:10px">1 — верно, 0 — ошибка или не выполнено</p>
+        </div>
+        <div class="enterprise-panel">
+            <div class="enterprise-section-head">
+                <div>
+                    <span class="enterprise-eyebrow">Анализ</span>
+                    <h3>Выводы по работе</h3>
+                </div>
+            </div>
+            <div class="enterprise-text-block" style="margin-top:0">
+                <ul>
+                    {% for item in analysis.insights %}
+                        <li>{{ item }}</li>
+                    {% empty %}
+                        <li>Недостаточно данных для автоматического анализа.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="enterprise-text-block">
+                <h4>Рекомендации</h4>
+                <ul>
+                    {% for item in analysis.recommendations %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Протокол</span>
+                <h3>Разбор заданий ученика</h3>
+            </div>
+        </div>
+        {% if task_rows %}
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Задание</th>
+                        <th>Ответ</th>
+                        <th>Статус</th>
+                        <th>Тема</th>
+                        <th>Классы</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in task_rows %}
+                    <tr class="{% if not task.success %}hub-row-danger{% endif %}">
+                        <td>№{{ task.task_number }}</td>
+                        <td>{{ task.value }}</td>
+                        <td>
+                            {% if task.success %}
+                                <span class="hub-rate is-success">{{ task.status }}</span>
+                            {% else %}
+                                <span class="hub-rate is-danger">{{ task.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ task.topic }}</td>
+                        <td>{% if task.grades %}{{ task.grades|join:", " }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="enterprise-empty">Нет детализации по заданиям для этой работы.</p>
+        {% endif %}
+    </section>
+
+    {% if analysis.weak_tasks %}
+    <section class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Зона внимания</span>
+                <h3>Задания с ошибками</h3>
+            </div>
+        </div>
+        <div class="enterprise-catalog-grid">
+            {% for task in analysis.weak_tasks %}
+            <div class="enterprise-catalog-card {% if task.blank %}{% else %}is-featured{% endif %}">
+                <h4>Задание №{{ task.task_number }}</h4>
+                <p>{{ task.topic }}</p>
+                <p style="margin-top:6px;color:#0f172a;font-weight:700">{{ task.status }} · ответ: {{ task.value }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {{ chart_data|json_script:"studentWorkChartData" }}
+    <script>
+    (function () {
+        const node = document.getElementById("studentWorkChartData");
+        const canvas = document.getElementById("studentWorkChart");
+        if (!node || !canvas) return;
+        const data = JSON.parse(node.textContent);
+        const labels = data.labels || [];
+        const values = (data.values || []).map((v) => Number(v));
+        if (window.Chart) {
+            new Chart(canvas, {
+                type: "bar",
+                data: {
+                    labels,
+                    datasets: [{
+                        label: "Выполнение",
+                        data: values,
+                        backgroundColor: values.map((v) => v ? "rgba(22, 163, 74, 0.75)" : "rgba(220, 38, 38, 0.75)"),
+                        borderRadius: 6,
+                        maxBarThickness: 28,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 1, ticks: { stepSize: 1 } },
+                    },
+                },
+            });
+        } else if (window.renderSimpleBarChart) {
+            window.renderSimpleBarChart("studentWorkChart", labels, values, 1);
+        }
+    })();
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

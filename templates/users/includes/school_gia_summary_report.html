@@ -1,0 +1,565 @@
+{# Свод результатов ГИА (ОО) — MAR document shell #}
+{% include "users/includes/district_mar_bits.html" with bit="css" %}
+
+{% if summary_has_data and summary_ui %}
+<div class="mar" id="schoolGiaSummary"
+     data-year="{{ report_selected_summary_year }}"
+     data-formed="{% now 'd.m.Y' %}">
+
+    <div class="mar-toolbar">
+        <div class="mar-toolbar__left">
+            <a class="ui-btn" href="/cabinet/reports/?exam_type={{ report_nav_exam_type }}">← Каталог</a>
+            <p class="mar-toolbar__crumb">Свод результатов · <strong>{{ summary_ui.exam_label }}{% if report_selected_summary_year %} · {{ report_selected_summary_year }}{% endif %}</strong></p>
+        </div>
+        <div class="mar-toolbar__right">
+            <form method="get" class="mar-form">
+                <input type="hidden" name="doc" value="gia-summary">
+                <label>Год
+                    <select name="year" class="ui-input" onchange="this.form.submit()">
+                        {% for y in report_summary_year_options %}
+                            <option value="{{ y }}" {% if report_selected_summary_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Экзамен
+                    <select name="exam_type" class="ui-input" onchange="this.form.submit()">
+                        <option value="ege" {% if report_nav_exam_type == "ege" %}selected{% endif %}>ЕГЭ</option>
+                        <option value="oge" {% if report_nav_exam_type == "oge" %}selected{% endif %}>ОГЭ</option>
+                    </select>
+                </label>
+            </form>
+            <button type="button" class="ui-btn ui-btn-primary js-download-in-place"
+                data-download-url="{% url 'cabinet-school-export-gia-summary' %}?exam_type={{ report_nav_exam_type }}&year={{ report_selected_summary_year }}"
+                data-download-label="Скачать DOCX">Скачать DOCX</button>
+            <button type="button" class="ui-btn" onclick="window.print()">Печать</button>
+        </div>
+    </div>
+
+    <div class="mar-doc">
+        <section class="mar-cover" id="mar-cover">
+            <div class="mar-cover__inner">
+                <div class="mar-cover__brand">
+                    {% include "users/includes/district_mar_bits.html" with bit="logo" %}
+                    <div>
+                        <p class="mar-cover__org">Система образования образовательной организации</p>
+                        <p class="mar-cover__org-name">{{ school_name|default:"Образовательная организация" }}</p>
+                    </div>
+                </div>
+                <p class="mar-cover__eyebrow">Официальный аналитический отчёт</p>
+                <h1 class="mar-cover__title">Свод результатов ГИА</h1>
+                <dl class="mar-cover__meta">
+                    <div><dt>Вид экзамена</dt><dd>{{ summary_ui.exam_label }}</dd></div>
+                    <div><dt>Отчётный период</dt><dd>{{ report_selected_summary_year|default:"—" }}</dd></div>
+                    <div><dt>Образовательная организация</dt><dd>{{ school_name|default:"—" }}</dd></div>
+                    <div><dt>Дата формирования</dt><dd>{% now "d.m.Y" %}</dd></div>
+                </dl>
+                <div class="mar-cover__foot">
+                    <span>Конфиденциально · данные загруженных протоколов</span>
+                    <span>Статус: <span class="mar-badge mar-badge--high">✓ Сформирован</span></span>
+                </div>
+            </div>
+        </section>
+
+        <div class="mar-body">
+            <nav class="mar-toc" aria-label="Содержание">
+                <h2 class="mar-toc__title">Содержание</h2>
+                <ol class="mar-toc__list">
+                    <li><a href="#sgs-exec"><span class="mar-toc__n">01</span>Панель руководителя<span class="mar-toc__dots"></span></a></li>
+                    {% if summary_ui.distribution %}<li><a href="#sgs-dist"><span class="mar-toc__n">02</span>Распределение результатов<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if summary_ui.charts.subject_labels %}<li><a href="#sgs-charts"><span class="mar-toc__n">03</span>Предметные диаграммы<span class="mar-toc__dots"></span></a></li>
+                    <li><a href="#sgs-rank"><span class="mar-toc__n">04</span>ТОП и проблемные предметы<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if summary_ui.dynamics %}<li><a href="#sgs-dyn"><span class="mar-toc__n">05</span>Динамика по годам<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if summary_ui.subject_cards %}<li><a href="#sgs-subj"><span class="mar-toc__n">06</span>Анализ предметов<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if summary_class_rows %}<li><a href="#sgs-class"><span class="mar-toc__n">07</span>Рейтинг классов<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if summary_ui.recommendations %}<li><a href="#sgs-reco"><span class="mar-toc__n">08</span>Рекомендации<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if summary_ui.panels %}<li><a href="#sgs-panels"><span class="mar-toc__n">09</span>Общий вывод<span class="mar-toc__dots"></span></a></li>{% endif %}
+                </ol>
+            </nav>
+
+            {# 01 — Executive KPIs + grade #}
+            <section class="mar-sec" id="sgs-exec">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">01</div>
+                    <div>
+                        <h2 class="mar-sec__title">Панель руководителя</h2>
+                        <p class="mar-sec__lead">{% if summary_ui.executive.text %}{{ summary_ui.executive.text }}{% else %}Ключевые показатели ОО по итогам {{ summary_ui.exam_label }}.{% endif %}</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-kpi">
+                        <div class="mar-kpi__card mar-kpi__card--{% if summary_ui.executive.kpi_tones.participants == 'neutral' %}mid{% else %}{{ summary_ui.executive.kpi_tones.participants }}{% endif %}">
+                            <div class="mar-kpi__icon">👤</div>
+                            <span class="mar-kpi__value">{{ summary_ui.executive.participants }}</span>
+                            <span class="mar-kpi__label">Участников</span>
+                        </div>
+                        <div class="mar-kpi__card mar-kpi__card--{% if summary_ui.executive.kpi_tones.results == 'neutral' %}mid{% else %}{{ summary_ui.executive.kpi_tones.results }}{% endif %}">
+                            <div class="mar-kpi__icon">📄</div>
+                            <span class="mar-kpi__value">{{ summary_ui.executive.total_results }}</span>
+                            <span class="mar-kpi__label">Результатов</span>
+                        </div>
+                        <div class="mar-kpi__card mar-kpi__card--{% if summary_ui.executive.kpi_tones.avg == 'neutral' %}mid{% else %}{{ summary_ui.executive.kpi_tones.avg }}{% endif %}">
+                            <div class="mar-kpi__icon">Σ</div>
+                            <span class="mar-kpi__value">{{ summary_ui.executive.avg_score }}</span>
+                            <span class="mar-kpi__label">{{ summary_ui.avg_label }}</span>
+                        </div>
+                        <div class="mar-kpi__card mar-kpi__card--{% if summary_ui.executive.kpi_tones.quality == 'neutral' %}mid{% else %}{{ summary_ui.executive.kpi_tones.quality }}{% endif %}">
+                            <div class="mar-kpi__icon">Q</div>
+                            <span class="mar-kpi__value">{{ summary_ui.executive.quality_rate }}%</span>
+                            <span class="mar-kpi__label">Качество знаний</span>
+                        </div>
+                        <div class="mar-kpi__card mar-kpi__card--{% if summary_ui.executive.kpi_tones.pass == 'neutral' %}mid{% else %}{{ summary_ui.executive.kpi_tones.pass }}{% endif %}">
+                            <div class="mar-kpi__icon">%</div>
+                            <span class="mar-kpi__value">{{ summary_ui.executive.pass_rate }}%</span>
+                            <span class="mar-kpi__label">Успеваемость</span>
+                        </div>
+                    </div>
+
+                    <div class="mar-dash" style="margin-top:1rem">
+                        <div class="mar-dash__hero">
+                            <div>
+                                <p class="mar-dash__hero-title">Общая оценка результатов</p>
+                                <p class="mar-dash__hero-snap">{{ summary_ui.school_grade.stars_display }} · {{ summary_ui.school_grade.label }}</p>
+                                <p class="mar-soft" style="color:rgba(255,255,255,.72);margin:.35rem 0 0">На основе успеваемости, качества и среднего результата</p>
+                            </div>
+                            <span class="mar-badge mar-badge--{% if summary_ui.school_grade.tone == 'neutral' %}mid{% else %}{{ summary_ui.school_grade.tone }}{% endif %}">{{ summary_ui.executive.overall }}</span>
+                        </div>
+                        <div class="mar-dash__grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+                            {% if summary_ui.executive.best_subject %}
+                            <div class="mar-tile mar-tile--good">
+                                <h3 class="mar-tile__h">Лучший предмет</h3>
+                                <ul><li>{{ summary_ui.executive.best_subject }}</li></ul>
+                            </div>
+                            {% endif %}
+                            {% if summary_ui.executive.main_risk %}
+                            <div class="mar-tile mar-tile--risk">
+                                <h3 class="mar-tile__h">Основной риск</h3>
+                                <ul><li>{{ summary_ui.executive.main_risk }}</li></ul>
+                            </div>
+                            {% endif %}
+                            <div class="mar-tile">
+                                <h3 class="mar-tile__h">Общая оценка</h3>
+                                <ul><li>{{ summary_ui.executive.overall }}</li></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {# 02 — Distribution #}
+            {% if summary_ui.distribution %}
+            <section class="mar-sec" id="sgs-dist">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">02</div>
+                    <div>
+                        <h2 class="mar-sec__title">Распределение результатов</h2>
+                        <p class="mar-sec__lead">Всего результатов в распределении: {{ summary_ui.distribution_total }}.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-prio">
+                        {% for row in summary_ui.distribution %}
+                        <div class="mar-prio__item">
+                            <span class="mar-prio__n">{{ forloop.counter }}</span>
+                            <div>
+                                <p class="mar-prio__action">{{ row.label }}</p>
+                                <p class="mar-prio__meta">{{ row.value }} рез. · {{ row.percent }}%</p>
+                                <div class="mar-meter"><i style="width:{{ row.bar }}%;background:{% cycle '#e53e3e' '#dd6b20' '#3182ce' '#38a169' %}"></i></div>
+                            </div>
+                            <span class="mar-badge mar-badge--neutral">{{ row.percent }}%</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if summary_ui.distribution_analysis %}
+                    <div class="mar-tile" style="margin-top:1rem;min-height:0">
+                        <ul>
+                            {% for line in summary_ui.distribution_analysis %}<li>{{ line }}</li>{% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+            {% endif %}
+
+            {# 03 — Charts #}
+            {% if summary_ui.charts.subject_labels %}
+            <section class="mar-sec" id="sgs-charts">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">03</div>
+                    <div>
+                        <h2 class="mar-sec__title">Предметные диаграммы</h2>
+                        <p class="mar-sec__lead">{{ summary_ui.avg_label }} и успеваемость по предметам.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-cards">
+                        <div>
+                            <h3 class="mar-panel-title">{{ summary_ui.avg_label }} по предметам</h3>
+                            <div class="mar-chart" style="height:280px">
+                                <canvas id="sgs-chart-avg" aria-label="Диаграмма среднего по предметам"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="mar-panel-title">Успеваемость по предметам</h3>
+                            <div class="mar-chart" style="height:280px">
+                                <canvas id="sgs-chart-pass" aria-label="Диаграмма успеваемости"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {# 04 — Best / worst / thin #}
+            <section class="mar-sec" id="sgs-rank">
+                <div class="mar-sec__bar mar-sec__bar--decision"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">04</div>
+                    <div>
+                        <h2 class="mar-sec__title">ТОП и проблемные предметы</h2>
+                        <p class="mar-sec__lead">Ранжирование предметов с достаточной выборкой.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-cards">
+                        <div class="mar-tile mar-tile--good">
+                            <h3 class="mar-tile__h">ТОП лучших</h3>
+                            {% if summary_ui.best_subjects %}
+                            <ul>
+                                {% for row in summary_ui.best_subjects %}
+                                <li>
+                                    <strong>{{ row.name }}</strong> — {{ row.avg }} · {{ row.pass_rate }}%
+                                    <div class="mar-meter"><i style="width:{{ row.pass_bar }}%;background:#1e7a4a"></i></div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="mar-soft">Недостаточно предметов с выборкой от 5 участников.</p>
+                            {% endif %}
+                        </div>
+                        <div class="mar-tile mar-tile--risk">
+                            <h3 class="mar-tile__h">Проблемные</h3>
+                            {% if summary_ui.worst_subjects %}
+                            <ul>
+                                {% for row in summary_ui.worst_subjects %}
+                                <li>
+                                    <strong>{{ row.name }}</strong> — {{ row.avg }} · {{ row.pass_rate }}%
+                                    <div class="mar-meter"><i style="width:{{ row.pass_bar }}%;background:#9b2c2c"></i></div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="mar-soft">Проблемных позиций с достаточной выборкой не выявлено.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if summary_ui.thin_subjects %}
+                    <div class="mar-tile" style="margin-top:1rem;min-height:0">
+                        <h3 class="mar-tile__h">Недостаточно данных для объективной оценки</h3>
+                        <ul>
+                            {% for row in summary_ui.thin_subjects %}
+                            <li>{{ row.name }} — {{ row.participants }} уч.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+            {% endif %}
+
+            {# 05 — Dynamics #}
+            {% if summary_ui.dynamics %}
+            <section class="mar-sec" id="sgs-dyn">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">05</div>
+                    <div>
+                        <h2 class="mar-sec__title">Динамика по годам</h2>
+                        <p class="mar-sec__lead">Сравнение ключевых показателей во времени.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>Год</th>
+                                    <th class="num">Участников</th>
+                                    <th class="num">Результатов</th>
+                                    <th class="num">Средний</th>
+                                    <th class="num">Успеваемость</th>
+                                    <th>Визуализация</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in summary_ui.dynamics %}
+                                <tr>
+                                    <td class="is-key">{{ row.year }}</td>
+                                    <td class="num">{{ row.students }}</td>
+                                    <td class="num">{{ row.results }}</td>
+                                    <td class="num">{{ row.avg }}</td>
+                                    <td class="num {% if row.pass_rate >= 85 %}is-good{% elif row.pass_rate < 70 %}is-risk{% endif %}">{{ row.pass_rate }}%</td>
+                                    <td><div class="mar-meter" style="margin:0"><i style="width:{{ row.pass_bar }}%"></i></div></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# 06 — Subject cards #}
+            {% if summary_ui.subject_cards %}
+            <section class="mar-sec" id="sgs-subj">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">06</div>
+                    <div>
+                        <h2 class="mar-sec__title">Анализ предметов</h2>
+                        <p class="mar-sec__lead">Карточки предметов с выводами и рекомендациями.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-cards">
+                        {% for card in summary_ui.subject_cards %}
+                        <article class="mar-card {% if card.tone == 'high' %}mar-card--leader{% elif card.tone == 'low' %}mar-card--risk{% elif card.tone == 'mid' %}mar-card--attention{% else %}mar-card--stable{% endif %}">
+                            <div style="display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start;margin-bottom:.55rem">
+                                <h3 class="mar-card__title" style="margin:0">{{ card.name }}</h3>
+                                <span class="mar-badge mar-badge--{% if card.tone == 'neutral' %}mid{% else %}{{ card.tone }}{% endif %}">{{ card.status }}</span>
+                            </div>
+                            <p class="mar-card__meta">{{ summary_ui.subject_count_label }}: {{ card.participants }} · {{ summary_ui.avg_label }}: {{ card.avg }} · усп.: {{ card.pass_rate }}%</p>
+                            <div class="mar-meter"><i style="width:{{ card.pass_bar }}%;background:{% if card.tone == 'high' %}#1e7a4a{% elif card.tone == 'low' %}#9b2c2c{% elif card.tone == 'mid' %}#a85a1a{% else %}#5b9bd5{% endif %}"></i></div>
+                            <p class="mar-card__note" style="margin-top:.55rem">{{ card.conclusion }}</p>
+                            {% if card.recommendation %}<p class="mar-card__note" style="margin-top:.4rem;border-top:1px dashed var(--line);padding-top:.45rem">{{ card.recommendation }}</p>{% endif %}
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# 07 — Class ranking #}
+            {% if summary_class_rows %}
+            <section class="mar-sec" id="sgs-class">
+                <div class="mar-sec__bar mar-sec__bar--decision"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">07</div>
+                    <div>
+                        <h2 class="mar-sec__title">Рейтинг классов</h2>
+                        <p class="mar-sec__lead">Сравнение классов образовательной организации.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>Класс</th>
+                                    <th class="num">Участников</th>
+                                    <th class="num">Средний</th>
+                                    <th class="num">Успеваемость</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in summary_class_rows %}
+                                <tr>
+                                    <td class="is-key">{{ row.student__grade|default:"Класс не указан" }}</td>
+                                    <td class="num">{{ row.participants }}</td>
+                                    <td class="num">{{ row.avg|floatformat:2 }}</td>
+                                    <td class="num {% if row.pass_rate >= 85 %}is-good{% elif row.pass_rate < 70 %}is-risk{% endif %}">{{ row.pass_rate }}%</td>
+                                    <td><div class="mar-meter" style="margin:0"><i style="width:{{ row.pass_rate }}%"></i></div></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# 08 — Recommendations #}
+            {% if summary_ui.recommendations %}
+            <section class="mar-sec" id="sgs-reco">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">08</div>
+                    <div>
+                        <h2 class="mar-sec__title">Рекомендации</h2>
+                        <p class="mar-sec__lead">Адресные предложения по итогам предметного анализа.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-tile">
+                        <ul>
+                            {% for line in summary_ui.recommendations %}
+                            <li>{{ line }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# 09 — Final panels #}
+            {% if summary_ui.panels %}
+            <section class="mar-sec" id="sgs-panels">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">09</div>
+                    <div>
+                        <h2 class="mar-sec__title">Общий вывод</h2>
+                        <p class="mar-sec__lead">Сильные стороны, риски и следующие шаги.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-dash__grid">
+                        <div class="mar-tile mar-tile--good">
+                            <h3 class="mar-tile__h">Сильные стороны</h3>
+                            <ul>{% for line in summary_ui.panels.strengths %}<li>{{ line }}</li>{% empty %}<li>Не выделены</li>{% endfor %}</ul>
+                        </div>
+                        <div class="mar-tile mar-tile--risk">
+                            <h3 class="mar-tile__h">Слабые стороны</h3>
+                            <ul>{% for line in summary_ui.panels.weaknesses %}<li>{{ line }}</li>{% empty %}<li>Не выделены</li>{% endfor %}</ul>
+                        </div>
+                        <div class="mar-tile mar-tile--risk">
+                            <h3 class="mar-tile__h">Основные риски</h3>
+                            <ul>{% for line in summary_ui.panels.risks %}<li>{{ line }}</li>{% empty %}<li>Не выделены</li>{% endfor %}</ul>
+                        </div>
+                        <div class="mar-tile">
+                            <h3 class="mar-tile__h">Рекомендации</h3>
+                            <ul>{% for line in summary_ui.panels.recommendations %}<li>{{ line }}</li>{% empty %}<li>Нет данных</li>{% endfor %}</ul>
+                        </div>
+                        <div class="mar-tile" style="grid-column:1/-1;min-height:0">
+                            <h3 class="mar-tile__h">Следующие шаги</h3>
+                            <ul>{% for line in summary_ui.panels.next_steps %}<li>{{ line }}</li>{% empty %}<li>Нет данных</li>{% endfor %}</ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            <footer class="mar-soft" style="padding:0 0 1.5rem;text-align:center">
+                Свод результатов ГИА · {{ school_name|default:"ОО" }} · {{ summary_ui.exam_label }} · {{ report_selected_summary_year }} · {% now "d.m.Y" %}
+            </footer>
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="sgs-chart-data">{{ summary_ui.charts_json|safe }}</script>
+<script>
+(function () {
+  function boot() {
+    var node = document.getElementById("sgs-chart-data");
+    if (!node || typeof Chart === "undefined") return;
+    var payload;
+    try { payload = JSON.parse(node.textContent); } catch (e) { return; }
+    var labels = payload.labels || [];
+    var avg = payload.avg || [];
+    var pass = payload.pass || [];
+    var common = {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: "#0b1f3a", padding: 10, cornerRadius: 8 }
+      },
+      scales: {
+        x: { grid: { color: "rgba(160,174,192,.35)" }, ticks: { color: "#718096", font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: "#2d3748", font: { size: 11, weight: "600" } } }
+      }
+    };
+    var avgEl = document.getElementById("sgs-chart-avg");
+    if (avgEl) {
+      new Chart(avgEl, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            data: avg,
+            backgroundColor: avg.map(function (v) {
+              var max = payload.avgMax || 100;
+              var rel = max ? v / max : 0;
+              if (rel >= 0.7) return "#38a169";
+              if (rel >= 0.45) return "#d69e2e";
+              return "#e53e3e";
+            }),
+            borderRadius: 8,
+            barThickness: 16
+          }]
+        },
+        options: Object.assign({}, common, {
+          scales: Object.assign({}, common.scales, {
+            x: Object.assign({}, common.scales.x, { max: payload.avgMax || undefined, beginAtZero: true })
+          })
+        })
+      });
+    }
+    var passEl = document.getElementById("sgs-chart-pass");
+    if (passEl) {
+      new Chart(passEl, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            data: pass,
+            backgroundColor: pass.map(function (v) {
+              if (v >= 85) return "#38a169";
+              if (v >= 70) return "#d69e2e";
+              return "#e53e3e";
+            }),
+            borderRadius: 8,
+            barThickness: 16
+          }]
+        },
+        options: Object.assign({}, common, {
+          scales: Object.assign({}, common.scales, {
+            x: Object.assign({}, common.scales.x, { max: 100, beginAtZero: true })
+          })
+        })
+      });
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () { setTimeout(boot, 50); });
+  } else {
+    setTimeout(boot, 50);
+  }
+  window.addEventListener("load", boot);
+})();
+</script>
+
+{% else %}
+<div class="mar" id="schoolGiaSummary">
+    <div class="mar-toolbar">
+        <div class="mar-toolbar__left">
+            <a class="ui-btn" href="/cabinet/reports/?exam_type={{ report_nav_exam_type }}">← Каталог</a>
+            <p class="mar-toolbar__crumb">Свод результатов</p>
+        </div>
+        <div class="mar-toolbar__right">
+            <form method="get" class="mar-form">
+                <input type="hidden" name="doc" value="gia-summary">
+                <label>Год
+                    <select name="year" class="ui-input" onchange="this.form.submit()">
+                        {% for y in report_summary_year_options %}
+                            <option value="{{ y }}" {% if report_selected_summary_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Экзамен
+                    <select name="exam_type" class="ui-input" onchange="this.form.submit()">
+                        <option value="ege" {% if report_nav_exam_type == "ege" %}selected{% endif %}>ЕГЭ</option>
+                        <option value="oge" {% if report_nav_exam_type == "oge" %}selected{% endif %}>ОГЭ</option>
+                    </select>
+                </label>
+            </form>
+        </div>
+    </div>
+    <div class="mar-doc" style="padding:2rem">
+        <p class="mar-soft">{{ summary_empty_message|default:"Недостаточно данных для формирования аналитического свода." }}</p>
+    </div>
+</div>
+{% endif %}

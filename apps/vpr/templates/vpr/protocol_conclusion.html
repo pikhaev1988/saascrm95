@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block head_title %}Аналитическое заключение · {{ protocol.subject }} · ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Модуль ВПР · ФИОКО</span>
+            <h2>Аналитическое заключение</h2>
+            <p>{{ protocol.subject }} · {{ protocol.parallel }} класс · {{ protocol.academic_year }} учебный год</p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'vpr-registry' %}" class="ui-btn">← К реестру</a>
+                <a href="{% url 'vpr-protocol-overview' protocol_id=protocol.id %}" class="ui-btn">Обзор</a>
+            </div>
+        </div>
+    </header>
+
+    {% include "vpr/_protocol_tabs.html" with active_tab="conclusion" %}
+
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <article class="enterprise-panel vpr-conclusion">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Экспертная интерпретация результатов</span>
+                <h3>{{ analysis.conclusion.subject }} · {{ analysis.conclusion.parallel }} класс</h3>
+            </div>
+        </div>
+        <p class="vpr-conclusion__lead">
+            Аналитическая записка сформирована на основании единого комплексного анализа ВПР.
+            Количественные таблицы приведены во вкладке «Обзор».
+        </p>
+
+        {% for section in analysis.conclusion_sections %}
+        <section class="vpr-conclusion__section" id="conclusion-{{ section.key }}">
+            <h4 class="vpr-conclusion__title">{{ forloop.counter }}. {{ section.title }}</h4>
+            {% for paragraph in section.paragraphs %}
+            <p class="vpr-conclusion__paragraph">{{ paragraph }}</p>
+            {% empty %}
+            <p class="enterprise-empty">Данные раздела отсутствуют.</p>
+            {% endfor %}
+        </section>
+        {% endfor %}
+    </article>
+</div>
+{% endblock %}

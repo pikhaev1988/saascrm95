@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow p-6 mt-6">
+    <h2 class="text-xl font-semibold mb-2">Раздел ОГЭ</h2>
+    <p class="text-slate-600 mb-4">
+        Аналитика ОГЭ будет добавлена в следующем этапе. Сейчас доступен полный модуль анализа ЕГЭ.
+    </p>
+    <a href="{% url 'cabinet-exam-choice' %}" class="inline-block bg-indigo-600 text-white rounded-lg px-4 py-2">
+        Назад к выбору экзамена
+    </a>
+</div>
+{% endblock %}

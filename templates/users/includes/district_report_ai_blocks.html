@@ -1,0 +1,49 @@
+{% if payload.report_sections %}
+<div class="enterprise-text-block space-y-4">
+    {% for section in payload.report_sections %}
+    <div>
+        <h4>{{ section.title }}</h4>
+        <ul>
+            {% for item in section.items %}
+                <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+</div>
+{% elif payload.ai_insights or payload.executive_summary or payload.conclusions or payload.recommendations %}
+<div class="enterprise-text-block space-y-4">
+    {% if payload.executive_summary %}
+    <div>
+        <h4>Резюме</h4>
+        <ul>
+            {% for item in payload.executive_summary %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% if payload.ai_insights %}
+    <div>
+        <h4>Ключевые выводы</h4>
+        <ul>
+            {% for item in payload.ai_insights %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% if payload.conclusions %}
+    <div>
+        <h4>Выводы</h4>
+        <ul>
+            {% for item in payload.conclusions %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% if payload.recommendations %}
+    <div>
+        <h4>Рекомендации</h4>
+        <ul>
+            {% for item in payload.recommendations %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endif %}

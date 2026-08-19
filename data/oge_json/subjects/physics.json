@@ -1,0 +1,203 @@
+{
+  "exam": "OGE_2026",
+  "subject": "physics",
+  "tasks": [
+    {
+      "task": 1,
+      "topic": "Кинематика",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched",
+      "skill": "1.2.4"
+    },
+    {
+      "task": 2,
+      "topic": "Законы движения тел",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 3,
+      "topic": "Работа и энергия",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 4,
+      "topic": "Импульс тела",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 5,
+      "topic": "Законы сохранения",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 6,
+      "topic": "Гравитация",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 7,
+      "topic": "Колебания и волны",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 8,
+      "topic": "Звук и его характеристики",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 9,
+      "topic": "Электрические заряды",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 10,
+      "topic": "Электрический ток",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 11,
+      "topic": "Электрическая энергия",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 12,
+      "topic": "Тема по спецификации ОГЭ (требуется методическая верификация)",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_spec_placeholder",
+      "needs_review": true
+    },
+    {
+      "task": 13,
+      "topic": "Магнетизм",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 14,
+      "topic": "Электромагнитные явления",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 15,
+      "topic": "Оптика",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 16,
+      "topic": "Квантовая физика и фотоэффект",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 17,
+      "topic": "Строение атома и ядерная физика",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 18,
+      "topic": "Тепловые явления",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 19,
+      "topic": "Электромагнитные колебания и волны",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 20,
+      "topic": "Современная физика: теория относительности",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 21,
+      "topic": "Гидростатика и гидродинамика",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 22,
+      "topic": "Электрические цепи",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    }
+  ]
+}

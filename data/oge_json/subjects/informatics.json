@@ -1,0 +1,143 @@
+{
+  "exam": "OGE_2026",
+  "subject": "informatics",
+  "tasks": [
+    {
+      "task": 1,
+      "topic": "Представление результатов моделирования в виде, удобном для восприятия человеком",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 2,
+      "topic": "Логика",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched",
+      "skill": "1.1.1"
+    },
+    {
+      "task": 3,
+      "topic": "Табличные (реляционные) базы данных",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 4,
+      "topic": "Двоичное кодирование",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 5,
+      "topic": "Определение возм о ж н ы х р е з у л ь т а т о в р а б о т ы п р о с т е й - ших алгоритмов управления исполнителями и вычислительных алгорит",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 6,
+      "topic": "Определение возможных результатов работы простейших алгоритмов управления исполнителями и вычислительных алгоритмов",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 7,
+      "topic": "Кодирование изображений",
+      "grade_range": [
+        7,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 8,
+      "topic": "Теоретические подходы к оценке количества информации",
+      "grade_range": [
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 9,
+      "topic": "Анализ данных с помощью электронных таблиц",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 10,
+      "topic": "Текстовый процессор",
+      "grade_range": [
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 11,
+      "topic": "Теоретические подходы к оценке количества информации",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 12,
+      "topic": "Определение возможных результатов работы простейших алгоритмов управления исполнителями и вычислительных алгоритмов",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 13,
+      "topic": "Сетевые протоколы",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 14,
+      "topic": "Системы счисления",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 15,
+      "topic": "Алгебра логики",
+      "grade_range": [
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    },
+    {
+      "task": 16,
+      "topic": "Работа с файлами и папками",
+      "grade_range": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "oge_from_ege_enriched"
+    }
+  ]
+}

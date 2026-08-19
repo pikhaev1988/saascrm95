@@ -1,0 +1,25 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Правовая информация{% endblock %} | Анализ ГИА</title>
+    <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=legal1">
+</head>
+<body class="legal-body">
+    <header class="legal-top">
+        <a class="legal-brand" href="{% url 'home-login' %}">Анализ ГИА</a>
+        <nav class="legal-nav">
+            <a href="{% url 'legal-privacy' %}">Персональные данные</a>
+            <a href="{% url 'legal-terms' %}">Условия доступа</a>
+            <a href="{% url 'home-login' %}">Вход</a>
+        </nav>
+    </header>
+    <main class="legal-main">
+        {% block legal_content %}{% endblock %}
+        <p class="legal-note">Редакция от {{ policy_date }}. Вопросы: <a href="mailto:{{ operator_email }}">{{ operator_email }}</a></p>
+    </main>
+</body>
+</html>

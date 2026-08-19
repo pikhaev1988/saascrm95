@@ -1,0 +1,30 @@
+<header class="enterprise-header">
+    <div class="enterprise-header__main">
+        <span class="enterprise-eyebrow">Районный центр аналитики ГИА</span>
+        <h2>{{ role_title|default:"Муниципальный кабинет" }}</h2>
+        <p>Управление образованием района: результаты, динамика, риски и управленческие решения.</p>
+    </div>
+    <div class="enterprise-header__meta">
+        <div class="enterprise-period">
+            <span>Период</span>
+            <strong>{{ hub_selected_year|default:district_selected_year|default:"-" }}</strong>
+        </div>
+        <div class="enterprise-actions">
+            <a href="{% url 'cabinet-district' %}?exam_type=ege{% if district_selected_year %}&amp;year={{ district_selected_year }}{% endif %}"
+               class="ui-btn {% if selected_exam_type == 'ege' %}ui-btn-primary{% endif %}">ЕГЭ</a>
+            <a href="{% url 'cabinet-district' %}?exam_type=oge{% if district_selected_year %}&amp;year={{ district_selected_year }}{% endif %}"
+               class="ui-btn {% if selected_exam_type == 'oge' %}ui-btn-primary{% endif %}">ОГЭ</a>
+            <a href="{% url 'cabinet-district' %}?exam_type=vpr{% if district_selected_year %}&amp;year={{ district_selected_year }}{% endif %}"
+               class="ui-btn {% if selected_exam_type == 'vpr' %}ui-btn-primary{% endif %}">ВПР</a>
+            <a href="{% url 'cabinet-reports' %}?doc=gia-summary&amp;exam_type={{ selected_exam_type|default:'ege' }}" class="ui-btn">Отчеты</a>
+            {% if district_selected_year %}
+            <button
+                type="button"
+                class="ui-btn js-download-in-place"
+                data-download-url="{% url 'cabinet-district-export-gia-summary-docx' %}?exam_type={{ selected_exam_type|default:'ege' }}&amp;year={{ district_selected_year }}"
+                data-download-label="Экспорт DOCX"
+            >Экспорт</button>
+            {% endif %}
+        </div>
+    </div>
+</header>

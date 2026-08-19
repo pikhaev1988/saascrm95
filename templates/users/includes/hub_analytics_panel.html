@@ -1,0 +1,75 @@
+<section class="hub-analytics" aria-label="Динамика и структура">
+    <div class="hub-panel">
+        <h3 class="hub-panel-title">
+            Динамика
+            {% if hub_dynamics_years %}
+                {% if hub_dynamics_years|length == 1 %}
+                    · {{ hub_dynamics_years.0 }}
+                {% else %}
+                    · {{ hub_dynamics_years.0 }}–{{ hub_dynamics_years|last }}
+                {% endif %}
+            {% endif %}
+        </h3>
+        <div class="hub-dyn-grid">
+            <div class="hub-dyn-card">
+                <h4>Средний балл по годам</h4>
+                <div class="hub-chart-box"><canvas id="hubAvgScoreChart"></canvas></div>
+            </div>
+            <div class="hub-dyn-card">
+                <h4>Участники по годам</h4>
+                <div class="hub-chart-box"><canvas id="hubParticipantsChart"></canvas></div>
+            </div>
+            <div class="hub-dyn-card">
+                <h4>Сдаваемость, %</h4>
+                <div class="hub-chart-box"><canvas id="hubPassRateChart"></canvas></div>
+            </div>
+            <div class="hub-dyn-card">
+                <h4>Не преодолели порог</h4>
+                <div class="hub-chart-box"><canvas id="hubFailedChart"></canvas></div>
+            </div>
+        </div>
+        <div class="hub-insights-row">
+            <div class="hub-insight is-up">
+                <p>Самый большой рост</p>
+                <strong>{{ comparison_insights.top_growth_subject|default:"Нет данных" }}</strong>
+                <em>{% if comparison_insights.top_growth_delta %}+{{ comparison_insights.top_growth_delta }}{% else %}—{% endif %}</em>
+            </div>
+            <div class="hub-insight is-down">
+                <p>Наибольшая просадка</p>
+                <strong>{{ comparison_insights.top_decline_subject|default:"Нет данных" }}</strong>
+                <em>{% if comparison_insights.top_decline_delta or comparison_insights.top_decline_delta == 0 %}{{ comparison_insights.top_decline_delta }}{% else %}—{% endif %}</em>
+            </div>
+            <div class="hub-insight">
+                <p>Участников (детей) в {{ comparison_years|last }}</p>
+                <strong>{{ comparison_insights.participants_latest_year }}</strong>
+                <em>ср. балл {{ comparison_insights.overall_avg }}</em>
+            </div>
+        </div>
+    </div>
+    <div class="hub-panel">
+        <h3 class="hub-panel-title">{{ hub_categories_title }}</h3>
+        {% if hub_categories %}
+        <div class="hub-donut-wrap">
+            <div class="hub-donut-canvas-box">
+                <canvas id="hubCategoriesChart"></canvas>
+            </div>
+            <div class="hub-donut-canvas-box hub-donut-canvas-box--bar">
+                <canvas id="hubCategoriesBarChart"></canvas>
+            </div>
+            <div class="hub-cat-list">
+                {% for item in hub_categories %}
+                <div class="hub-cat-item">
+                    <span class="hub-cat-name">
+                        <i class="hub-cat-dot" data-cat-index="{{ forloop.counter0 }}"></i>
+                        <span>{{ item.exam__subject }}</span>
+                    </span>
+                    <strong>{{ item.students }} · {{ item.share }}%</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+            <p class="hub-empty">Нет данных для структуры по предметам.</p>
+        {% endif %}
+    </div>
+</section>

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block head_title %}{{ protocol.subject }} · ВПР — Анализ ГИА{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Модуль ВПР · протокол</span>
+            <h2>{{ protocol.subject }} · {{ protocol.parallel }} класс</h2>
+            <p>{{ protocol.source_title|default:protocol.organization_name }}</p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'vpr-registry' %}" class="ui-btn">← К реестру</a>
+                <a href="{% url 'vpr-upload' %}" class="ui-btn">Загрузить ещё</a>
+                {% if upload.file %}
+                <a href="{% url 'vpr-upload-file' upload_id=upload.id %}" class="ui-btn">Скачать файл</a>
+                {% endif %}
+                <a href="{% url 'vpr-protocol-overview' protocol_id=protocol.id %}" class="ui-btn ui-btn-primary">Обзор результатов</a>
+            </div>
+        </div>
+    </header>
+
+    {% include "vpr/_protocol_tabs.html" %}
+
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="enterprise-panel" id="info">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Сведения</span>
+                <h3>Карточка протокола</h3>
+            </div>
+            <div class="enterprise-actions">
+                <form method="post" action="{% url 'vpr-upload-reimport' upload_id=upload.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="ui-btn" onclick="return confirm('Повторить импорт?');">Повторить импорт</button>
+                </form>
+                <form method="post" action="{% url 'vpr-upload-delete' upload_id=upload.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="ui-btn" onclick="return confirm('Удалить импорт?');">Удалить импорт</button>
+                </form>
+            </div>
+        </div>
+        <div class="hub-kpi-grid hub-kpi-grid--compact">
+            <article class="hub-kpi"><p class="hub-kpi-label">Предмет</p><p class="hub-kpi-value" style="font-size:1.05rem">{{ protocol.subject }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Класс</p><p class="hub-kpi-value">{{ protocol.parallel }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Учебный год</p><p class="hub-kpi-value">{{ protocol.academic_year }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Дата проведения</p><p class="hub-kpi-value" style="font-size:1.05rem">{{ protocol.exam_date|date:"d.m.Y"|default:"—" }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Участники</p><p class="hub-kpi-value">{{ protocol.participants_count }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Макс. балл</p><p class="hub-kpi-value">{{ protocol.max_primary_score }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Задания</p><p class="hub-kpi-value">{{ protocol.tasks_count }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Статус</p><p class="hub-kpi-value" style="font-size:1.05rem">{{ upload.get_status_display }}</p></article>
+        </div>
+        <p class="enterprise-empty" style="margin-top:1rem">
+            Организация: <strong>{{ protocol.organization_name|default:protocol.organization_code|default:"—" }}</strong>
+            {% if protocol.municipality %}<br>Муниципалитет: {{ protocol.municipality }}{% endif %}
+            <br>Дата загрузки: {{ upload.created_at|date:"d.m.Y H:i" }}
+            <br>Пользователь: {{ upload.uploaded_by.get_username|default:"—" }}
+            {% if upload.original_filename %}<br>Файл: {{ upload.original_filename }}{% endif %}
+        </p>
+    </section>
+
+    {% if tasks %}
+    <section class="enterprise-panel">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Задания</span>
+                <h3>Список заданий протокола</h3>
+            </div>
+        </div>
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Код</th>
+                        <th>Заголовок</th>
+                        <th>Макс. балл</th>
+                        <th>Сложность</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>{{ task.position }}</td>
+                        <td>{{ task.code }}</td>
+                        <td>{{ task.title }}</td>
+                        <td>{{ task.max_score }}</td>
+                        <td>{{ task.difficulty|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="enterprise-panel" id="participants">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Участники</span>
+                <h3>Результаты участников ({{ participants|length }})</h3>
+            </div>
+        </div>
+        {% if participants %}
+        <div class="enterprise-table-wrap">
+            <table class="enterprise-table">
+                <thead>
+                    <tr>
+                        <th>Код</th>
+                        <th>Класс</th>
+                        <th>Вариант</th>
+                        <th>Первичный балл</th>
+                        <th>Отметка ВПР</th>
+                        <th>Отметка по журналу</th>
+                        {% for task in tasks %}
+                        <th title="{{ task.title }}">{{ task.code }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in participants %}
+                    <tr>
+                        <td>{{ row.participant_code }}</td>
+                        <td>{{ row.class_group|default:"—" }}</td>
+                        <td>{{ row.variant|default:"—" }}</td>
+                        <td>{{ row.primary_score|default:"—" }}</td>
+                        <td>{{ row.mark_vpr|default:"—" }}</td>
+                        <td>{{ row.mark_journal|default:"—" }}</td>
+                        {% for cell in row.score_cells %}
+                        <td>{% if cell and cell.score is not None %}{{ cell.score|floatformat:0 }}{% elif cell and cell.raw_value %}{{ cell.raw_value }}{% else %}—{% endif %}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="enterprise-empty" style="margin-top:0.75rem">Баллы по заданиям показаны без анализа.</p>
+        {% else %}
+        <p class="enterprise-empty">Участники не найдены.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,928 @@
+{# Аналитическая справка по итогам ГИА (школа) — MAR presentation shell #}
+{% include "users/includes/district_mar_bits.html" with bit="css" %}
+
+{% if analytic_note_ui and analytic_note_ui.has_data %}
+{% with ui=analytic_note_ui %}
+<div class="mar" id="schoolAnalyticNote"
+     data-school="{{ school_name|default:'Образовательная организация' }}"
+     data-year="{{ ui.year }}"
+     data-formed="{% now 'd.m.Y' %}">
+
+    <div class="mar-toolbar">
+        <div class="mar-toolbar__left">
+            <a class="ui-btn" href="/cabinet/reports/?exam_type={{ report_nav_exam_type }}">← Каталог</a>
+            <p class="mar-toolbar__crumb">Аналитическая справка · <strong>{{ ui.exam_label }}{% if ui.year %} · {{ ui.year }}{% endif %}</strong></p>
+        </div>
+        <div class="mar-toolbar__right">
+            <form method="get" class="mar-form">
+                <input type="hidden" name="doc" value="analysis-note">
+                <label>Год
+                    <select name="year" class="ui-input" onchange="this.form.submit()">
+                        {% for y in report_note_year_options %}
+                            <option value="{{ y }}" {% if report_selected_note_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Экзамен
+                    <select name="exam_type" class="ui-input" onchange="this.form.submit()">
+                        <option value="ege" {% if report_nav_exam_type == "ege" %}selected{% endif %}>ЕГЭ</option>
+                        <option value="oge" {% if report_nav_exam_type == "oge" %}selected{% endif %}>ОГЭ</option>
+                    </select>
+                </label>
+            </form>
+            <button
+                type="button"
+                class="ui-btn ui-btn-primary js-download-in-place"
+                data-download-url="{% url 'cabinet-school-export-analytic-note-docx' %}?exam_type={{ report_selected_note_exam_type }}&year={{ report_selected_note_year }}"
+                data-download-label="Скачать DOCX"
+            >Скачать DOCX</button>
+        </div>
+    </div>
+
+    <div class="mar-doc">
+        <section class="mar-cover" id="mar-cover">
+            <div class="mar-cover__inner">
+                <div class="mar-cover__brand">
+                    {% include "users/includes/district_mar_bits.html" with bit="logo" %}
+                    <div>
+                        <p class="mar-cover__org">Система образования образовательной организации</p>
+                        <p class="mar-cover__org-name">{{ school_name|default:"Образовательная организация" }}</p>
+                    </div>
+                </div>
+                <p class="mar-cover__eyebrow">Официальный аналитический отчёт</p>
+                <h1 class="mar-cover__title">Аналитическая справка по итогам ГИА</h1>
+                <dl class="mar-cover__meta">
+                    <div>
+                        <dt>Вид экзамена</dt>
+                        <dd>{{ ui.exam_label }}</dd>
+                    </div>
+                    <div>
+                        <dt>Отчётный период</dt>
+                        <dd>{% if ui.year %}{{ ui.year }}{% else %}—{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>Образовательная организация</dt>
+                        <dd>{{ school_name|default:"Образовательная организация" }}</dd>
+                    </div>
+                    <div>
+                        <dt>Дата формирования</dt>
+                        <dd>{% now "d.m.Y" %}</dd>
+                    </div>
+                </dl>
+                <div class="mar-cover__foot">
+                    <span>Конфиденциально · для служебного пользования</span>
+                    <span class="mar-badge mar-badge--neutral">{{ ui.exam_label }}{% if ui.year %} · {{ ui.year }}{% endif %}</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="mar-body">
+            <nav class="mar-toc" id="mar-toc" aria-label="Содержание">
+                <h2 class="mar-toc__title">Содержание</h2>
+                <ol class="mar-toc__list">
+                    <li><a href="#san-01"><span class="mar-toc__n">01</span>Управленческое резюме<span class="mar-toc__dots"></span></a></li>
+                    {% if ui.expert.comprehensive_analysis %}<li><a href="#san-02"><span class="mar-toc__n">02</span>Комплексный анализ результатов<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.subjects %}<li><a href="#san-03"><span class="mar-toc__n">03</span>Предметный анализ<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.expert.strengths_analysis %}<li><a href="#san-04"><span class="mar-toc__n">04</span>Анализ сильных сторон<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.expert.problems_analysis %}<li><a href="#san-05"><span class="mar-toc__n">05</span>Анализ проблемных зон<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.classes %}<li><a href="#san-06"><span class="mar-toc__n">06</span>Поклассная статистика<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.expert.risk_group_analysis %}<li><a href="#san-07"><span class="mar-toc__n">07</span>Анализ группы риска<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    <li><a href="#san-08"><span class="mar-toc__n">08</span>Проблемные зоны<span class="mar-toc__dots"></span></a></li>
+                    {% if ui.expert.factor_analysis %}<li><a href="#san-09"><span class="mar-toc__n">09</span>Факторный анализ<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.expert.management_risks %}<li><a href="#san-10"><span class="mar-toc__n">10</span>Управленческие риски<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.expert.forecast %}<li><a href="#san-11"><span class="mar-toc__n">11</span>Прогноз<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    <li><a href="#san-12"><span class="mar-toc__n">12</span>Анализ высокобалльников<span class="mar-toc__dots"></span></a></li>
+                    {% if ui.dynamics %}<li><a href="#san-13"><span class="mar-toc__n">13</span>Сравнительный анализ и динамика<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.expert.final_expert_conclusion %}<li><a href="#san-14"><span class="mar-toc__n">14</span>Итоговое экспертное заключение<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.methodological %}<li><a href="#san-15"><span class="mar-toc__n">15–21</span>Методический анализ ФИПИ<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.expert.management_decisions %}<li><a href="#san-ur"><span class="mar-toc__n">UR</span>Управленческие решения<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.expert.plan_rows %}<li><a href="#san-pm"><span class="mar-toc__n">PM</span>План мероприятий<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    {% if ui.expert.quality_self_check %}<li><a href="#san-qc"><span class="mar-toc__n">QC</span>Самопроверка качества<span class="mar-toc__dots"></span></a></li>{% endif %}
+                    <li><a href="#san-concl"><span class="mar-toc__n">ВЫВ</span>Выводы<span class="mar-toc__dots"></span></a></li>
+                    {% if ui.reco_groups %}<li><a href="#san-reco"><span class="mar-toc__n">РЕК</span>Рекомендации<span class="mar-toc__dots"></span></a></li>{% endif %}
+                </ol>
+            </nav>
+
+            {# ——— 01 Управленческое резюме ——— #}
+            <section class="mar-sec" id="san-01">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">01</div>
+                    <div>
+                        <h2 class="mar-sec__title">Управленческое резюме</h2>
+                        <p class="mar-sec__lead">Сводная оценка результатов ОО и ключевые показатели среза.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    {% if ui.expert.executive_summary %}
+                    <div class="mar-legend">
+                        <span class="mar-stmt--fact" style="padding:.25rem .55rem;border-radius:999px">Факт</span>
+                        <span class="mar-stmt--conclusion" style="padding:.25rem .55rem;border-radius:999px">Вывод</span>
+                        <span class="mar-stmt--hypothesis" style="padding:.25rem .55rem;border-radius:999px">Гипотеза</span>
+                        <span class="mar-stmt--decision" style="padding:.25rem .55rem;border-radius:999px">Решение</span>
+                    </div>
+                    {% include "users/includes/district_an_chain.html" with chain=ui.expert.executive_summary %}
+                    <div class="mar-divider"></div>
+                    {% endif %}
+                    <div class="mar-kpi">
+                        <div class="mar-kpi__card mar-kpi__card--{{ ui.kpi.tones.participants }}"><div class="mar-kpi__icon">👤</div><span class="mar-kpi__value">{{ ui.kpi.participants }}</span><span class="mar-kpi__label">Количество участников</span></div>
+                        <div class="mar-kpi__card"><div class="mar-kpi__icon">≡</div><span class="mar-kpi__value">{{ ui.kpi.total_results }}</span><span class="mar-kpi__label">Результатов по предметам</span></div>
+                        <div class="mar-kpi__card mar-kpi__card--{{ ui.kpi.tones.subjects }}"><div class="mar-kpi__icon">▣</div><span class="mar-kpi__value">{{ ui.kpi.subjects_count }}</span><span class="mar-kpi__label">Количество предметов</span></div>
+                        <div class="mar-kpi__card mar-kpi__card--{{ ui.kpi.tones.avg }}"><div class="mar-kpi__icon">Σ</div><span class="mar-kpi__value">{{ ui.kpi.avg_score }}</span><span class="mar-kpi__label">{{ ui.avg_label }}</span></div>
+                        <div class="mar-kpi__card mar-kpi__card--{{ ui.kpi.tones.quality }}"><div class="mar-kpi__icon">Q</div><span class="mar-kpi__value">{{ ui.kpi.quality_rate }}%</span><span class="mar-kpi__label">Качество знаний</span></div>
+                        <div class="mar-kpi__card mar-kpi__card--{{ ui.kpi.tones.pass }}"><div class="mar-kpi__icon">%</div><span class="mar-kpi__value">{{ ui.kpi.pass_rate }}%</span><span class="mar-kpi__label">Успеваемость</span></div>
+                        <div class="mar-kpi__card mar-kpi__card--{{ ui.kpi.tones.high }}"><div class="mar-kpi__icon">★</div><span class="mar-kpi__value">{{ ui.kpi.high_count }}</span><span class="mar-kpi__label">Высокобалльники</span></div>
+                    </div>
+                </div>
+            </section>
+
+            {# ——— 02 Комплексный анализ ——— #}
+            {% if ui.expert.comprehensive_analysis %}
+            <section class="mar-sec" id="san-02">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">02</div>
+                    <div>
+                        <h2 class="mar-sec__title">Комплексный анализ результатов</h2>
+                        <p class="mar-sec__lead">Связанные факты, выводы и гипотезы по итогам среза.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    {% include "users/includes/district_an_chain.html" with chain=ui.expert.comprehensive_analysis %}
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 03 Предметный анализ ——— #}
+            {% if ui.subjects %}
+            <section class="mar-sec" id="san-03">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">03</div>
+                    <div>
+                        <h2 class="mar-sec__title">Предметный анализ</h2>
+                        <p class="mar-sec__lead">Результаты по предметам с оценкой успешности и статусом.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>Предмет</th>
+                                    <th class="num">Участ.</th>
+                                    <th class="num">{{ ui.avg_label }}</th>
+                                    <th>Успеваемость</th>
+                                    <th class="num">Мин</th>
+                                    <th class="num">Макс</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in ui.subjects %}
+                                <tr>
+                                    <td class="is-key">{{ row.name }}</td>
+                                    <td class="num">{{ row.participants }}</td>
+                                    <td class="num">{{ row.avg }}</td>
+                                    <td>
+                                        <span class="{% if row.tone == 'high' %}is-good{% elif row.tone == 'low' %}is-risk{% endif %}">{{ row.pass_rate }}%</span>
+                                        <div class="mar-meter"><i style="width:{{ row.pass_bar }}%;background:{% if row.tone == 'high' %}#1e7a4a{% elif row.tone == 'low' %}#9b2c2c{% elif row.tone == 'warn' %}#a85a1a{% else %}#b7791f{% endif %}"></i></div>
+                                    </td>
+                                    <td class="num">{{ row.min_v|floatformat:2 }}</td>
+                                    <td class="num">{{ row.max_v|floatformat:2 }}</td>
+                                    <td><span class="mar-badge mar-badge--{{ row.tone }}">{{ row.icon }} {{ row.status }}</span></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if ui.expert.subject_analysis %}
+                    <div class="mar-divider"></div>
+                    {% for row in ui.expert.subject_analysis %}
+                    <p class="mar-panel-title"{% if not forloop.first %} style="margin-top:1.1rem"{% endif %}>{{ row.name }}</p>
+                    {% include "users/includes/district_an_chain.html" with chain=row.items %}
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 04 Сильные стороны ——— #}
+            {% if ui.expert.strengths_analysis %}
+            <section class="mar-sec" id="san-04">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">04</div>
+                    <div>
+                        <h2 class="mar-sec__title">Анализ сильных сторон</h2>
+                        <p class="mar-sec__lead">Подтверждённые достижения и устойчивые положительные результаты.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    {% include "users/includes/district_an_chain.html" with chain=ui.expert.strengths_analysis %}
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 05 Проблемные зоны (текст) ——— #}
+            {% if ui.expert.problems_analysis %}
+            <section class="mar-sec" id="san-05">
+                <div class="mar-sec__bar mar-sec__bar--risk"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">05</div>
+                    <div>
+                        <h2 class="mar-sec__title">Анализ проблемных зон</h2>
+                        <p class="mar-sec__lead">Зоны внимания и подтверждённые дефициты по результатам среза.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    {% include "users/includes/district_an_chain.html" with chain=ui.expert.problems_analysis %}
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 06 Поклассная статистика ——— #}
+            {% if ui.classes %}
+            <section class="mar-sec" id="san-06">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">06</div>
+                    <div>
+                        <h2 class="mar-sec__title">Поклассная статистика</h2>
+                        <p class="mar-sec__lead">Сравнение параллелей и классов по среднему и успеваемости.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>Класс / параллель</th>
+                                    <th class="num">Участ.</th>
+                                    <th class="num">{{ ui.avg_label }}</th>
+                                    <th>Успеваемость</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in ui.classes %}
+                                <tr>
+                                    <td class="is-key">{{ row.name }}</td>
+                                    <td class="num">{{ row.participants }}</td>
+                                    <td class="num">{{ row.avg }}</td>
+                                    <td><span class="mar-badge mar-badge--{{ row.tone }}">{{ row.pass_rate }}%</span></td>
+                                    <td><div class="mar-meter"><i style="width:{{ row.pass_bar }}%"></i></div></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 07 Группа риска ——— #}
+            {% if ui.expert.risk_group_analysis %}
+            <section class="mar-sec" id="san-07">
+                <div class="mar-sec__bar mar-sec__bar--risk"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">07</div>
+                    <div>
+                        <h2 class="mar-sec__title">Анализ группы риска</h2>
+                        <p class="mar-sec__lead">Участники и предметы с повышенным риском неуспешности.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    {% include "users/includes/district_an_chain.html" with chain=ui.expert.risk_group_analysis %}
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 08 Карточки риска ——— #}
+            <section class="mar-sec" id="san-08">
+                <div class="mar-sec__bar mar-sec__bar--risk"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">08</div>
+                    <div>
+                        <h2 class="mar-sec__title">Проблемные зоны (карточки риска)</h2>
+                        <p class="mar-sec__lead">Предметы и направления, требующие приоритетного сопровождения.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    {% if ui.has_weak_zones %}
+                    <div class="mar-dash__grid">
+                        {% for z in ui.weak_zones %}
+                        <div class="mar-tile {% if z.tone == 'low' %}mar-tile--risk{% elif z.tone == 'high' %}mar-tile--good{% endif %}">
+                            <h3 class="mar-tile__h">{{ z.name }}</h3>
+                            <p class="mar-soft" style="margin:0 0 .55rem">
+                                <span class="mar-badge mar-badge--{{ z.tone }}">Риск: {{ z.risk }}</span>
+                                · {{ ui.avg_label }}: {{ z.avg }} · усп. {{ z.pass_rate }}%
+                            </p>
+                            {% if z.statements %}
+                            {% include "users/includes/district_an_chain.html" with chain=z.statements %}
+                            {% else %}
+                            <p style="margin:0;font-size:.92rem;line-height:1.45">{{ z.text }}</p>
+                            {% endif %}
+                            <div class="mar-meter" style="margin-top:.65rem"><i style="width:{{ z.pass_bar }}%;background:{% if z.tone == 'low' %}#9b2c2c{% elif z.tone == 'warn' %}#a85a1a{% else %}#b7791f{% endif %}"></i></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="mar-tile mar-tile--good">
+                        <h3 class="mar-tile__h">Статус: без критических дефицитов</h3>
+                        <p class="mar-soft" style="margin:0">По заданным критериям проблемные зоны не выявлены.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            {# ——— 09 Факторный анализ ——— #}
+            {% if ui.expert.factor_analysis %}
+            <section class="mar-sec" id="san-09">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">09</div>
+                    <div>
+                        <h2 class="mar-sec__title">Факторный анализ</h2>
+                        <p class="mar-sec__lead">Факторы влияния на результат и их интерпретация.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead><tr><th>Фактор</th><th>Влияние</th><th>Интерпретация</th></tr></thead>
+                            <tbody>
+                            {% for f in ui.expert.factor_analysis %}
+                                <tr>
+                                    <td class="is-key">{{ f.factor }}</td>
+                                    <td>{{ f.impact }}</td>
+                                    <td>
+                                        {% if f.kind %}
+                                        <span class="mar-badge mar-badge--{% if f.kind == 'fact' %}neutral{% elif f.kind == 'conclusion' %}high{% elif f.kind == 'hypothesis' %}mid{% else %}warn{% endif %}">
+                                            {% if f.kind == 'fact' %}Факт{% elif f.kind == 'conclusion' %}Вывод{% elif f.kind == 'hypothesis' %}Гипотеза{% else %}Решение{% endif %}
+                                        </span>
+                                        {% endif %}
+                                        {{ f.why }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 10 Управленческие риски ——— #}
+            {% if ui.expert.management_risks %}
+            <section class="mar-sec" id="san-10">
+                <div class="mar-sec__bar mar-sec__bar--risk"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">10</div>
+                    <div>
+                        <h2 class="mar-sec__title">Управленческие риски</h2>
+                        <p class="mar-sec__lead">Вероятность, влияние и приоритет устранения рисков.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead><tr><th>Риск</th><th>Вероятность</th><th>Влияние</th><th>Приоритет</th></tr></thead>
+                            <tbody>
+                            {% for r in ui.expert.management_risks %}
+                                <tr>
+                                    <td class="is-key">{{ r.type }}</td>
+                                    <td>{{ r.probability }}</td>
+                                    <td>{{ r.impact }}</td>
+                                    <td class="is-key">{{ r.priority }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 11 Прогноз ——— #}
+            {% if ui.expert.forecast %}
+            <section class="mar-sec" id="san-11">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">11</div>
+                    <div>
+                        <h2 class="mar-sec__title">Прогноз</h2>
+                        <p class="mar-sec__lead">Ожидаемая динамика при сохранении текущих условий.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    {% include "users/includes/district_an_chain.html" with chain=ui.expert.forecast %}
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 12 Высокобалльники ——— #}
+            <section class="mar-sec" id="san-12">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">12</div>
+                    <div>
+                        <h2 class="mar-sec__title">Анализ высокобалльников</h2>
+                        <p class="mar-sec__lead">Критерий: {{ ui.high_scorers.threshold_hint }}</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-dash__hero">
+                        <div>
+                            <p class="mar-dash__hero-title">Высокобалльных результатов</p>
+                            <p class="mar-dash__hero-snap" style="font-size:2.2rem;font-weight:800;margin:.35rem 0 0">{{ ui.high_scorers.count }}</p>
+                        </div>
+                        <span class="mar-badge mar-badge--{{ ui.high_scorers.tone }}">Высокобалльники</span>
+                    </div>
+                    {% if ui.high_scorers.statements %}
+                    {% include "users/includes/district_an_chain.html" with chain=ui.high_scorers.statements %}
+                    {% else %}
+                    <p class="mar-soft" style="margin:.85rem 0 0">{{ ui.high_scorers.insight }}</p>
+                    {% endif %}
+                </div>
+            </section>
+
+            {# ——— 13 Динамика ——— #}
+            {% if ui.dynamics %}
+            <section class="mar-sec" id="san-13">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">13</div>
+                    <div>
+                        <h2 class="mar-sec__title">Сравнительный анализ и динамика</h2>
+                        <p class="mar-sec__lead">Изменение ключевых показателей по годам.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-chart"><canvas id="san-dyn-chart"></canvas></div>
+                    <p class="mar-hint">Таблица — приложение к графику</p>
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>Год</th>
+                                    <th class="num">Участников</th>
+                                    <th class="num">Результатов</th>
+                                    <th class="num">{{ ui.avg_label }}</th>
+                                    <th>Успеваемость</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in ui.dynamics %}
+                                <tr>
+                                    <td class="is-key">{{ row.year }}</td>
+                                    <td class="num">{{ row.participants }}</td>
+                                    <td class="num">{{ row.results }}</td>
+                                    <td class="num">{{ row.avg }}</td>
+                                    <td class="num">{{ row.pass_rate }}%</td>
+                                    <td><div class="mar-meter"><i style="width:{{ row.pass_bar }}%"></i></div></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 14 Итоговое заключение ——— #}
+            {% if ui.expert.final_expert_conclusion %}
+            <section class="mar-sec" id="san-14">
+                <div class="mar-sec__bar mar-sec__bar--decision"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">14</div>
+                    <div>
+                        <h2 class="mar-sec__title">Итоговое экспертное заключение</h2>
+                        <p class="mar-sec__lead">Сводка фактов, выводов и управленческих решений.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    {% include "users/includes/district_an_chain.html" with chain=ui.expert.final_expert_conclusion %}
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— 15–21 Методический анализ ——— #}
+            {% if ui.methodological %}
+            {% with m=ui.methodological %}
+            <section class="mar-sec" id="san-15">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">15</div>
+                    <div>
+                        <h2 class="mar-sec__title">Методический анализ ФИПИ: темы и приоритеты</h2>
+                        <p class="mar-sec__lead">Агрегация тем, дефициты, план коррекции и методическое заключение.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <p class="mar-hint">{{ m.methodology_note }}</p>
+                    <p class="mar-hint">{{ m.appendix_note }}</p>
+                    {% if not m.has_any_task_data %}
+                        <p class="mar-soft">{{ m.empty_message }}</p>
+                    {% else %}
+                        <p class="mar-panel-title">15–16. Агрегация тем и анализ по темам</p>
+                        <div class="mar-chain">
+                            {% for line in m.aggregation_overview %}
+                            <article class="mar-stmt mar-stmt--conclusion">
+                                <div class="mar-stmt__icon" aria-hidden="true">②</div>
+                                <div>
+                                    <span class="mar-stmt__label">Вывод</span>
+                                    <p class="mar-stmt__text">{{ line }}</p>
+                                </div>
+                            </article>
+                            {% endfor %}
+                        </div>
+
+                        {% for block in m.subject_blocks %}
+                            {% if block.has_task_data and block.topics %}
+                            <div class="mar-tile" style="margin-top:.85rem">
+                                <h3 class="mar-tile__h">{{ block.subject }}</h3>
+                                <p style="margin:0 0 .55rem;font-size:.92rem;line-height:1.45">{{ block.analysis_text }}</p>
+                                {% for t in block.topics|slice:":3" %}
+                                <p style="margin:.55rem 0 0;font-size:.9rem">
+                                    <strong>{{ t.topic }}</strong> · задания {{ t.tasks_label }} · {{ t.success_rate }}% ·
+                                    <span class="mar-badge mar-badge--{% if t.risk_level == 'critical' or t.risk_level == 'high' %}low{% elif t.risk_level == 'medium' %}mid{% else %}high{% endif %}">{{ t.risk_label }}</span>
+                                    · {{ t.grade_label }}
+                                </p>
+                                <p class="mar-soft" style="margin:.25rem 0 0">{{ t.analysis_text }}</p>
+                                {% endfor %}
+                            </div>
+                            {% elif not block.has_task_data %}
+                            <div class="mar-tile" style="margin-top:.85rem">
+                                <h3 class="mar-tile__h">{{ block.subject }}</h3>
+                                <p class="mar-soft" style="margin:0">{{ block.message }}</p>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+
+                        <p class="mar-panel-title" style="margin-top:1.25rem">17. Анализ по классам</p>
+                        {% if m.class_analysis %}
+                        <div class="mar-chain">
+                            {% for row in m.class_analysis|slice:":8" %}
+                            <article class="mar-stmt mar-stmt--conclusion">
+                                <div class="mar-stmt__icon" aria-hidden="true">②</div>
+                                <div>
+                                    <span class="mar-stmt__label">Вывод</span>
+                                    <p class="mar-stmt__text"><strong>{{ row.subject }}.</strong> {{ row.text }}</p>
+                                </div>
+                            </article>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="mar-soft">Недостаточно данных о классах изучения.</p>
+                        {% endif %}
+
+                        <p class="mar-panel-title" style="margin-top:1.25rem">18. Методические рекомендации (по приоритетным темам)</p>
+                        <div class="mar-dash__grid">
+                            {% for row in m.recommendations_by_topic|slice:":6" %}
+                            <div class="mar-tile">
+                                <h3 class="mar-tile__h">{{ row.subject }} · {{ row.topic }}</h3>
+                                <p class="mar-soft" style="margin:0 0 .45rem">{{ row.grade_label }} · {{ row.success_rate }}%</p>
+                                <ul>{% for a in row.actions|slice:":3" %}<li>{{ a }}</li>{% endfor %}</ul>
+                            </div>
+                            {% empty %}
+                            <div class="mar-tile"><p class="mar-soft" style="margin:0">{{ m.empty_message }}</p></div>
+                            {% endfor %}
+                        </div>
+
+                        <p class="mar-panel-title" style="margin-top:1.25rem">19. План коррекционной работы</p>
+                        <div class="mar-table-wrap">
+                            <table class="mar-table">
+                                <thead><tr><th>Тема</th><th>Класс</th><th>Предмет</th><th>Причина</th><th>Ответственный</th><th>Срок</th></tr></thead>
+                                <tbody>
+                                {% for row in m.correction_plan|slice:":8" %}
+                                    <tr>
+                                        <td class="is-key">{{ row.topic }}</td>
+                                        <td>{{ row.grade }}</td>
+                                        <td>{{ row.subject }}</td>
+                                        <td>{{ row.reason }}</td>
+                                        <td>{{ row.owner }}</td>
+                                        <td>{{ row.deadline }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="6">{{ m.empty_message }}</td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="mar-panel-title" style="margin-top:1.25rem">20. Сводная карта дефицитов школы</p>
+                        <div style="display:flex;flex-wrap:wrap;gap:.45rem">
+                            {% for row in m.school_deficit_map|slice:":12" %}
+                            <span class="mar-badge mar-badge--{% if row.risk_level == 'critical' or row.risk_level == 'high' %}low{% elif row.risk_level == 'medium' or row.risk_level == 'watch' %}mid{% else %}high{% endif %}">
+                                {{ row.grade_label }} · <strong>{{ row.subject }}</strong> · {{ row.topic }} · {{ row.success_rate }}% · {{ row.risk_label }}
+                            </span>
+                            {% empty %}
+                            <p class="mar-soft">{{ m.empty_message }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <p class="mar-panel-title" style="margin-top:1.25rem">21 / 24. Приоритетные методические дефициты (ТОП-10)</p>
+                        <ol style="margin:0;padding-left:1.2rem;font-size:.92rem;line-height:1.45">
+                            {% for row in m.priority_topics %}
+                            <li style="margin:.55rem 0">
+                                <strong>{{ row.topic }}</strong> · {{ row.subject }} · {{ row.grade_label }} · ср.успех {{ row.success_rate }}% · заданий {{ row.task_count }} ({{ row.tasks_label }}) ·
+                                <span class="mar-badge mar-badge--{% if row.risk_level == 'critical' or row.risk_level == 'high' %}low{% elif row.risk_level == 'medium' %}mid{% else %}high{% endif %}">{{ row.risk_label }}</span>.
+                                <br><span class="mar-soft">Почему критична: {{ row.why_critical }}</span>
+                                <br><span class="mar-soft">Последствия: {{ row.exam_impact }}</span>
+                            </li>
+                            {% empty %}
+                            <li>{{ m.empty_message }}</li>
+                            {% endfor %}
+                        </ol>
+
+                        <p class="mar-panel-title" style="margin-top:1.25rem">25. Методическое заключение</p>
+                        <div class="mar-chain">
+                            {% for line in m.methodological_conclusion %}
+                            <article class="mar-stmt mar-stmt--conclusion">
+                                <div class="mar-stmt__icon" aria-hidden="true">②</div>
+                                <div>
+                                    <span class="mar-stmt__label">Вывод</span>
+                                    <p class="mar-stmt__text">{{ line }}</p>
+                                </div>
+                            </article>
+                            {% empty %}
+                            <article class="mar-stmt mar-stmt--fact">
+                                <div class="mar-stmt__icon" aria-hidden="true">①</div>
+                                <div>
+                                    <span class="mar-stmt__label">Факт</span>
+                                    <p class="mar-stmt__text">{{ m.empty_message }}</p>
+                                </div>
+                            </article>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+            {% endwith %}
+            {% endif %}
+
+            {# ——— Управленческие решения ——— #}
+            {% if ui.expert.management_decisions %}
+            <section class="mar-sec" id="san-ur">
+                <div class="mar-sec__bar mar-sec__bar--decision"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">UR</div>
+                    <div>
+                        <h2 class="mar-sec__title">Управленческие решения по уровням</h2>
+                        <p class="mar-sec__lead">Действия для ролей управленческой команды ОО.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-dash__grid">
+                    {% for d in ui.expert.management_decisions %}
+                        <div class="mar-tile">
+                            <h3 class="mar-tile__h">{{ d.role }}</h3>
+                            <ul>{% for a in d.actions %}<li>{{ a }}</li>{% endfor %}</ul>
+                        </div>
+                    {% endfor %}
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— План мероприятий ——— #}
+            {% if ui.expert.plan_rows %}
+            <section class="mar-sec" id="san-pm">
+                <div class="mar-sec__bar mar-sec__bar--decision"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">PM</div>
+                    <div>
+                        <h2 class="mar-sec__title">План мероприятий</h2>
+                        <p class="mar-sec__lead">От факта риска к мероприятию, ответственному и ожидаемому результату.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-table-wrap">
+                        <table class="mar-table">
+                            <thead>
+                                <tr>
+                                    <th>Проблема (факт риска)</th>
+                                    <th>Гипотеза (требует проверки)</th>
+                                    <th>Мероприятие (решение)</th>
+                                    <th>Ответственный</th>
+                                    <th>Ожидаемый результат</th>
+                                    <th>Приоритет</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for p in ui.expert.plan_rows %}
+                                <tr>
+                                    <td>{{ p.problem }}</td>
+                                    <td>{{ p.cause }}</td>
+                                    <td class="is-key">{{ p.action }}</td>
+                                    <td>{{ p.owner }}</td>
+                                    <td>{{ p.effect }}</td>
+                                    <td>{{ p.priority }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— Самопроверка ——— #}
+            {% if ui.expert.quality_self_check %}
+            <section class="mar-sec" id="san-qc">
+                <div class="mar-sec__bar"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">QC</div>
+                    <div>
+                        <h2 class="mar-sec__title">Самопроверка качества анализа</h2>
+                        <p class="mar-sec__lead">Контроль соответствия справки критериям экспертного анализа.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    {% if ui.expert.ready %}
+                    <p class="mar-soft" style="margin:0 0 .65rem"><span class="mar-badge mar-badge--high">✔ Готово</span> Справка соответствует критериям экспертного анализа.</p>
+                    {% else %}
+                    <p class="mar-soft" style="margin:0 0 .65rem"><span class="mar-badge mar-badge--low">✖ Переработка</span> Требуется переработка: не все критерии качества выполнены.</p>
+                    {% endif %}
+                    <div class="mar-tile">
+                        <ul>
+                            {% for c in ui.expert.quality_self_check %}
+                            <li>{% if c.ok %}✔{% else %}✖{% endif %} {{ c.label }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            {# ——— Выводы ——— #}
+            <section class="mar-sec" id="san-concl">
+                <div class="mar-sec__bar mar-sec__bar--good"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">ВЫВ</div>
+                    <div>
+                        <h2 class="mar-sec__title">Выводы</h2>
+                        <p class="mar-sec__lead">Сильные стороны, зоны внимания и общая оценка периода.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-dash__grid">
+                        <div class="mar-tile mar-tile--good">
+                            <h3 class="mar-tile__h">Сильные стороны</h3>
+                            {% if ui.conclusions.strengths %}
+                            <ul>{% for item in ui.conclusions.strengths %}<li>{{ item }}</li>{% endfor %}</ul>
+                            {% else %}
+                            <p class="mar-soft" style="margin:0">Отдельные сильные стороны в тексте выводов не выделены.</p>
+                            {% endif %}
+                        </div>
+                        <div class="mar-tile mar-tile--risk">
+                            <h3 class="mar-tile__h">Что требует внимания</h3>
+                            {% if ui.conclusions.attention %}
+                            <ul>{% for item in ui.conclusions.attention %}<li>{{ item }}</li>{% endfor %}</ul>
+                            {% else %}
+                            <p class="mar-soft" style="margin:0">Явных зон внимания в текущих выводах нет.</p>
+                            {% endif %}
+                        </div>
+                        <div class="mar-tile">
+                            <h3 class="mar-tile__h">Общая оценка</h3>
+                            {% if ui.conclusions.overall %}
+                            <ul>{% for item in ui.conclusions.overall %}<li>{{ item }}</li>{% endfor %}</ul>
+                            {% else %}
+                            <p class="mar-soft" style="margin:0">Общая оценка формируется по совокупности показателей периода.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {# ——— Рекомендации ——— #}
+            {% if ui.reco_groups %}
+            <section class="mar-sec" id="san-reco">
+                <div class="mar-sec__bar mar-sec__bar--decision"></div>
+                <header class="mar-sec__head">
+                    <div class="mar-sec__icon">РЕК</div>
+                    <div>
+                        <h2 class="mar-sec__title">Рекомендации</h2>
+                        <p class="mar-sec__lead">Практические шаги по итогам анализа.</p>
+                    </div>
+                </header>
+                <div class="mar-sec__body">
+                    <div class="mar-dash__grid">
+                    {% for g in ui.reco_groups %}
+                        <div class="mar-tile">
+                            <h3 class="mar-tile__h">{{ g.icon }} {{ g.title }}</h3>
+                            <ul>{% for item in g.items %}<li>{{ item }}</li>{% endfor %}</ul>
+                        </div>
+                    {% endfor %}
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            <footer class="mar-soft" style="padding:0 0 1.5rem;text-align:center">
+                Аналитическая справка по итогам ГИА · {{ school_name|default:"Образовательная организация" }} · {% if ui.year %}{{ ui.year }} · {% endif %}дата формирования {% now "d.m.Y" %}
+            </footer>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+  var canvas = document.getElementById("san-dyn-chart");
+  if (!canvas || typeof Chart === "undefined") return;
+  var raw = {{ ui.charts_json|safe }};
+  if (!raw.dynYears || !raw.dynYears.length) return;
+  new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: raw.dynYears,
+      datasets: [
+        {
+          label: "Средний",
+          data: raw.dynAvg,
+          borderColor: "#1b4f72",
+          backgroundColor: "rgba(27,79,114,.12)",
+          tension: 0.35,
+          yAxisID: "y",
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: "#1b4f72"
+        },
+        {
+          label: "Успеваемость, %",
+          data: raw.dynPass,
+          borderColor: "#1e7a4a",
+          backgroundColor: "rgba(30,122,74,.08)",
+          tension: 0.35,
+          yAxisID: "y1",
+          fill: false,
+          pointRadius: 4,
+          pointBackgroundColor: "#1e7a4a"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 12 } } }
+      },
+      scales: {
+        y: {
+          type: "linear",
+          position: "left",
+          min: 0,
+          max: raw.avgMax || 100,
+          title: { display: true, text: "Средний" },
+          grid: { color: "rgba(16,42,67,.06)" }
+        },
+        y1: {
+          type: "linear",
+          position: "right",
+          min: 0,
+          max: 100,
+          title: { display: true, text: "Успеваемость, %" },
+          grid: { drawOnChartArea: false }
+        },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+})();
+</script>
+{% endwith %}
+{% else %}
+<div class="mar" id="schoolAnalyticNoteEmpty">
+    <div class="mar-toolbar">
+        <div class="mar-toolbar__left">
+            <a class="ui-btn" href="/cabinet/reports/?exam_type={{ report_nav_exam_type }}">← Каталог</a>
+            <p class="mar-toolbar__crumb">Аналитическая справка по итогам ГИА</p>
+        </div>
+        <div class="mar-toolbar__right">
+            <form method="get" class="mar-form">
+                <input type="hidden" name="doc" value="analysis-note">
+                <label>Год
+                    <select name="year" class="ui-input" onchange="this.form.submit()">
+                        {% for y in report_note_year_options %}
+                            <option value="{{ y }}" {% if report_selected_note_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Экзамен
+                    <select name="exam_type" class="ui-input" onchange="this.form.submit()">
+                        <option value="ege" {% if report_nav_exam_type == "ege" %}selected{% endif %}>ЕГЭ</option>
+                        <option value="oge" {% if report_nav_exam_type == "oge" %}selected{% endif %}>ОГЭ</option>
+                    </select>
+                </label>
+                <button type="submit" class="ui-btn ui-btn-primary">Сформировать</button>
+            </form>
+        </div>
+    </div>
+    <div class="mar-doc" style="padding:2rem">
+        <p class="mar-soft">{{ analytic_note_ui.message|default:analytic_note_payload.message|default:"Недостаточно данных для формирования аналитической справки." }}</p>
+    </div>
+</div>
+{% endif %}

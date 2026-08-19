@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+{% block head_title %}{% if selected_exam_type == "ege" %}Аналитика ЕГЭ — {{ role_title }}{% elif selected_exam_type == "oge" %}Аналитика ОГЭ — {{ role_title }}{% elif selected_exam_type == "vpr" or vpr_mode %}Аналитика ВПР — {{ role_title }}{% else %}{{ role_title }} — Анализ ГИА{% endif %}{% endblock %}
+{% block content %}
+{% if selected_exam_type == "ege" and not vpr_mode %}
+{# Presentation-only BI shell for school EGE analytics #}
+<div class="content-stack content-stack--loose">
+    {% include "users/includes/school_ege_analytics.html" %}
+</div>
+{% elif selected_exam_type == "oge" and not vpr_mode %}
+{# Same BI shell for school OGE analytics #}
+<div class="content-stack content-stack--loose">
+    {% include "users/includes/school_oge_analytics.html" %}
+</div>
+{% elif vpr_mode or selected_exam_type == "vpr" %}
+{# Same BI shell for school VPR analytics #}
+<div class="content-stack content-stack--loose">
+    {% include "users/includes/school_vpr_analytics.html" %}
+</div>
+{% else %}
+<div class="content-stack content-stack--loose hub-page ds-page ds-page--loose">
+    <header class="enterprise-header ds-page-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Кабинет школы</span>
+            <h2>{{ role_title }}</h2>
+            <p>Аналитика {{ selected_exam_type_label|default:"ЕГЭ" }}: разбор по предметам, заданиям и результатам учеников.</p>
+        </div>
+        <div class="enterprise-header__meta">
+            {% if selected_year %}
+            <div class="enterprise-period">
+                <span>Период</span>
+                <strong>{{ selected_year }}</strong>
+            </div>
+            {% endif %}
+            <div class="enterprise-actions">
+                <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn ui-btn-primary">Обзор школы</a>
+                <a href="{% url 'cabinet-reports' %}" class="ui-btn">Отчёты</a>
+                <a href="{% url 'cabinet-upload-ege' %}" class="ui-btn">Протоколы ЕГЭ</a>
+                <a href="{% url 'cabinet-upload-oge' %}" class="ui-btn">Протоколы ОГЭ</a>
+                <a href="{% url 'cabinet-upload-vpr' %}" class="ui-btn">Протоколы ВПР</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="hub-year-pills" style="margin-bottom:1rem;">
+        <a href="?exam_type=ege{% if selected_year %}&amp;year={{ selected_year }}{% endif %}" class="hub-year-pill-link {% if selected_exam_type == 'ege' %}is-active{% endif %}">ЕГЭ</a>
+        <a href="?exam_type=oge{% if selected_year %}&amp;year={{ selected_year }}{% endif %}" class="hub-year-pill-link {% if selected_exam_type == 'oge' %}is-active{% endif %}">ОГЭ</a>
+        <a href="?exam_type=vpr{% if selected_year %}&amp;year={{ selected_year }}{% endif %}" class="hub-year-pill-link {% if selected_exam_type == 'vpr' %}is-active{% endif %}">ВПР</a>
+    </div>
+
+    <div class="hub-detail-layout">
+        <aside class="hub-panel hub-subject-nav">
+            <h3 class="hub-panel-title">Предметы · {{ selected_exam_type_label|default:"ЕГЭ" }}</h3>
+            {% if available_years %}
+            <div class="hub-year-pills">
+                {% for year in available_years %}
+                <a href="?exam_type={{ selected_exam_type|default:'ege' }}&amp;year={{ year }}{% if selected_exam_id %}&amp;exam={{ selected_exam_id }}{% endif %}"
+                   class="hub-year-pill-link {% if selected_year == year %}is-active{% endif %}">{{ year }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if school_subjects %}
+            <div class="hub-subject-links">
+                {% for item in school_subjects %}
+                <a href="?exam_type={{ selected_exam_type|default:'ege' }}&amp;year={{ selected_year }}&amp;exam={{ item.exam_id }}"
+                   class="hub-subject-link {% if selected_exam_id == item.exam_id|stringformat:'s' %}is-active{% endif %}">
+                    <strong>{{ item.subject_label|default:item.exam__subject }}</strong>
+                    {% if vpr_mode %}
+                    <span>{% if item.exam__exam_date %}{{ item.exam__exam_date|date:"d.m.Y" }}{% else %}Дата не указана{% endif %} · макс. {{ item.max_primary_score }} б.</span>
+                    {% else %}
+                    <span>Код {{ item.exam__code }} · {{ item.exam__exam_date|date:"d.m.Y" }}</span>
+                    {% endif %}
+                    <em>{{ item.students_count }} участников</em>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+                {% if vpr_mode %}
+                {% include "includes/ds/empty_state.html" with icon="📋" title="Нет протоколов ВПР" text="По выбранному году протоколы ВПР не найдены." action_url="/cabinet/vpr/upload/" action_label="Загрузить протокол ВПР" %}
+                {% else %}
+                {% include "includes/ds/empty_state.html" with icon="📊" title="Нет результатов" text="Нет результатов по выбранному году и типу экзамена." %}
+                {% endif %}
+            {% endif %}
+        </aside>
+
+        <div class="hub-detail-main">
+            {% if vpr_mode %}
+                {% if vpr_selected_protocol %}
+                <section class="hub-panel">
+                    <div class="hub-compare-head">
+                        <div>
+                            <h3 class="hub-panel-title">Анализ ВПР</h3>
+                            <p class="hub-compare-lead">{{ selected_exam_title }}</p>
+                        </div>
+                        <div class="hub-actions">
+                            <a href="{% url 'vpr-protocol-overview' protocol_id=vpr_selected_protocol.id %}" class="ui-btn ui-btn-primary">Обзор результатов</a>
+                            <a href="{% url 'vpr-protocol-conclusion' protocol_id=vpr_selected_protocol.id %}" class="ui-btn">Аналитическое заключение</a>
+                            <a href="{% url 'vpr-protocol-detail' protocol_id=vpr_selected_protocol.id %}" class="ui-btn">Протокол</a>
+                            <a href="{% url 'vpr-registry' %}" class="ui-btn">Все протоколы ВПР</a>
+                        </div>
+                    </div>
+
+                    {% if selected_exam_analysis %}
+                    <div class="hub-kpi-grid hub-kpi-grid--compact">
+                        <article class="hub-kpi"><p class="hub-kpi-label">Участников</p><p class="hub-kpi-value">{{ selected_exam_analysis.students_count }}</p></article>
+                        <article class="hub-kpi"><p class="hub-kpi-label">Средний первичный балл</p><p class="hub-kpi-value">{% if selected_exam_analysis.avg_score is not None %}{{ selected_exam_analysis.avg_score }}{% else %}—{% endif %}</p></article>
+                        <article class="hub-kpi"><p class="hub-kpi-label">Мин / макс</p><p class="hub-kpi-value" style="font-size:1rem;">{% if selected_exam_analysis.min_score is not None %}{{ selected_exam_analysis.min_score }}{% else %}—{% endif %} / {% if selected_exam_analysis.max_score is not None %}{{ selected_exam_analysis.max_score }}{% else %}—{% endif %}</p></article>
+                        <article class="hub-kpi"><p class="hub-kpi-label">Абс. успеваемость</p><p class="hub-kpi-value">{% if selected_exam_analysis.pass_rate is not None %}{{ selected_exam_analysis.pass_rate }}%{% else %}—{% endif %}</p></article>
+                        <article class="hub-kpi"><p class="hub-kpi-label">Качество знаний</p><p class="hub-kpi-value">{% if selected_exam_analysis.knowledge_quality_percent is not None %}{{ selected_exam_analysis.knowledge_quality_percent }}%{% else %}—{% endif %}</p></article>
+                        <article class="hub-kpi"><p class="hub-kpi-label">Средняя отметка ВПР</p><p class="hub-kpi-value">{% if selected_exam_analysis.avg_mark_vpr is not None %}{{ selected_exam_analysis.avg_mark_vpr }}{% else %}—{% endif %}</p></article>
+                    </div>
+                    {% endif %}
+
+                    <p class="hub-empty" style="margin-top:1rem">
+                        Полный разбор заданий, дефицитов и экспертное заключение доступны в модуле ВПР.
+                        Используйте кнопки выше.
+                    </p>
+                </section>
+                {% else %}
+                <section class="hub-panel">
+                    <p class="hub-empty">
+                        {% if school_subjects %}
+                        Выберите предмет ВПР в меню слева.
+                        {% else %}
+                        Протоколы ВПР не найдены.
+                        <a href="{% url 'vpr-upload' %}">Загрузить протокол</a>
+                        или откройте <a href="{% url 'vpr-registry' %}">реестр протоколов ВПР</a>.
+                        {% endif %}
+                    </p>
+                </section>
+                {% endif %}
+            {% elif selected_exam_results %}
+            <section class="hub-panel">
+                <div class="hub-compare-head">
+                    <div>
+                        <h3 class="hub-panel-title">Анализ предмета</h3>
+                        <p class="hub-compare-lead">{{ selected_exam_title }}</p>
+                    </div>
+                    <div class="hub-actions">
+                        {% if selected_exam_id %}
+                        <button type="button" class="ui-btn js-download-in-place"
+                            data-download-url="{% url 'cabinet-school-export-word' %}?exam={{ selected_exam_id }}"
+                            data-download-label="Скачать анализ (DOCX)">Скачать DOCX</button>
+                        {% endif %}
+                        <a href="{% url 'cabinet-reports' %}" class="ui-btn ui-btn-primary">Отчёты</a>
+                    </div>
+                </div>
+
+                {% if selected_exam_analysis %}
+                {% if analytics_error %}
+                <div class="hub-insight hub-insight--warn">
+                    <p>Внимание</p>
+                    <strong>{{ analytics_error }}</strong>
+                </div>
+                {% endif %}
+                <div class="hub-kpi-grid hub-kpi-grid--compact">
+                    <article class="hub-kpi"><p class="hub-kpi-label">Учеников</p><p class="hub-kpi-value">{{ selected_exam_analysis.students_count }}</p></article>
+                    <article class="hub-kpi"><p class="hub-kpi-label">Средний балл</p><p class="hub-kpi-value">{{ selected_exam_analysis.avg_score }}</p></article>
+                    <article class="hub-kpi"><p class="hub-kpi-label">Мин / макс</p><p class="hub-kpi-value" style="font-size:1rem;">{{ selected_exam_analysis.min_score }} / {{ selected_exam_analysis.max_score }}</p></article>
+                    <article class="hub-kpi"><p class="hub-kpi-label">Сдаваемость</p><p class="hub-kpi-value">{{ selected_exam_analysis.pass_rate }}%</p></article>
+                </div>
+
+                <div class="hub-dyn-grid">
+                    <div class="hub-dyn-card">
+                        <h4>Успешность по заданиям, %</h4>
+                        <div class="hub-chart-box"><canvas id="allTasksSuccessChart"></canvas></div>
+                    </div>
+                    <div class="hub-dyn-card">
+                        <h4>Ошибки по заданиям</h4>
+                        <div class="hub-chart-box"><canvas id="allTasksMinusChart"></canvas></div>
+                    </div>
+                </div>
+
+                {% if selected_exam_analysis.part_narrative %}
+                <p class="hub-section-label">Анализ частей экзамена</p>
+                <div class="hub-insights-row">
+                    {% for line in selected_exam_analysis.part_narrative %}
+                    <div class="hub-insight"><p>Части КИМ</p><strong>{{ line }}</strong></div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if selected_exam_analysis.strength_summary.lines %}
+                <p class="hub-section-label">Сильные стороны</p>
+                <div class="hub-insights-row">
+                    {% for line in selected_exam_analysis.strength_summary.lines %}
+                    <div class="hub-insight hub-insight--positive"><p>Достигнуто</p><strong>{{ line }}</strong></div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if selected_exam_analysis.thematic_blocks %}
+                <p class="hub-section-label">Тематические блоки</p>
+                <div class="hub-table-wrap">
+                    <table class="hub-table">
+                        <thead><tr><th>Приоритет</th><th>Раздел → Подраздел</th><th>Задания</th><th>Успешность</th></tr></thead>
+                        <tbody>
+                            {% for block in selected_exam_analysis.thematic_blocks %}
+                            <tr>
+                                <td>{{ block.priority_label }}</td>
+                                <td>{{ block.section }} → {{ block.subsection }}</td>
+                                <td>{% for n in block.tasks %}№{{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                                <td><span class="hub-rate {% if block.avg_success < 50 %}is-danger{% endif %}">{{ block.avg_success }}%</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                {% if selected_exam_analysis.recommendations %}
+                <div class="hub-insights-row">
+                    {% for rec in selected_exam_analysis.recommendations %}
+                    <div class="hub-insight"><p>Рекомендация</p><strong>{{ rec }}</strong></div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="hub-table-wrap">
+                    <table class="hub-table">
+                        <thead><tr><th>Задание</th><th>Тема (ФИПИ)</th><th>Успешность</th><th>Верно (+)</th><th>Ошибок (-)</th><th>Всего</th></tr></thead>
+                        <tbody>
+                            {% for task in selected_exam_analysis.task_rows %}
+                            <tr>
+                                <td>№{{ task.task_number }}</td>
+                                <td>
+                                    <strong>{{ task.topic|default:"—" }}</strong>
+                                    {% if task.section %}<br><small>{{ task.section }}{% if task.subsection %} · {{ task.subsection }}{% endif %}</small>{% endif %}
+                                    {% if task.skill_name %}<br><small>Умение: {{ task.skill_name }}</small>{% endif %}
+                                    {% if task.fgos_studied %}<br><small>Изучается: {{ task.fgos_studied }}; закрепляется: {{ task.fgos_reinforced }}; проверяется: {{ task.fgos_exam }}</small>{% endif %}
+                                    {% if task.source %}<br><small>Источник: {{ task.source }}</small>{% endif %}
+                                </td>
+                                <td><span class="hub-rate {% if task.success_rate < 50 %}is-danger{% endif %}">{{ task.success_rate }}%</span></td>
+                                <td>{{ task.plus }}</td>
+                                <td>{{ task.minus }}</td>
+                                <td>{{ task.total }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if selected_exam_analysis.deficit_paths %}
+                <p class="hub-section-label">Причины дефицитов и маршрут устранения</p>
+                {% for deficit in selected_exam_analysis.deficit_paths %}
+                <div class="hub-panel hub-panel--nested">
+                    <p><strong>{{ deficit.priority_label|default:"" }}</strong> {% if deficit.cause %}{{ deficit.cause }}{% endif %}</p>
+                    {% if deficit.prerequisites %}
+                    <p class="hub-compare-lead">Базовые темы:</p>
+                    <ul class="hub-trajectory">
+                        {% for step in deficit.prerequisites %}
+                        <li>{{ step }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% if deficit.remediation_path %}
+                    <p class="hub-compare-lead">План ликвидации:</p>
+                    <ol class="hub-trajectory">
+                        {% for step in deficit.remediation_path %}
+                        <li>{{ step }}</li>
+                        {% endfor %}
+                    </ol>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if selected_exam_analysis.class_analysis.lines %}
+                <p class="hub-section-label">Анализ классов программы</p>
+                {% for line in selected_exam_analysis.class_analysis.lines %}
+                <div class="hub-insight"><p>Класс программы</p><strong>{{ line }}</strong></div>
+                {% endfor %}
+                {% endif %}
+
+                {% if selected_exam_analysis.risk_clusters %}
+                <p class="hub-section-label">Группы риска</p>
+                {% for cluster in selected_exam_analysis.risk_clusters %}
+                <div class="hub-insight hub-insight--warn"><p>{{ cluster.students_count }} уч.</p><strong>{{ cluster.label }}</strong></div>
+                {% endfor %}
+                {% endif %}
+                {{ selected_exam_analysis.chart.labels|json_script:"allTasksChartLabels" }}
+                {{ selected_exam_analysis.chart.success_rates|json_script:"allTasksChartSuccessRates" }}
+                {{ selected_exam_analysis.chart.minus_counts|json_script:"allTasksChartMinusCounts" }}
+                {% endif %}
+            </section>
+
+            <section class="hub-panel">
+                <h3 class="hub-panel-title">Результаты учеников · {{ selected_exam_results|length }}</h3>
+                {% if selected_exam_threshold %}
+                <p class="hub-compare-lead">Минимальный порог: {% if selected_exam_threshold.minimum_score %}{{ selected_exam_threshold.minimum_score }} балла{% else %}оценка {{ selected_exam_threshold.minimum_grade }}{% endif %}</p>
+                {% endif %}
+                <div class="hub-table-wrap">
+                    <table class="hub-table">
+                        <thead>
+                            <tr>
+                                <th>ФИО</th><th>Краткий</th><th>Развёрнутый</th><th>Первичный</th><th>Балл</th><th>Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in selected_exam_results %}
+                            <tr class="{% if row.below_minimum %}hub-row-danger{% endif %}">
+                                <td>
+                                    <a class="hub-link" href="{% url 'cabinet-school-student-work' result_id=row.result.id %}">
+                                        <strong>{{ row.result.student_name|default:row.result.student.full_name }}</strong>
+                                    </a>
+                                </td>
+                                <td>{{ row.result.short_answer_tasks }}</td>
+                                <td>{{ row.result.long_answer_tasks }}</td>
+                                <td>{{ row.result.primary_score }}</td>
+                                <td>{{ row.result.score }}</td>
+                                <td>{% if row.below_minimum %}<span class="hub-rate is-danger">Ниже минимума</span>{% else %}Порог пройден{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {% else %}
+            <section class="hub-panel">
+                <p class="hub-empty">Выберите предмет в меню слева для детального анализа.</p>
+            </section>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if selected_exam_analysis %}
+    <script>
+    (function () {
+        const taskLabels = JSON.parse(document.getElementById("allTasksChartLabels").textContent);
+        const taskSuccessRates = JSON.parse(document.getElementById("allTasksChartSuccessRates").textContent);
+        const taskMinusCounts = JSON.parse(document.getElementById("allTasksChartMinusCounts").textContent);
+        const nullSafe = (arr) => (Array.isArray(arr) ? arr : []);
+        const labels = nullSafe(taskLabels);
+        const successRates = nullSafe(taskSuccessRates);
+        const minusCounts = nullSafe(taskMinusCounts);
+        function initTaskCharts() {
+            if (!labels.length) return;
+            if (!window.Chart) {
+                window.renderSimpleBarChart("allTasksSuccessChart", labels, successRates, 100);
+                window.renderSimpleBarChart("allTasksMinusChart", labels, minusCounts);
+                return;
+            }
+            new Chart(document.getElementById("allTasksSuccessChart"), {
+                type: "bar",
+                data: { labels: labels, datasets: [{ data: successRates, backgroundColor: "#1677ff" }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } },
+            });
+            new Chart(document.getElementById("allTasksMinusChart"), {
+                type: "bar",
+                data: { labels: labels, datasets: [{ data: minusCounts, backgroundColor: "#f5222d" }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+            });
+        }
+        if (document.readyState === "complete") initTaskCharts();
+        else window.addEventListener("load", initTaskCharts);
+    })();
+    </script>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

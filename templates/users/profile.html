@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block head_title %}Профиль — Анализ ГИА{% endblock %}
+{% block content %}
+{% if request.user.role == "district" %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Районный центр аналитики ГИА</span>
+            <h2>Настройки</h2>
+            <p>Данные организации и параметры районного кабинета.</p>
+        </div>
+    </header>
+    <div class="enterprise-panel enterprise-narrow">
+        {% if saved %}
+            <div class="mb-4 ui-alert ui-alert--success">Изменения сохранены.</div>
+        {% endif %}
+        {% if error %}
+            <div class="mb-4 ui-alert ui-alert--error">{{ error }}</div>
+        {% endif %}
+        {% if organization %}
+            <form method="post" class="ui-form-stack space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="id-org-name">Название</label>
+                    <input id="id-org-name" type="text" name="name" value="{{ organization.name }}" required>
+                </div>
+                <div>
+                    <label for="id-org-code">Код</label>
+                    <input id="id-org-code" type="text" name="code" value="{{ organization.code }}" required>
+                </div>
+                <div class="enterprise-form-actions">
+                    <button type="submit" class="ui-btn ui-btn-primary">Сохранить</button>
+                    <a href="{% url 'cabinet-password-change' %}" class="ui-btn">Изменить пароль</a>
+                    <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn">← К обзору</a>
+                </div>
+            </form>
+        {% else %}
+            <p class="enterprise-empty">Для вашей учетной записи организация не привязана.</p>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="enterprise-dashboard ds-page">
+    <header class="enterprise-header ds-page-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Настройки</span>
+            <h2>Профиль организации</h2>
+            <p>Измените данные вашей организации и параметры входа.</p>
+        </div>
+    </header>
+    <div class="enterprise-panel enterprise-narrow">
+    {% if saved %}
+        <div class="mb-4 ui-alert ui-alert--success">Изменения сохранены.</div>
+    {% endif %}
+    {% if error %}
+        <div class="mb-4 ui-alert ui-alert--error">{{ error }}</div>
+    {% endif %}
+
+    {% if organization %}
+        <form method="post" class="ui-form-stack space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="id-org-name">Название</label>
+                <input id="id-org-name" type="text" name="name" value="{{ organization.name }}" required>
+            </div>
+            {% if user_role != "ministry" %}
+            <div>
+                <label for="id-org-code">Код</label>
+                <input id="id-org-code" type="text" name="code" value="{{ organization.code }}" required>
+            </div>
+            {% endif %}
+            <div class="enterprise-form-actions">
+                <button type="submit" class="ui-btn ui-btn-primary">Сохранить</button>
+                <a href="{% url 'cabinet-password-change' %}" class="ui-btn">Изменить пароль</a>
+                <a href="{% url 'cabinet-exam-choice' %}" class="ui-btn">← К обзору</a>
+            </div>
+        </form>
+    {% else %}
+        {% include "includes/ds/empty_state.html" with icon="⚙" title="Организация не привязана" text="Для вашей учетной записи организация не привязана." %}
+    {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+title=None subject=None creator=None desc=None keywords=None
+defined_names keys: []
+merged: []
+nonempty participant codes: 0 sample=[]
+rows with data in cols1-11: 0
+original_filename: 'Форма сбора результатов Английский язык 8 класс ВПР 2026.xlsx'
+comments in header: 0
+HEADER:
+  col1: 'Код участника'
+  col2: 'Вариант'
+  col3: '1 (5б)'
+  col4: '2 (5б)'
+  col5: '3 (5б)'
+  col6: '4К1 (3б)'
+  col7: '4К2 (2б)'
+  col8: '4К3 (3б)'
+  col9: '4К4 (2б)'
+  col10: 'Порядковый номер класса'
+  col11: 'Отметка за предыдущий триместр/ четверть/полугодие'
+  col12: 'Итого баллов'
+  col13: None
+  col14: None
+  col15: None
+  col16: None
+  col17: None
+  col18: None
+  col19: None
+  col20: None
+  col21: None

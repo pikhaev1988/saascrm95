@@ -1,0 +1,25 @@
+<section class="enterprise-panel" id="risks">
+    <div class="enterprise-section-head">
+        <div>
+            <span class="enterprise-eyebrow">Управленческие сигналы</span>
+            <h3>Что требует внимания</h3>
+        </div>
+    </div>
+    {% if district_management_signals %}
+        <div class="enterprise-signal-grid">
+            {% for signal in district_management_signals %}
+            <article class="enterprise-signal-card">
+                <div class="enterprise-signal-card__mark">!</div>
+                <div>
+                    <h4>{{ signal.title }}</h4>
+                    <p><strong>Проблема:</strong> {{ signal.issue }}</p>
+                    <p><strong>Причина:</strong> {{ signal.reason }}</p>
+                    <p><strong>Рекомендация:</strong> {{ signal.recommendation }}</p>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="enterprise-empty">Критических сигналов по выбранному периоду не найдено.</p>
+    {% endif %}
+</section>

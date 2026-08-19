@@ -1,0 +1,751 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head_title %}Отчеты — Анализ ГИА{% endblock %}
+{% block extra_head %}
+{% if user_role == "district" and not report_doc or user_role == "school" and not report_doc %}
+<link rel="stylesheet" href="{% static 'css/district-reports.css' %}?v=drc2">
+{% endif %}
+{% if user_role == "district" and report_doc == "analysis-note" or user_role == "district" and report_doc == "gia-summary" or user_role == "district" and report_doc == "info-stat" or user_role == "district" and report_doc == "subject-notes" or user_role == "district" and report_doc == "school-comparison" or user_role == "district" and report_doc == "mo-report" or user_role == "district" and report_doc == "management-report" or user_role == "school" and report_doc == "analysis-note" or user_role == "school" and report_doc == "gia-summary" or user_role == "school" and report_doc == "info-stat" or user_role == "school" and report_doc == "subject-notes" or user_role == "school" and report_doc == "mo-report" or user_role == "school" and report_doc == "deputy-report" %}
+<link rel="stylesheet" href="{% static 'css/district-analytic-note.css' %}?v=mar7">
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="{% if user_role == 'district' or user_role == 'school' %}enterprise-dashboard{% else %}content-stack content-stack--loose{% endif %}">
+    {% if user_role == "district" and report_doc and report_doc != "analysis-note" and report_doc != "gia-summary" and report_doc != "info-stat" and report_doc != "subject-notes" and report_doc != "school-comparison" and report_doc != "mo-report" and report_doc != "management-report" %}
+        <header class="enterprise-header">
+            <div class="enterprise-header__main">
+                <span class="enterprise-eyebrow">Районный центр аналитики ГИА</span>
+                <h2>Отчеты</h2>
+                <p>Единый раздел хранения и выгрузки официальных документов по итогам ГИА.</p>
+            </div>
+            <div class="enterprise-header__meta">
+                {% if report_selected_district_year %}
+                <div class="enterprise-period">
+                    <span>Период</span>
+                    <strong>{{ report_selected_district_year }}</strong>
+                </div>
+                {% endif %}
+                <div class="enterprise-actions">
+                    <a class="ui-btn {% if report_nav_exam_type == 'ege' %}ui-btn-primary{% endif %}" href="/cabinet/reports/?exam_type=ege{% if report_doc %}&doc={{ report_doc }}{% endif %}">ЕГЭ</a>
+                    <a class="ui-btn {% if report_nav_exam_type == 'oge' %}ui-btn-primary{% endif %}" href="/cabinet/reports/?exam_type=oge{% if report_doc %}&doc={{ report_doc }}{% endif %}">ОГЭ</a>
+                    <a class="ui-btn" href="/cabinet/reports/?exam_type={{ report_nav_exam_type }}">К каталогу</a>
+                </div>
+            </div>
+        </header>
+    {% elif user_role != "district" and user_role != "school" %}
+    <header class="enterprise-header ds-page-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Кабинет{% if user_role == "ministry" %} министерства{% endif %}</span>
+            <h2>Отчеты</h2>
+            <p>Единый раздел хранения и выгрузки официальных документов по итогам ГИА.</p>
+        </div>
+    </header>
+    {% endif %}
+
+    {% if user_role == "district" and report_doc == "gia-summary" %}
+        {% include "users/includes/district_gia_summary_report.html" %}
+    {% elif user_role == "district" and report_doc == "info-stat" %}
+        {% include "users/includes/district_info_stat_report.html" %}
+    {% elif user_role == "district" and report_doc == "analysis-note" %}
+        {% include "users/includes/district_analytic_note_report.html" %}
+    {% elif user_role == "district" and report_doc == "subject-notes" %}
+        {% include "users/includes/district_subject_note_report.html" %}
+    {% elif user_role == "district" and report_doc == "school-comparison" %}
+        {% include "users/includes/district_school_comparison_report.html" %}
+    {% elif user_role == "district" and report_doc == "mo-report" %}
+        {% include "users/includes/district_mo_report.html" %}
+    {% elif user_role == "district" and report_doc == "management-report" %}
+        {% include "users/includes/district_management_report.html" %}
+    {% elif user_role == "district" %}
+        <div class="drc" id="drcRoot" data-exam="{{ report_nav_exam_type }}" data-year="{{ report_selected_district_year|default:'' }}">
+            <section class="drc-hero" aria-label="Центр аналитической отчетности">
+                <div class="drc-hero__main">
+                    <p class="drc-hero__eyebrow">Районный центр аналитики ГИА{% if district_name %} · {{ district_name }}{% endif %}</p>
+                    <h1 class="drc-hero__title">Центр аналитической отчетности</h1>
+                    <p class="drc-hero__lead">
+                        Аналитические и управленческие документы по результатам государственной итоговой аттестации муниципалитета.
+                    </p>
+                    <div class="drc-hero__meta">
+                        <div class="drc-hero__chip">
+                            <span>Отчётов</span>
+                            <strong>7</strong>
+                        </div>
+                        <div class="drc-hero__chip">
+                            <span>Период</span>
+                            <strong>{{ report_selected_district_year|default:"—" }}</strong>
+                        </div>
+                        <div class="drc-hero__chip">
+                            <span>Обновлено</span>
+                            <strong>{% now "d.m.Y" %}</strong>
+                        </div>
+                    </div>
+                    <div class="drc-hero__switches" role="group" aria-label="Тип экзамена">
+                        <a class="drc-switch {% if report_nav_exam_type == 'ege' %}is-active{% endif %}" href="/cabinet/reports/?exam_type=ege">ЕГЭ</a>
+                        <a class="drc-switch {% if report_nav_exam_type == 'oge' %}is-active{% endif %}" href="/cabinet/reports/?exam_type=oge">ОГЭ</a>
+                        <button type="button" class="drc-switch" id="drcVprSwitch" data-filter="vpr">ВПР</button>
+                    </div>
+                </div>
+                <div class="drc-hero__art" aria-hidden="true">
+                    <span class="drc-hero__art-mark">АГ</span>
+                </div>
+            </section>
+
+            <section class="drc-section" aria-label="Популярные отчеты">
+                <div class="drc-section__head">
+                    <h3>Популярные отчеты</h3>
+                    <p>ТОП-3 по открытиям в этом кабинете</p>
+                </div>
+                <div class="drc-popular" id="drcPopular"></div>
+            </section>
+
+            <section class="drc-section" id="drcCatalog" aria-label="Каталог отчётов">
+                <div class="drc-section__head">
+                    <h3>Каталог аналитических модулей</h3>
+                    <p>{% if district_name %}{{ district_name }} · {% endif %}сводные документы по ОО муниципалитета</p>
+                </div>
+
+                <div class="drc-grid" id="drcGrid">
+                    <article
+                        class="drc-card drc-card--blue is-large"
+                        data-doc="gia-summary"
+                        data-title="Свод результатов ГИА по району"
+                        data-tags="ege oge municipal analytic export"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">📊</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--ok">Актуально</span>
+                                <span class="drc-badge drc-badge--new">Ключевой</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Свод результатов</h3>
+                        <p class="drc-card__desc">Главный управленческий срез муниципалитета: KPI, предметы, школы и динамика для руководства.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>KPI</li>
+                            <li>Диаграммы</li>
+                            <li>Динамика</li>
+                            <li>Предметы и школы</li>
+                            <li>Управленческие выводы</li>
+                            <li>Рекомендации</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Муниципальный</strong></span>
+                            <span>~ <strong>8–12</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Свод ГИА</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=gia-summary&amp;exam_type={{ report_nav_exam_type }}" data-doc="gia-summary">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--green is-large"
+                        data-doc="analysis-note"
+                        data-title="Аналитическая справка по итогам ГИА"
+                        data-tags="ege oge municipal analytic"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">🧠</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--ok">Актуально</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Аналитическая справка</h3>
+                        <p class="drc-card__desc">Причины, проблемные зоны и выводы для координационного совета муниципалитета.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>Ключевые выводы</li>
+                            <li>Проблемные зоны</li>
+                            <li>Карта дефицитов</li>
+                            <li>Предметный срез</li>
+                            <li>Управленческие выводы</li>
+                            <li>Рекомендации</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Аналитический</strong></span>
+                            <span>~ <strong>6–10</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Справка</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=analysis-note&amp;exam_type={{ report_nav_exam_type }}" data-doc="analysis-note">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--violet"
+                        data-doc="info-stat"
+                        data-title="Информационно-статистический отчёт"
+                        data-tags="ege oge municipal export"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">📈</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--ok">Актуально</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Информационно-статистический отчет</h3>
+                        <p class="drc-card__desc">Официальные показатели, сравнение с республикой и школы риска.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>KPI</li>
+                            <li>Сравнение с регионом</li>
+                            <li>Школы риска</li>
+                            <li>Выводы</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Статистический</strong></span>
+                            <span>~ <strong>5–8</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Инфо-стат</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=info-stat&amp;exam_type={{ report_nav_exam_type }}" data-doc="info-stat">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--orange"
+                        data-doc="subject-notes"
+                        data-title="Предметные аналитические справки"
+                        data-tags="ege oge analytic methodical"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">📚</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--sync">Обновляется</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Предметная аналитика</h3>
+                        <p class="drc-card__desc">По выбранному предмету: школы района, задания и рекомендации МО.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>Срез по школам</li>
+                            <li>Задания</li>
+                            <li>Дефициты</li>
+                            <li>Рекомендации МО</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Предметный</strong></span>
+                            <span>~ <strong>4–7</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Предмет</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=subject-notes&amp;exam_type={{ report_nav_exam_type }}" data-doc="subject-notes">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--teal"
+                        data-doc="school-comparison"
+                        data-title="Сравнение школ района"
+                        data-tags="ege oge municipal analytic"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">🏫</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--ok">Актуально</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Сравнение школ</h3>
+                        <p class="drc-card__desc">Рейтинг ОО, лидеры, зона риска и адресная поддержка.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>Рейтинг школ</li>
+                            <li>Лидеры</li>
+                            <li>Зона риска</li>
+                            <li>Адресная поддержка</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Сравнительный</strong></span>
+                            <span>~ <strong>5–9</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Сравнение</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=school-comparison&amp;exam_type={{ report_nav_exam_type }}" data-doc="school-comparison">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--red"
+                        data-doc="mo-report"
+                        data-title="Отчёты методических объединений"
+                        data-tags="ege oge methodical analytic"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">👥</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--ok">Актуально</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Методические объединения</h3>
+                        <p class="drc-card__desc">Агрегат по циклам МО в масштабе муниципалитета.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>Срез по МО</li>
+                            <li>Динамика</li>
+                            <li>Выводы</li>
+                            <li>Рекомендации</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Методический</strong></span>
+                            <span>~ <strong>4–6</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">МО</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=mo-report&amp;exam_type={{ report_nav_exam_type }}" data-doc="mo-report">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--slate"
+                        data-doc="management-report"
+                        data-title="Управленческий отчёт отдела образования"
+                        data-tags="ege oge municipal analytic export"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">🗂</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--new">Новый</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Управленческий отчёт</h3>
+                        <p class="drc-card__desc">Мониторинг подготовки, риски и план мероприятий для отдела образования.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>Риски</li>
+                            <li>Мониторинг</li>
+                            <li>План мероприятий</li>
+                            <li>Выводы</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Управленческий</strong></span>
+                            <span>~ <strong>6–10</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Управление</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=management-report&amp;exam_type={{ report_nav_exam_type }}" data-doc="management-report">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <div class="drc-empty" id="drcEmpty" role="status">
+                        <strong>Отчёты не найдены</strong>
+                        Попробуйте изменить фильтр или поисковый запрос.
+                    </div>
+                </div>
+            </section>
+        </div>
+        <script>
+        (function () {
+            var root = document.getElementById("drcRoot");
+            if (!root) return;
+            var STORAGE_KEY = "drc_report_opens_v1";
+            var DEFAULT_TOP = ["gia-summary", "analysis-note", "school-comparison"];
+            var cards = Array.prototype.slice.call(root.querySelectorAll(".drc-card"));
+            var popular = document.getElementById("drcPopular");
+
+            function readStats() {
+                try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") || {}; }
+                catch (e) { return {}; }
+            }
+            function writeStats(stats) {
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(stats)); } catch (e) {}
+            }
+            function bumpOpen(doc) {
+                if (!doc) return;
+                var stats = readStats();
+                stats[doc] = (stats[doc] || 0) + 1;
+                writeStats(stats);
+            }
+            function cardByDoc(doc) {
+                return cards.find(function (c) { return c.getAttribute("data-doc") === doc; });
+            }
+            function renderPopular() {
+                if (!popular) return;
+                var stats = readStats();
+                var ranked = cards
+                    .map(function (c) {
+                        var doc = c.getAttribute("data-doc");
+                        return { doc: doc, title: c.getAttribute("data-title"), count: stats[doc] || 0 };
+                    })
+                    .sort(function (a, b) { return b.count - a.count || DEFAULT_TOP.indexOf(a.doc) - DEFAULT_TOP.indexOf(b.doc); });
+                var top = ranked.slice(0, 3);
+                if (top.every(function (x) { return x.count === 0; })) {
+                    top = DEFAULT_TOP.map(function (doc) {
+                        var c = cardByDoc(doc);
+                        return { doc: doc, title: c ? c.getAttribute("data-title") : doc, count: 0 };
+                    });
+                }
+                popular.innerHTML = top.map(function (item, idx) {
+                    var href = "/cabinet/reports/?doc=" + encodeURIComponent(item.doc) + "&exam_type={{ report_nav_exam_type }}";
+                    return '<a class="drc-popular__item js-drc-open" href="' + href + '" data-doc="' + item.doc + '">' +
+                        '<span class="drc-popular__rank">' + (idx + 1) + '</span>' +
+                        '<span class="drc-popular__body"><strong>' + item.title + '</strong>' +
+                        '<span>' + (item.count ? ("Открытий: " + item.count) : "Рекомендуемый модуль") + '</span></span></a>';
+                }).join("");
+            }
+            root.addEventListener("click", function (e) {
+                var link = e.target.closest(".js-drc-open");
+                if (!link) return;
+                bumpOpen(link.getAttribute("data-doc"));
+            });
+            var vprSwitch = document.getElementById("drcVprSwitch");
+            if (vprSwitch) {
+                vprSwitch.addEventListener("click", function () {
+                    window.alert("Отчёты ВПР для муниципалитета готовятся к подключению.");
+                });
+            }
+            renderPopular();
+        })();
+        </script>
+    {% elif user_role == "school" and report_doc == "gia-summary" %}
+        {% include "users/includes/school_gia_summary_report.html" %}
+    {% elif user_role == "school" and report_doc == "info-stat" %}
+        {% include "users/includes/school_info_stat_report.html" %}
+    {% elif user_role == "school" and report_doc == "analysis-note" %}
+        {% include "users/includes/school_analytic_note_report.html" %}
+    {% elif user_role == "school" and report_doc == "subject-notes" %}
+        {% include "users/includes/school_subject_note_report.html" %}
+    {% elif user_role == "school" and report_doc == "mo-report" %}
+        {% include "users/includes/school_mo_report.html" %}
+    {% elif user_role == "school" and report_doc == "deputy-report" %}
+        {% include "users/includes/school_deputy_report.html" %}
+    {% elif user_role == "school" and report_doc %}
+        <div class="ui-card">
+            <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+                <h3 class="ui-section-title">Отчет</h3>
+                <a class="ui-btn" href="/cabinet/reports/?exam_type={{ report_nav_exam_type }}">← Каталог</a>
+            </div>
+            <p class="text-sm text-slate-600">Документ выделен в отдельный раздел отчетов. Формирование файла будет доступно следующим этапом.</p>
+        </div>
+    {% elif user_role == "school" %}
+        <div class="drc" id="drcRoot" data-exam="{{ report_nav_exam_type }}" data-year="">
+            <section class="drc-hero" aria-label="Центр аналитической отчетности ОО">
+                <div class="drc-hero__main">
+                    <p class="drc-hero__eyebrow">Центр аналитики ГИА{% if school_name %} · {{ school_name }}{% endif %}</p>
+                    <h1 class="drc-hero__title">Центр аналитической отчетности</h1>
+                    <p class="drc-hero__lead">
+                        Аналитические и управленческие документы по результатам государственной итоговой аттестации образовательной организации.
+                    </p>
+                    <div class="drc-hero__meta">
+                        <div class="drc-hero__chip">
+                            <span>Отчётов</span>
+                            <strong>6</strong>
+                        </div>
+                        <div class="drc-hero__chip">
+                            <span>Экзамен</span>
+                            <strong>{% if report_nav_exam_type == "oge" %}ОГЭ{% else %}ЕГЭ{% endif %}</strong>
+                        </div>
+                        <div class="drc-hero__chip">
+                            <span>Обновлено</span>
+                            <strong>{% now "d.m.Y" %}</strong>
+                        </div>
+                    </div>
+                    <div class="drc-hero__switches" role="group" aria-label="Тип экзамена">
+                        <a class="drc-switch {% if report_nav_exam_type == 'ege' %}is-active{% endif %}" href="/cabinet/reports/?exam_type=ege">ЕГЭ</a>
+                        <a class="drc-switch {% if report_nav_exam_type == 'oge' %}is-active{% endif %}" href="/cabinet/reports/?exam_type=oge">ОГЭ</a>
+                        <button type="button" class="drc-switch" id="drcVprSwitch" data-filter="vpr">ВПР</button>
+                    </div>
+                </div>
+                <div class="drc-hero__art" aria-hidden="true">
+                    <span class="drc-hero__art-mark">АГ</span>
+                </div>
+            </section>
+
+            <section class="drc-section" aria-label="Популярные отчеты">
+                <div class="drc-section__head">
+                    <h3>Популярные отчеты</h3>
+                    <p>ТОП-3 по открытиям в этом кабинете</p>
+                </div>
+                <div class="drc-popular" id="drcPopular"></div>
+            </section>
+
+            <section class="drc-section" id="drcCatalog" aria-label="Каталог отчётов">
+                <div class="drc-section__head">
+                    <h3>Каталог аналитических модулей</h3>
+                    <p>{% if school_name %}{{ school_name }} · {% endif %}документы школы по итогам ГИА</p>
+                </div>
+
+                <div class="drc-grid" id="drcGrid">
+                    <article
+                        class="drc-card drc-card--blue is-large"
+                        data-doc="gia-summary"
+                        data-title="Свод результатов ГИА"
+                        data-tags="ege oge school analytic export"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">📊</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--ok">Актуально</span>
+                                <span class="drc-badge drc-badge--new">Ключевой</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Свод результатов</h3>
+                        <p class="drc-card__desc">Главный управленческий срез ОО: KPI, предметы, классы и динамика для руководства.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>KPI</li>
+                            <li>Диаграммы</li>
+                            <li>Динамика</li>
+                            <li>Предметы и классы</li>
+                            <li>Управленческие выводы</li>
+                            <li>Рекомендации</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Школьный</strong></span>
+                            <span>~ <strong>8–12</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Свод ГИА</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=gia-summary&amp;exam_type={{ report_nav_exam_type }}" data-doc="gia-summary">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--green is-large"
+                        data-doc="analysis-note"
+                        data-title="Аналитическая справка по итогам ГИА"
+                        data-tags="ege oge school analytic"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">🧠</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--ok">Актуально</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Аналитическая справка</h3>
+                        <p class="drc-card__desc">Причины, проблемные зоны и выводы для педсовета и администрации школы.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>Ключевые выводы</li>
+                            <li>Проблемные зоны</li>
+                            <li>Карта дефицитов</li>
+                            <li>Предметный срез</li>
+                            <li>Управленческие выводы</li>
+                            <li>Рекомендации</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Аналитический</strong></span>
+                            <span>~ <strong>6–10</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Справка</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=analysis-note&amp;exam_type={{ report_nav_exam_type }}" data-doc="analysis-note">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--violet"
+                        data-doc="info-stat"
+                        data-title="Информационно-статистический отчёт"
+                        data-tags="ege oge school export"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">📈</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--ok">Актуально</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Информационно-статистический отчет</h3>
+                        <p class="drc-card__desc">Официальные показатели, сравнение с районом и республикой, зоны риска.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>KPI</li>
+                            <li>Сравнение</li>
+                            <li>Динамика</li>
+                            <li>Выводы</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Статистический</strong></span>
+                            <span>~ <strong>5–8</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Инфо-стат</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=info-stat&amp;exam_type={{ report_nav_exam_type }}" data-doc="info-stat">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--orange"
+                        data-doc="subject-notes"
+                        data-title="Предметные аналитические справки"
+                        data-tags="ege oge analytic methodical"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">📚</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--sync">Обновляется</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Предметная аналитика</h3>
+                        <p class="drc-card__desc">По выбранному предмету: задания, типичные ошибки и рекомендации МО.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>Задания КИМ</li>
+                            <li>Дефициты</li>
+                            <li>Сильные стороны</li>
+                            <li>Рекомендации</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Предметный</strong></span>
+                            <span>~ <strong>4–7</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Предмет</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=subject-notes&amp;exam_type={{ report_nav_exam_type }}" data-doc="subject-notes">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--red"
+                        data-doc="mo-report"
+                        data-title="Отчёты методических объединений"
+                        data-tags="ege oge methodical analytic"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">👥</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--ok">Актуально</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Методические объединения</h3>
+                        <p class="drc-card__desc">Результаты учителей, подготовка к экзаменам и проблемные вопросы МО.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>Срез по МО</li>
+                            <li>Динамика</li>
+                            <li>Выводы</li>
+                            <li>Рекомендации</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Методический</strong></span>
+                            <span>~ <strong>4–6</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">МО</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=mo-report&amp;exam_type={{ report_nav_exam_type }}" data-doc="mo-report">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <article
+                        class="drc-card drc-card--slate"
+                        data-doc="deputy-report"
+                        data-title="Отчёт заместителя директора"
+                        data-tags="ege oge school analytic export"
+                    >
+                        <div class="drc-card__top">
+                            <span class="drc-card__icon" aria-hidden="true">🗂</span>
+                            <div class="drc-card__badges">
+                                <span class="drc-badge drc-badge--new">Новый</span>
+                            </div>
+                        </div>
+                        <h3 class="drc-card__title">Отчёт заместителя директора</h3>
+                        <p class="drc-card__desc">Управленческий обзор подготовки, мониторинг и выводы по школе.</p>
+                        <p class="drc-card__list-title">Внутри отчета</p>
+                        <ul class="drc-card__list">
+                            <li>Риски</li>
+                            <li>Мониторинг</li>
+                            <li>План мероприятий</li>
+                            <li>Выводы</li>
+                        </ul>
+                        <div class="drc-card__meta">
+                            <span>Тип: <strong>Управленческий</strong></span>
+                            <span>~ <strong>6–10</strong> стр.</span>
+                            <span>Обновлено: <strong>{% now "d.m.Y" %}</strong></span>
+                        </div>
+                        <div class="drc-card__footer">
+                            <span class="drc-card__type">Управление</span>
+                            <a class="drc-open js-drc-open" href="/cabinet/reports/?doc=deputy-report&amp;exam_type={{ report_nav_exam_type }}" data-doc="deputy-report">Открыть <span aria-hidden="true">→</span></a>
+                        </div>
+                    </article>
+
+                    <div class="drc-empty" id="drcEmpty" role="status">
+                        <strong>Отчёты не найдены</strong>
+                        Попробуйте изменить фильтр или поисковый запрос.
+                    </div>
+                </div>
+            </section>
+        </div>
+        <script>
+        (function () {
+            var root = document.getElementById("drcRoot");
+            if (!root) return;
+            var STORAGE_KEY = "src_report_opens_v1";
+            var DEFAULT_TOP = ["gia-summary", "analysis-note", "deputy-report"];
+            var cards = Array.prototype.slice.call(root.querySelectorAll(".drc-card"));
+            var popular = document.getElementById("drcPopular");
+
+            function readStats() {
+                try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") || {}; }
+                catch (e) { return {}; }
+            }
+            function writeStats(stats) {
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(stats)); } catch (e) {}
+            }
+            function bumpOpen(doc) {
+                if (!doc) return;
+                var stats = readStats();
+                stats[doc] = (stats[doc] || 0) + 1;
+                writeStats(stats);
+            }
+            function cardByDoc(doc) {
+                return cards.find(function (c) { return c.getAttribute("data-doc") === doc; });
+            }
+            function renderPopular() {
+                if (!popular) return;
+                var stats = readStats();
+                var ranked = cards
+                    .map(function (c) {
+                        var doc = c.getAttribute("data-doc");
+                        return { doc: doc, title: c.getAttribute("data-title"), count: stats[doc] || 0 };
+                    })
+                    .sort(function (a, b) { return b.count - a.count || DEFAULT_TOP.indexOf(a.doc) - DEFAULT_TOP.indexOf(b.doc); });
+                var top = ranked.slice(0, 3);
+                if (top.every(function (x) { return x.count === 0; })) {
+                    top = DEFAULT_TOP.map(function (doc) {
+                        var c = cardByDoc(doc);
+                        return { doc: doc, title: c ? c.getAttribute("data-title") : doc, count: 0 };
+                    });
+                }
+                popular.innerHTML = top.map(function (item, idx) {
+                    var href = "/cabinet/reports/?doc=" + encodeURIComponent(item.doc) + "&exam_type={{ report_nav_exam_type }}";
+                    return '<a class="drc-popular__item js-drc-open" href="' + href + '" data-doc="' + item.doc + '">' +
+                        '<span class="drc-popular__rank">' + (idx + 1) + '</span>' +
+                        '<span class="drc-popular__body"><strong>' + item.title + '</strong>' +
+                        '<span>' + (item.count ? ("Открытий: " + item.count) : "Рекомендуемый модуль") + '</span></span></a>';
+                }).join("");
+            }
+            root.addEventListener("click", function (e) {
+                var link = e.target.closest(".js-drc-open");
+                if (!link) return;
+                bumpOpen(link.getAttribute("data-doc"));
+            });
+            var vprSwitch = document.getElementById("drcVprSwitch");
+            if (vprSwitch) {
+                vprSwitch.addEventListener("click", function () {
+                    window.alert("Отчёты ВПР для школы готовятся к подключению.");
+                });
+            }
+            renderPopular();
+        })();
+        </script>
+    {% else %}
+        <div class="ui-card">
+            <h3 class="ui-section-title">Отчеты</h3>
+            <p class="text-sm text-slate-600">Для этой роли раздел отчетов подключается поэтапно. Базовые документы для уровня школы уже доступны.</p>
+            <p class="text-sm text-slate-500 mt-2">Недостаточно данных для формирования отчета.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

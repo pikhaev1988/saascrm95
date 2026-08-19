@@ -1,0 +1,194 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/school-ege-analytics.css' %}?v=sae3">
+
+{% with ui=district_vpr_ui %}
+<div class="sae" id="districtVprAnalytics">
+    <header class="sae-header">
+        <div class="sae-header__brand">
+            <div class="sae-header__logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><path d="M4 19V7l8-4 8 4v12l-8 4-8-4z"/><path d="M12 11v8M8 9.5l4 2 4-2" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+                <p class="sae-header__eyebrow">Аналитика ВПР · кабинет района</p>
+                <h1 class="sae-header__title">{{ ui.district.name|default:role_title }}</h1>
+                <div class="sae-header__meta">
+                    <span>Код: <strong>{{ ui.district.code|default:"—" }}</strong></span>
+                    <span>Период: <strong>{{ selected_year|default:district_selected_year|default:"—" }}</strong></span>
+                    <span>Экзамен: <strong>ВПР</strong></span>
+                    <span>ОО с данными: <strong>{{ ui.schools_count }}</strong></span>
+                    <span>Протоколов: <strong>{{ ui.protocols_count }}</strong></span>
+                </div>
+            </div>
+        </div>
+        <div class="sae-header__aside">
+            <span class="sae-status sae-status--{{ ui.status.tone }}">{{ ui.status.label }}</span>
+            <div class="sae-header__actions">
+                <a class="sae-btn" href="{% url 'cabinet-exam-choice' %}">Обзор</a>
+                <a class="sae-btn" href="{% url 'vpr-registry' %}">Реестр ВПР</a>
+                <a class="sae-btn sae-btn--primary" href="{% url 'cabinet-reports' %}">Отчёты</a>
+            </div>
+        </div>
+    </header>
+
+    {% if available_years or district_available_years %}
+    <div class="sae-years" aria-label="Годы">
+        {% with years=available_years|default:district_available_years %}
+        {% for year in years %}
+        <a class="sae-year {% if selected_year == year or district_selected_year == year %}is-active{% endif %}"
+           href="?exam_type=vpr&amp;year={{ year }}">{{ year }}</a>
+        {% endfor %}
+        {% endwith %}
+        <a class="sae-year" href="{% url 'cabinet-district' %}?exam_type=ege{% if district_selected_year %}&amp;year={{ district_selected_year }}{% endif %}">ЕГЭ</a>
+        <a class="sae-year" href="{% url 'cabinet-district' %}?exam_type=oge{% if district_selected_year %}&amp;year={{ district_selected_year }}{% endif %}">ОГЭ</a>
+        <a class="sae-year is-active" href="{% url 'cabinet-district' %}?exam_type=vpr{% if selected_year %}&amp;year={{ selected_year }}{% elif district_selected_year %}&amp;year={{ district_selected_year }}{% endif %}">ВПР</a>
+    </div>
+    {% endif %}
+
+    {% if not ui.has_data %}
+    <div class="sae-state">
+        <p class="sae-state__title">Нет протоколов ВПР по району</p>
+        <p class="sae-state__text">По выбранному году протоколы школ района не найдены.</p>
+        <p style="margin-top:0.85rem"><a class="sae-btn sae-btn--primary" href="{% url 'vpr-registry' %}" style="color:#0b1f3a">Открыть реестр ВПР</a></p>
+    </div>
+    {% else %}
+
+    <section class="sae-kpi sae-kpi--6" aria-label="Ключевые показатели района">
+        <article class="sae-kpi__card">
+            <div class="sae-kpi__value">{{ ui.schools_count }}</div>
+            <div class="sae-kpi__label">Школ с ВПР</div>
+        </article>
+        <article class="sae-kpi__card">
+            <div class="sae-kpi__value">{{ ui.protocols_count }}</div>
+            <div class="sae-kpi__label">Протоколов</div>
+        </article>
+        <article class="sae-kpi__card">
+            <div class="sae-kpi__value">{{ ui.subjects_count }}</div>
+            <div class="sae-kpi__label">Предметов</div>
+        </article>
+        <article class="sae-kpi__card">
+            <div class="sae-kpi__value">{{ ui.participants }}</div>
+            <div class="sae-kpi__label">Участников</div>
+        </article>
+        <article class="sae-kpi__card {% if ui.quality_rate >= 40 %}sae-kpi__card--good{% elif ui.quality_rate < 25 %}sae-kpi__card--risk{% else %}sae-kpi__card--mid{% endif %}">
+            <div class="sae-kpi__value">{% if ui.quality_rate != None %}{{ ui.quality_rate }}%{% else %}—{% endif %}</div>
+            <div class="sae-kpi__label">Индекс качества</div>
+        </article>
+        <article class="sae-kpi__card {% if ui.pass_rate >= 85 %}sae-kpi__card--good{% elif ui.pass_rate < 70 %}sae-kpi__card--risk{% else %}sae-kpi__card--mid{% endif %}">
+            <div class="sae-kpi__value">{% if ui.pass_rate != None %}{{ ui.pass_rate }}%{% else %}—{% endif %}</div>
+            <div class="sae-kpi__label">Абс. успеваемость</div>
+        </article>
+    </section>
+
+    <section class="sae-kpi sae-kpi--4" aria-label="Дополнительные показатели">
+        <article class="sae-kpi__card">
+            <div class="sae-kpi__value">{{ ui.grades_count }}</div>
+            <div class="sae-kpi__label">Параллелей</div>
+        </article>
+        <article class="sae-kpi__card {% if ui.risk_schools %}sae-kpi__card--risk{% else %}sae-kpi__card--good{% endif %}">
+            <div class="sae-kpi__value">{{ ui.risk_schools }}</div>
+            <div class="sae-kpi__label">Школ риска</div>
+        </article>
+        <article class="sae-kpi__card sae-kpi__card--good">
+            <div class="sae-kpi__value sae-kpi__value--sm">{{ ui.best_school|default:"—" }}</div>
+            <div class="sae-kpi__label">Лучшая ОО{% if ui.best_school_score %} · {{ ui.best_school_score }}%{% endif %}</div>
+        </article>
+        <article class="sae-kpi__card">
+            <div class="sae-kpi__value">{{ ui.schools_count }}</div>
+            <div class="sae-kpi__label">Открыть аналитику ОО ↓</div>
+        </article>
+    </section>
+
+    <section class="sae-panel">
+        <div class="sae-panel__head">
+            <div>
+                <h2 class="sae-panel__title">Школы района · ВПР</h2>
+                <p class="sae-panel__lead">Сравнение ОО по успеваемости и качеству · {{ selected_year|default:district_selected_year }}</p>
+            </div>
+        </div>
+        <div class="sae-tools" style="margin-bottom:0.75rem">
+            <input type="search" class="sae-input" id="dvprSchoolSearch" placeholder="Поиск школы…" aria-label="Поиск школы">
+        </div>
+        <div class="sae-table-wrap">
+            <table class="sae-table" id="dvprSchoolTable">
+                <thead>
+                    <tr>
+                        <th>Код</th>
+                        <th>Школа</th>
+                        <th>Протоколов</th>
+                        <th>Предметов</th>
+                        <th>Участников</th>
+                        <th>Отметка</th>
+                        <th>Качество</th>
+                        <th>Успеваемость</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in ui.schools %}
+                    <tr data-name="{{ row.school_name }}" class="{% if row.tone == 'risk' %}sae-row-danger{% endif %}">
+                        <td>{{ row.school_code }}</td>
+                        <td><strong>{{ row.school_name }}</strong></td>
+                        <td>{{ row.protocols_count }}</td>
+                        <td>{{ row.subjects_count }}</td>
+                        <td>{{ row.participants }}</td>
+                        <td>{% if row.avg_mark != None %}{{ row.avg_mark }}{% else %}—{% endif %}</td>
+                        <td>{% if row.quality_rate != None %}{{ row.quality_rate }}%{% else %}—{% endif %}</td>
+                        <td class="{% if row.tone == 'risk' %}is-danger{% elif row.tone == 'good' %}is-good{% endif %}">{% if row.pass_rate != None %}{{ row.pass_rate }}%{% else %}—{% endif %}</td>
+                        <td>
+                            <a class="sae-btn" style="color:#0b1f3a;border-color:#d5dde5;background:#fff;padding:0.3rem 0.65rem"
+                               href="{% url 'vpr-school-analytics' %}?school_id={{ row.school_id }}&amp;year={{ selected_year|default:district_selected_year }}">Открыть</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="sae-panel">
+        <div class="sae-panel__head">
+            <div>
+                <h3 class="sae-panel__title">Последние протоколы</h3>
+                <p class="sae-panel__lead">Недавние загрузки ВПР по району</p>
+            </div>
+        </div>
+        {% if ui.recent_protocols %}
+        <div class="sae-table-wrap">
+            <table class="sae-table">
+                <thead><tr><th>Школа</th><th>Предмет</th><th>Класс</th><th>Год</th><th>Загрузка</th><th></th></tr></thead>
+                <tbody>
+                {% for p in ui.recent_protocols %}
+                    <tr>
+                        <td>{{ p.school_name }}</td>
+                        <td>{{ p.subject }}</td>
+                        <td>{{ p.parallel }}</td>
+                        <td>{{ p.year }}</td>
+                        <td>{% if p.uploaded_at %}{{ p.uploaded_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</td>
+                        <td><a class="sae-link" href="{% url 'vpr-protocol-overview' protocol_id=p.id %}">Обзор</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="sae-state__text">Нет загруженных протоколов.</p>
+        {% endif %}
+    </section>
+    {% endif %}
+</div>
+
+<script>
+(function () {
+    var input = document.getElementById("dvprSchoolSearch");
+    var table = document.getElementById("dvprSchoolTable");
+    if (!input || !table) return;
+    input.addEventListener("input", function () {
+        var q = (input.value || "").toLowerCase().trim();
+        Array.prototype.forEach.call(table.querySelectorAll("tbody tr"), function (row) {
+            var name = (row.getAttribute("data-name") || "").toLowerCase();
+            row.style.display = !q || name.indexOf(q) !== -1 ? "" : "none";
+        });
+    });
+})();
+</script>
+{% endwith %}

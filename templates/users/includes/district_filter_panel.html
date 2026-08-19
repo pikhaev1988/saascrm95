@@ -1,0 +1,38 @@
+<form class="enterprise-filter-panel" method="get" action="{% url 'cabinet-district' %}">
+    <div class="enterprise-field">
+        <label for="districtExamType">Экзамен</label>
+        <select id="districtExamType" name="exam_type">
+            <option value="ege" {% if selected_exam_type == "ege" %}selected{% endif %}>ЕГЭ</option>
+            <option value="oge" {% if selected_exam_type == "oge" %}selected{% endif %}>ОГЭ</option>
+            <option value="vpr" {% if selected_exam_type == "vpr" %}selected{% endif %}>ВПР</option>
+        </select>
+    </div>
+    <div class="enterprise-field">
+        <label for="districtYear">Год</label>
+        <select id="districtYear" name="year">
+            {% if district_available_years %}
+                {% for year in district_available_years %}
+                    <option value="{{ year }}" {% if district_selected_year == year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            {% else %}
+                <option value="">Нет данных</option>
+            {% endif %}
+        </select>
+    </div>
+    <div class="enterprise-field">
+        <label for="districtScope">Территория</label>
+        <select id="districtScope" disabled>
+            <option selected>{{ role_title|default:"Район" }}</option>
+        </select>
+    </div>
+    <div class="enterprise-field">
+        <label for="districtSubject">Предмет</label>
+        <select id="districtSubject" disabled>
+            <option selected>Все предметы</option>
+        </select>
+    </div>
+    <div class="enterprise-filter-panel__actions">
+        <button type="submit" class="ui-btn ui-btn-primary">Применить</button>
+        <a href="{% url 'cabinet-district' %}" class="ui-btn">Сбросить</a>
+    </div>
+</form>

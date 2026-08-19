@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% block head_title %}{{ role_title }} — Сводная аналитика{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard ds-page ds-page--loose">
+    <header class="enterprise-header ds-page-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Кабинет министерства</span>
+            <h2>{{ role_title }}</h2>
+            <p>Единая аналитика ГИА с проваливанием до уровня ученика: район → школа → предмет → фамильные результаты.</p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-period">
+                <span>Период</span>
+                <strong>{{ selected_exam_type_label }}{% if ministry_selected_year %} / {{ ministry_selected_year }}{% endif %}</strong>
+            </div>
+        </div>
+    </header>
+
+    <div class="enterprise-filter-panel" style="grid-template-columns: 1fr auto;">
+        <div class="enterprise-field">
+            <label>Фильтр периода</label>
+            {% if ministry_available_years %}
+            <div class="hub-year-pills" style="margin:0;">
+                {% for year in ministry_available_years %}
+                <a
+                    href="?exam_type={{ selected_exam_type|default:'ege' }}&year={{ year }}"
+                    class="hub-year-pill-link {% if ministry_selected_year == year %}is-active{% endif %}"
+                >{{ year }}</a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="ds-caption">Нет данных по годам для выбранного типа экзамена.</p>
+            {% endif %}
+        </div>
+        <div class="enterprise-field">
+            <label>Текущий путь анализа</label>
+            <p class="ds-body" style="margin:0;min-height:40px;display:flex;align-items:center;">
+                {{ selected_district.name|default:"Выберите район" }} →
+                {{ selected_school.name|default:"школа" }} →
+                {{ selected_subject_name|default:"предмет" }}
+            </p>
+        </div>
+    </div>
+
+    <section class="enterprise-section">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Executive Summary</span>
+                <h3>Ключевые показатели</h3>
+            </div>
+        </div>
+        <div class="enterprise-kpi-grid">
+            <article class="enterprise-kpi-card">
+                <span class="enterprise-kpi-card__icon is-blue">Ø</span>
+                <p>Средний балл</p>
+                <strong>{{ metrics.avg_score|floatformat:2 }}</strong>
+                <em>{{ selected_exam_type_label }}</em>
+            </article>
+            <article class="enterprise-kpi-card">
+                <span class="enterprise-kpi-card__icon is-cyan">Σ</span>
+                <p>Участников (детей)</p>
+                <strong>{{ metrics.unique_students|default:metrics.total_results }}</strong>
+                <em>по выбранному срезу</em>
+            </article>
+            <article class="enterprise-kpi-card is-risk">
+                <span class="enterprise-kpi-card__icon is-red">!</span>
+                <p>Сложные задания</p>
+                <strong>{{ metrics.hard_tasks|length }}</strong>
+                <em>требуют внимания</em>
+            </article>
+            <article class="enterprise-kpi-card">
+                <span class="enterprise-kpi-card__icon is-slate">Δ</span>
+                <p>Системный тренд</p>
+                <strong style="font-size:1.05rem;">{{ comparison_insights.trend_label }}</strong>
+                <em>динамика среза</em>
+            </article>
+        </div>
+    </section>
+
+    <div class="ds-grid ds-grid-3">
+        <div class="ui-card xl:col-span-2">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-semibold">Шаг 1. Результаты по районам</h3>
+                <span class="text-sm text-slate-500">{{ ministry_district_results|length }} районов</span>
+            </div>
+            {% if ministry_district_results %}
+                <div class="overflow-x-auto">
+                    <table class="enterprise-table">
+                        <thead>
+                            <tr class="text-left text-slate-500 border-b">
+                                <th class="py-2 pr-3">Код</th>
+                                <th class="py-2 pr-3">Район</th>
+                                <th class="py-2 pr-3">Участников</th>
+                                <th class="py-2 pr-3">Экзаменов</th>
+                                <th class="py-2 pr-3">Средний балл</th>
+                                <th class="py-2">Сдавших</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for district in ministry_district_results %}
+                                <tr class="border-b last:border-0 {% if selected_district_id == district.district_id %}is-selected{% endif %}">
+                                    <td class="py-2 pr-3 font-medium">{{ district.district_code }}</td>
+                                    <td class="py-2 pr-3">
+                                        <a
+                                            href="?exam_type={{ selected_exam_type|default:'ege' }}{% if ministry_selected_year %}&year={{ ministry_selected_year }}{% endif %}&district={{ district.district_id }}"
+                                            class="{% if selected_district_id == district.district_id %}text-violet-700 font-semibold{% else %}text-violet-600 hover:text-violet-800{% endif %}"
+                                        >
+                                            {{ district.district_name }}
+                                        </a>
+                                    </td>
+                                    <td class="py-2 pr-3">{{ district.students }}</td>
+                                    <td class="py-2 pr-3">{{ district.exams }}</td>
+                                    <td class="py-2 pr-3">{{ district.avg_score }}</td>
+                                    <td class="py-2">{{ district.pass_rate }}%</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-sm text-slate-500">Нет результатов по районам для выбранного фильтра.</p>
+            {% endif %}
+        </div>
+
+        <div class="ui-card">
+            <h3 class="text-lg font-semibold mb-3">Сравнение ЕГЭ / ОГЭ</h3>
+            <div class="space-y-3">
+                <div class="rounded-lg border border-slate-200 p-3">
+                    <p class="text-sm text-slate-500 mb-1">ЕГЭ</p>
+                    <p class="text-sm text-slate-700">Участников: {{ ege_stats.unique_students }}</p>
+                    <p class="text-sm text-slate-700">Результатов: {{ ege_stats.total_results }}</p>
+                    <p class="text-sm text-slate-700">Экзаменов: {{ ege_stats.total_exams }}</p>
+                    <p class="text-sm text-slate-700">Средний балл: {{ ege_stats.avg_score }}</p>
+                    <p class="text-sm text-slate-700">Доля сдавших: {{ ege_stats.pass_rate }}%</p>
+                </div>
+                <div class="rounded-lg border border-slate-200 p-3">
+                    <p class="text-sm text-slate-500 mb-1">ОГЭ</p>
+                    <p class="text-sm text-slate-700">Участников: {{ oge_stats.unique_students }}</p>
+                    <p class="text-sm text-slate-700">Результатов: {{ oge_stats.total_results }}</p>
+                    <p class="text-sm text-slate-700">Экзаменов: {{ oge_stats.total_exams }}</p>
+                    <p class="text-sm text-slate-700">Средний балл: {{ oge_stats.avg_score }}</p>
+                    <p class="text-sm text-slate-700">Доля сдавших: {{ oge_stats.pass_rate }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if selected_district %}
+    <div class="ui-card">
+        <div class="flex items-center justify-between gap-2 flex-wrap mb-3">
+            <h3 class="text-lg font-semibold">Шаг 2. Школы района: {{ selected_district.name }}</h3>
+            <a href="?exam_type={{ selected_exam_type|default:'ege' }}{% if ministry_selected_year %}&year={{ ministry_selected_year }}{% endif %}" class="rounded-lg px-3 py-1.5 text-sm border bg-white text-slate-700 border-slate-300 hover:border-violet-400">Сбросить район</a>
+        </div>
+        {% if selected_district_school_results %}
+            <div class="overflow-x-auto">
+                <table class="enterprise-table">
+                    <thead>
+                        <tr class="text-left text-slate-500 border-b">
+                            <th class="py-2 pr-3">Код</th>
+                            <th class="py-2 pr-3">Школа</th>
+                            <th class="py-2 pr-3">Участников</th>
+                            <th class="py-2 pr-3">Экзаменов</th>
+                            <th class="py-2 pr-3">Средний балл</th>
+                            <th class="py-2">Сдавших</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for school in selected_district_school_results %}
+                            <tr class="border-b last:border-0 {% if selected_school_id == school.school_id %}is-selected{% endif %}">
+                                <td class="py-2 pr-3 font-medium">{{ school.school_code }}</td>
+                                <td class="py-2 pr-3">
+                                    <a href="?exam_type={{ selected_exam_type|default:'ege' }}{% if ministry_selected_year %}&year={{ ministry_selected_year }}{% endif %}&district={{ selected_district_id }}&school={{ school.school_id }}" class="{% if selected_school_id == school.school_id %}text-violet-700 font-semibold{% else %}text-violet-600 hover:text-violet-800{% endif %}">{{ school.school_name }}</a>
+                                </td>
+                                <td class="py-2 pr-3">{{ school.students }}</td>
+                                <td class="py-2 pr-3">{{ school.exams }}</td>
+                                <td class="py-2 pr-3">{{ school.avg_score }}</td>
+                                <td class="py-2">{{ school.pass_rate }}%</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-sm text-slate-500">По району нет школьных результатов.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if selected_school %}
+    <div class="ui-card">
+        <div class="flex items-center justify-between gap-2 flex-wrap mb-3">
+            <h3 class="text-lg font-semibold">Шаг 3. Предметы школы: {{ selected_school.name }}</h3>
+            <a href="?exam_type={{ selected_exam_type|default:'ege' }}{% if ministry_selected_year %}&year={{ ministry_selected_year }}{% endif %}&district={{ selected_district_id }}" class="rounded-lg px-3 py-1.5 text-sm border bg-white text-slate-700 border-slate-300 hover:border-violet-400">Сбросить школу</a>
+        </div>
+        {% if selected_school_subject_results %}
+            <div class="overflow-x-auto">
+                <table class="enterprise-table">
+                    <thead>
+                        <tr class="text-left text-slate-500 border-b">
+                            <th class="py-2 pr-3">Предмет</th>
+                            <th class="py-2 pr-3">Участников</th>
+                            <th class="py-2 pr-3">Экзаменов</th>
+                            <th class="py-2 pr-3">Средний балл</th>
+                            <th class="py-2">Сдавших</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in selected_school_subject_results %}
+                            <tr class="border-b last:border-0 {% if selected_subject_name == item.subject %}is-selected{% endif %}">
+                                <td class="py-2 pr-3 font-medium">
+                                    <a href="?exam_type={{ selected_exam_type|default:'ege' }}{% if ministry_selected_year %}&year={{ ministry_selected_year }}{% endif %}&district={{ selected_district_id }}&school={{ selected_school_id }}&subject={{ item.subject|urlencode }}" class="{% if selected_subject_name == item.subject %}text-violet-700 font-semibold{% else %}text-violet-600 hover:text-violet-800{% endif %}">{{ item.subject }}</a>
+                                </td>
+                                <td class="py-2 pr-3">{{ item.students }}</td>
+                                <td class="py-2 pr-3">{{ item.exams }}</td>
+                                <td class="py-2 pr-3">{{ item.avg_score }}</td>
+                                <td class="py-2">{{ item.pass_rate }}%</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-sm text-slate-500">Для школы нет результатов по предметам.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if selected_subject_name %}
+    <div class="ui-card">
+        <div class="flex items-center justify-between gap-2 flex-wrap mb-3">
+            <h3 class="text-lg font-semibold">Шаг 4. Фамильные результаты: {{ selected_subject_name }}</h3>
+            <a href="?exam_type={{ selected_exam_type|default:'ege' }}{% if ministry_selected_year %}&year={{ ministry_selected_year }}{% endif %}&district={{ selected_district_id }}&school={{ selected_school_id }}" class="rounded-lg px-3 py-1.5 text-sm border bg-white text-slate-700 border-slate-300 hover:border-violet-400">Сбросить предмет</a>
+        </div>
+        {% if selected_subject_results %}
+            <div class="overflow-x-auto mb-4">
+                <table class="enterprise-table">
+                    <thead>
+                        <tr class="text-left text-slate-500 border-b">
+                            <th class="py-2 pr-3">ФИО</th>
+                            <th class="py-2 pr-3">Дата</th>
+                            <th class="py-2 pr-3">Код</th>
+                            <th class="py-2 pr-3">Краткий</th>
+                            <th class="py-2 pr-3">Развернутый</th>
+                            <th class="py-2 pr-3">Первичный</th>
+                            <th class="py-2 pr-3">Балл</th>
+                            <th class="py-2">Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in selected_subject_results %}
+                            <tr class="border-b last:border-0 {% if row.below_minimum %}bg-red-50{% endif %}">
+                                <td class="py-2 pr-3 font-medium {% if row.below_minimum %}text-red-700{% endif %}">{{ row.student_name }}</td>
+                                <td class="py-2 pr-3 {% if row.below_minimum %}text-red-700{% endif %}">{{ row.exam_date|date:"d.m.Y" }}</td>
+                                <td class="py-2 pr-3 {% if row.below_minimum %}text-red-700{% endif %}">{{ row.exam_code }}</td>
+                                <td class="py-2 pr-3 {% if row.below_minimum %}text-red-700{% endif %}">{{ row.short_answer_tasks }}</td>
+                                <td class="py-2 pr-3 {% if row.below_minimum %}text-red-700{% endif %}">{{ row.long_answer_tasks }}</td>
+                                <td class="py-2 pr-3 {% if row.below_minimum %}text-red-700{% endif %}">{{ row.primary_score }}</td>
+                                <td class="py-2 pr-3 {% if row.below_minimum %}text-red-700{% endif %}">{{ row.score }}</td>
+                                <td class="py-2 {% if row.below_minimum %}text-red-700 font-semibold{% else %}text-slate-600{% endif %}">
+                                    {% if row.below_minimum %}Ниже минимума{% else %}Порог пройден{% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-sm text-slate-500 mb-4">Для выбранного предмета нет фамильных результатов.</p>
+        {% endif %}
+        <h4 class="text-sm font-semibold mb-2">Протокол заданий</h4>
+        {% if selected_subject_task_rows %}
+            <div class="overflow-x-auto">
+                <table class="enterprise-table">
+                    <thead>
+                        <tr class="text-left text-slate-500 border-b">
+                            <th class="py-2 pr-3">Задание</th>
+                            <th class="py-2 pr-3">Успешность</th>
+                            <th class="py-2 pr-3">Верно (+)</th>
+                            <th class="py-2 pr-3">Ошибок (-)</th>
+                            <th class="py-2">Всего</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in selected_subject_task_rows %}
+                            <tr class="border-b last:border-0">
+                                <td class="py-2 pr-3">№{{ task.task_number }}</td>
+                                <td class="py-2 pr-3">{{ task.success_rate }}%</td>
+                                <td class="py-2 pr-3">{{ task.plus }}</td>
+                                <td class="py-2 pr-3">{{ task.minus }}</td>
+                                <td class="py-2">{{ task.total }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-sm text-slate-500">Нет данных по заданиям.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="ui-card">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <h3 class="text-lg font-semibold">Динамика результатов по предметам</h3>
+                <p class="text-xs text-slate-500 mt-1 max-w-3xl">{{ ministry_dynamics_note }}</p>
+            </div>
+            <span class="text-sm text-slate-500 whitespace-nowrap">{{ comparison_years|join:", " }}</span>
+        </div>
+        {% if comparison_rows %}
+            <div class="overflow-x-auto">
+                <table class="enterprise-table">
+                    <thead>
+                        <tr class="text-left text-slate-500 border-b">
+                            <th class="py-2 pr-3">Предмет</th>
+                            {% for year in comparison_years %}
+                                <th class="py-2 pr-3">{{ year }}</th>
+                            {% endfor %}
+                            <th class="py-2">Дельта</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in comparison_rows %}
+                            <tr class="border-b last:border-0">
+                                <td class="py-2 pr-3 font-medium">{{ row.subject }}</td>
+                                {% for y in row.years %}
+                                    <td class="py-2 pr-3">{% if y.avg_score is not None %}{{ y.avg_score }} ({{ y.students_count }}){% else %}—{% endif %}</td>
+                                {% endfor %}
+                                <td class="py-2">{% if row.trend_delta is not None %}{% if row.trend_delta > 0 %}+{% endif %}{{ row.trend_delta }}{% else %}—{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-sm text-slate-500">Недостаточно данных для построения динамики.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

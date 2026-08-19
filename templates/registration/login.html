@@ -1,0 +1,38 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Вход | Анализ ГИА</title>
+    <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
+    <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<div class="ui-login-wrap">
+    <form method="post" class="ui-login-card ui-form-stack">
+        {% csrf_token %}
+        <h1 class="ui-login-brand">Анализ ГИА</h1>
+        <p class="ui-login-lead">Платформа аналитики ЕГЭ и ОГЭ для школ, районов и министерства.</p>
+
+        {% if form.errors %}
+            <div class="mb-2 ui-alert ui-alert--error">Неверный логин или пароль</div>
+        {% endif %}
+
+        <label for="login-username">Логин</label>
+        <input id="login-username" type="text" name="username" autocomplete="username" required placeholder="Введите логин">
+
+        <label for="login-password">Пароль</label>
+        <input id="login-password" type="password" name="password" autocomplete="current-password" required placeholder="Введите пароль">
+
+        <button type="submit" class="w-full ui-btn ui-btn-primary" style="margin-top: 8px;">
+            Войти
+        </button>
+    </form>
+</div>
+</body>
+</html>

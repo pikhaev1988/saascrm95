@@ -1,0 +1,394 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/school-ege-analytics.css' %}?v=sae2">
+
+{% with ui=vpr_ui %}
+<div class="sae" id="schoolVprAnalytics">
+    <header class="sae-header">
+        <div class="sae-header__brand">
+            <div class="sae-header__logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><path d="M4 19V7l8-4 8 4v12l-8 4-8-4z"/><path d="M12 11v8M8 9.5l4 2 4-2" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+                <p class="sae-header__eyebrow">Аналитика ВПР · кабинет школы</p>
+                <h1 class="sae-header__title">{{ ui.school.name|default:role_title }}</h1>
+                <div class="sae-header__meta">
+                    <span>Код: <strong>{{ ui.school.code|default:"—" }}</strong></span>
+                    <span>Тип: <strong>{{ ui.school.type_label }}</strong></span>
+                    <span>МО: <strong>{{ ui.school.district|default:"—" }}</strong></span>
+                    <span>Период: <strong>{{ selected_year|default:"—" }}</strong></span>
+                    <span>Экзамен: <strong>ВПР</strong></span>
+                    <span>Протоколов: <strong>{{ ui.subjects_count }}</strong></span>
+                </div>
+            </div>
+        </div>
+        <div class="sae-header__aside">
+            <span class="sae-status sae-status--{{ ui.status.tone }}">{{ ui.status.label }}</span>
+            <div class="sae-header__actions">
+                <a class="sae-btn" href="{% url 'cabinet-exam-choice' %}">Обзор школы</a>
+                <a class="sae-btn" href="{% url 'vpr-registry' %}">Реестр ВПР</a>
+                <a class="sae-btn sae-btn--primary" href="{% url 'cabinet-upload-vpr' %}">Загрузить</a>
+            </div>
+        </div>
+    </header>
+
+    {% if available_years %}
+    <div class="sae-years" aria-label="Годы">
+        {% for year in available_years %}
+        <a class="sae-year {% if selected_year == year %}is-active{% endif %}"
+           href="?exam_type=vpr&amp;year={{ year }}{% if selected_exam_id %}&amp;exam={{ selected_exam_id }}{% endif %}">{{ year }}</a>
+        {% endfor %}
+        <a class="sae-year" href="?exam_type=ege{% if selected_year %}&amp;year={{ selected_year }}{% endif %}">ЕГЭ</a>
+        <a class="sae-year" href="?exam_type=oge{% if selected_year %}&amp;year={{ selected_year }}{% endif %}">ОГЭ</a>
+        <a class="sae-year is-active" href="?exam_type=vpr{% if selected_year %}&amp;year={{ selected_year }}{% endif %}">ВПР</a>
+    </div>
+    {% else %}
+    <div class="sae-years" aria-label="Тип экзамена">
+        <a class="sae-year" href="?exam_type=ege">ЕГЭ</a>
+        <a class="sae-year" href="?exam_type=oge">ОГЭ</a>
+        <a class="sae-year is-active" href="?exam_type=vpr">ВПР</a>
+    </div>
+    {% endif %}
+
+    {% if not ui.has_subjects %}
+    <div class="sae-state">
+        <p class="sae-state__title">Нет протоколов ВПР</p>
+        <p class="sae-state__text">По выбранному году протоколы не найдены. Загрузите протокол ВПР или выберите другой период.</p>
+        <p style="margin-top:0.85rem"><a class="sae-btn sae-btn--primary" href="{% url 'cabinet-upload-vpr' %}" style="color:#0b1f3a">Загрузить протокол ВПР</a></p>
+    </div>
+    {% else %}
+
+    <section class="sae-kpi" aria-label="Ключевые показатели школы">
+        <article class="sae-kpi__card">
+            <div class="sae-kpi__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M3 19c0-3 2.5-5 6-5s6 2 6 5M14 14c2.5.2 4.5 1.5 5 4"/></svg></div>
+            <div class="sae-kpi__value">{{ ui.participants|default:"—" }}</div>
+            <div class="sae-kpi__label">Участники</div>
+        </article>
+        <article class="sae-kpi__card {% if ui.avg_score >= 4 %}sae-kpi__card--good{% elif ui.avg_score < 3.5 %}sae-kpi__card--risk{% else %}sae-kpi__card--mid{% endif %}">
+            <div class="sae-kpi__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5M4 19h16"/><path d="M7 15l3-4 3 2 4-6"/></svg></div>
+            <div class="sae-kpi__value">{% if ui.avg_score != None %}{{ ui.avg_score }}{% else %}—{% endif %}</div>
+            <div class="sae-kpi__label">Средняя отметка ВПР</div>
+        </article>
+        <article class="sae-kpi__card {% if ui.quality_rate >= 40 %}sae-kpi__card--good{% elif ui.quality_rate < 25 %}sae-kpi__card--risk{% else %}sae-kpi__card--mid{% endif %}">
+            <div class="sae-kpi__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="sae-kpi__value">{% if ui.quality_rate != None %}{{ ui.quality_rate }}%{% else %}—{% endif %}</div>
+            <div class="sae-kpi__label">Качество (4–5)</div>
+        </article>
+        <article class="sae-kpi__card {% if ui.pass_rate >= 85 %}sae-kpi__card--good{% elif ui.pass_rate < 70 %}sae-kpi__card--risk{% else %}sae-kpi__card--mid{% endif %}">
+            <div class="sae-kpi__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="sae-kpi__value">{% if ui.pass_rate != None %}{{ ui.pass_rate }}%{% else %}—{% endif %}</div>
+            <div class="sae-kpi__label">Абс. успеваемость</div>
+        </article>
+        <article class="sae-kpi__card sae-kpi__card--good">
+            <div class="sae-kpi__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4zM5 4h14"/></svg></div>
+            <div class="sae-kpi__value">{{ ui.high_count|default:"0" }}</div>
+            <div class="sae-kpi__label">Отличники (выбр.)</div>
+        </article>
+        <article class="sae-kpi__card">
+            <div class="sae-kpi__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h10M4 18h7"/></svg></div>
+            <div class="sae-kpi__value">{{ ui.subjects_count }}</div>
+            <div class="sae-kpi__label">Протоколов</div>
+        </article>
+        <article class="sae-kpi__card {% if ui.risk_subjects %}sae-kpi__card--risk{% else %}sae-kpi__card--good{% endif %}">
+            <div class="sae-kpi__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01"/><path d="M10.3 4.3L2.8 17a2 2 0 001.7 3h15a2 2 0 001.7-3L13.7 4.3a2 2 0 00-3.4 0z"/></svg></div>
+            <div class="sae-kpi__value">{{ ui.risk_subjects }}</div>
+            <div class="sae-kpi__label">Предметов риска</div>
+        </article>
+        <article class="sae-kpi__card sae-kpi__card--good">
+            <div class="sae-kpi__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l2.4 4.9L20 9l-4 3.9.9 5.6L12 16.1 7.1 18.5 8 12.9 4 9l5.6-1.1L12 3z"/></svg></div>
+            <div class="sae-kpi__value sae-kpi__value--sm">{{ ui.best_subject|default:"—" }}</div>
+            <div class="sae-kpi__label">Лучший предмет{% if ui.best_subject_score %} · {{ ui.best_subject_score }}{% endif %}</div>
+        </article>
+    </section>
+
+    <div class="sae-layout">
+        <aside class="sae-col-subjects">
+            <section class="sae-panel">
+                <div class="sae-panel__head">
+                    <div>
+                        <h2 class="sae-panel__title">Предметы ВПР</h2>
+                        <p class="sae-panel__lead">{{ ui.subjects_count }} протоколов в срезе {{ selected_year }}</p>
+                    </div>
+                </div>
+                <div class="sae-tools">
+                    <input type="search" class="sae-input" id="saeSubjectSearch" placeholder="Поиск предмета…" aria-label="Поиск предмета">
+                    <select class="sae-select" id="saeSubjectSort" aria-label="Сортировка">
+                        <option value="name">По названию</option>
+                        <option value="avg">По средней отметке</option>
+                        <option value="participants">По участникам</option>
+                        <option value="pass">По успеваемости</option>
+                    </select>
+                </div>
+                <div class="sae-subject-list" id="saeSubjectList">
+                    {% for item in ui.subjects %}
+                    <a href="?exam_type=vpr&amp;year={{ selected_year }}&amp;exam={{ item.exam_id }}"
+                       class="sae-subject sae-subject--{{ item.tone }} {% if selected_exam_id == item.exam_id|stringformat:'s' %}is-active{% endif %}"
+                       data-name="{{ item.subject_label|default:item.exam__subject }}"
+                       data-avg="{{ item.avg|default_if_none:0 }}"
+                       data-participants="{{ item.students_count|default:0 }}"
+                       data-pass="{{ item.pass_rate|default_if_none:0 }}">
+                        <p class="sae-subject__name">{{ item.subject_label|default:item.exam__subject }}</p>
+                        <p class="sae-subject__meta">{% if item.exam__exam_date %}{{ item.exam__exam_date|date:"d.m.Y" }}{% else %}дата не указана{% endif %} · макс. {{ item.max_primary_score }} б.</p>
+                        <div class="sae-subject__kpis">
+                            <div class="sae-subject__kpi"><span>Участ.</span><strong>{{ item.students_count }}</strong></div>
+                            <div class="sae-subject__kpi"><span>Отм.</span><strong>{% if item.avg != None %}{{ item.avg }}{% else %}—{% endif %}</strong></div>
+                            <div class="sae-subject__kpi"><span>Усп.</span><strong>{% if item.pass_rate != None %}{{ item.pass_rate }}%{% else %}—{% endif %}</strong></div>
+                        </div>
+                        <div class="sae-level" aria-hidden="true"><i style="width:{{ item.level_pct }}%"></i></div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </section>
+        </aside>
+
+        <div class="sae-col-main">
+            {% if vpr_selected_protocol and selected_exam_analysis %}
+            <section class="sae-hero">
+                <div>
+                    <h2 class="sae-hero__title">{{ selected_exam_title }}</h2>
+                    <p class="sae-hero__desc">Сводка по протоколу ВПР: успеваемость, качество, задания и переходы к полному разбору в модуле ВПР.</p>
+                    <div class="sae-hero__chips">
+                        <span class="sae-chip">ВПР · {{ selected_year }}</span>
+                        {% if selected_exam_analysis.pass_rate >= 85 %}
+                        <span class="sae-chip sae-chip--good">Статус: устойчивый</span>
+                        {% elif selected_exam_analysis.pass_rate < 70 %}
+                        <span class="sae-chip sae-chip--risk">Статус: зона риска</span>
+                        {% else %}
+                        <span class="sae-chip sae-chip--mid">Статус: рабочий</span>
+                        {% endif %}
+                        <span class="sae-chip">{{ vpr_selected_protocol.parallel }} класс</span>
+                    </div>
+                </div>
+                <div class="sae-header__actions">
+                    <a class="sae-btn sae-btn--primary" href="{% url 'vpr-protocol-overview' protocol_id=vpr_selected_protocol.id %}" style="color:#0b1f3a;border:0">Обзор результатов</a>
+                    <a class="sae-btn" href="{% url 'vpr-protocol-conclusion' protocol_id=vpr_selected_protocol.id %}" style="color:#0b1f3a;border-color:#d5dde5;background:#fff">Заключение</a>
+                    <a class="sae-btn" href="{% url 'vpr-protocol-detail' protocol_id=vpr_selected_protocol.id %}" style="color:#0b1f3a;border-color:#d5dde5;background:#fff">Протокол</a>
+                </div>
+            </section>
+
+            <section class="sae-panel">
+                <div class="sae-panel__head">
+                    <div>
+                        <h3 class="sae-panel__title">Показатели протокола</h3>
+                        <p class="sae-panel__lead">Ключевые метрики выбранной ВПР</p>
+                    </div>
+                </div>
+                <div class="sae-subject-kpi">
+                    <article class="sae-kpi__card"><div class="sae-kpi__value">{{ ui.subject_kpi.students_count|default:"—" }}</div><div class="sae-kpi__label">Участников</div></article>
+                    <article class="sae-kpi__card"><div class="sae-kpi__value">{% if ui.subject_kpi.avg_mark != None %}{{ ui.subject_kpi.avg_mark }}{% else %}—{% endif %}</div><div class="sae-kpi__label">Средняя отметка ВПР</div></article>
+                    <article class="sae-kpi__card"><div class="sae-kpi__value">{% if ui.subject_kpi.avg_journal != None %}{{ ui.subject_kpi.avg_journal }}{% else %}—{% endif %}</div><div class="sae-kpi__label">Средняя отметка журнала</div></article>
+                    <article class="sae-kpi__card"><div class="sae-kpi__value">{% if ui.subject_kpi.avg_primary != None %}{{ ui.subject_kpi.avg_primary }}{% else %}—{% endif %}</div><div class="sae-kpi__label">Средний первичный балл</div></article>
+                    <article class="sae-kpi__card"><div class="sae-kpi__value">{% if ui.subject_kpi.pass_rate != None %}{{ ui.subject_kpi.pass_rate }}%{% else %}—{% endif %}</div><div class="sae-kpi__label">Абс. успеваемость</div></article>
+                    <article class="sae-kpi__card"><div class="sae-kpi__value">{% if ui.subject_kpi.quality_rate != None %}{{ ui.subject_kpi.quality_rate }}%{% else %}—{% endif %}</div><div class="sae-kpi__label">Качество (4–5)</div></article>
+                    <article class="sae-kpi__card"><div class="sae-kpi__value">{% if ui.subject_kpi.min_score != None %}{{ ui.subject_kpi.min_score }}{% else %}—{% endif %}</div><div class="sae-kpi__label">Мин. первичный</div></article>
+                    <article class="sae-kpi__card"><div class="sae-kpi__value">{% if ui.subject_kpi.max_score != None %}{{ ui.subject_kpi.max_score }}{% else %}—{% endif %}</div><div class="sae-kpi__label">Макс. первичный</div></article>
+                </div>
+            </section>
+
+            <section class="sae-panel">
+                <div class="sae-panel__head">
+                    <div>
+                        <h3 class="sae-panel__title">Аналитические выводы</h3>
+                        <p class="sae-panel__lead">Автоматические акценты по выбранному протоколу</p>
+                    </div>
+                </div>
+                <div class="sae-insights">
+                    <article class="sae-insight sae-insight--good">
+                        <p class="sae-insight__label">Главная сильная сторона</p>
+                        <p class="sae-insight__text">{{ ui.insights.strength|default:"Недостаточно данных для выделения сильной стороны." }}</p>
+                    </article>
+                    <article class="sae-insight sae-insight--risk">
+                        <p class="sae-insight__label">Главный риск</p>
+                        <p class="sae-insight__text">{{ ui.insights.risk|default:"Критических рисков не выявлено." }}</p>
+                    </article>
+                    <article class="sae-insight sae-insight--blue">
+                        <p class="sae-insight__label">Самое успешное задание</p>
+                        <p class="sae-insight__text">{{ ui.insights.best_task|default:"—" }}</p>
+                    </article>
+                    <article class="sae-insight sae-insight--mid">
+                        <p class="sae-insight__label">Самое проблемное задание</p>
+                        <p class="sae-insight__text">{{ ui.insights.worst_task|default:"—" }}</p>
+                    </article>
+                </div>
+            </section>
+
+            {% if ui.profile.bars %}
+            <section class="sae-panel">
+                <div class="sae-panel__head">
+                    <div>
+                        <h3 class="sae-panel__title">Профиль протокола</h3>
+                        <p class="sae-panel__lead">Сопоставление отметок и успеваемости</p>
+                    </div>
+                </div>
+                <div class="sae-profile">
+                    {% for bar in ui.profile.bars %}
+                    <div class="sae-profile__row">
+                        <div class="sae-profile__label">
+                            <span>{{ bar.label }}</span>
+                            {% if bar.empty %}
+                            <em class="sae-profile__empty">нет данных</em>
+                            {% elif bar.is_percent %}
+                            <strong>{% if bar.value != None %}{{ bar.value }}%{% else %}—{% endif %}</strong>
+                            {% else %}
+                            <strong>{% if bar.value != None %}{{ bar.value }}{% else %}—{% endif %}</strong>
+                            {% endif %}
+                        </div>
+                        <div class="sae-profile__bar sae-profile__bar--{{ bar.tone }}"><i style="width:{% if bar.empty %}0{% else %}{{ bar.pct }}{% endif %}%"></i></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            {% if ui.marks_bars %}
+            <section class="sae-panel">
+                <div class="sae-panel__head">
+                    <div>
+                        <h3 class="sae-panel__title">Распределение отметок ВПР</h3>
+                        <p class="sae-panel__lead">Доля участников по оценкам 2–5</p>
+                    </div>
+                </div>
+                <div class="sae-profile">
+                    {% for bar in ui.marks_bars %}
+                    <div class="sae-profile__row">
+                        <div class="sae-profile__label">
+                            <span>{{ bar.label }}</span>
+                            <strong>{{ bar.value }} · {{ bar.pct }}%</strong>
+                        </div>
+                        <div class="sae-profile__bar sae-profile__bar--{% if bar.label == 'Оценка 2' %}risk{% elif bar.label == 'Оценка 5' %}green{% else %}blue{% endif %}"><i style="width:{{ bar.pct }}%"></i></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            {% if ui.weak_tasks %}
+            <section class="sae-panel">
+                <p class="sae-section-label">Проблемные задания</p>
+                <div class="sae-table-wrap">
+                    <table class="sae-table">
+                        <thead><tr><th>Задание</th><th>Тема / умение</th><th>Успешность</th><th>Верно (+)</th><th>Ошибок (-)</th><th>Всего</th></tr></thead>
+                        <tbody>
+                        {% for task in ui.weak_tasks %}
+                            <tr>
+                                <td>№{{ task.task_number }}</td>
+                                <td>{{ task.topic }}</td>
+                                <td class="{% if task.success_rate < 50 %}is-danger{% endif %}">{{ task.success_rate }}%</td>
+                                <td>{{ task.plus|default:task.correct_count }}</td>
+                                <td>{{ task.minus|default:task.incorrect_count }}</td>
+                                <td>{{ task.answers_count }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {% endif %}
+
+            {% if ui.strong_tasks %}
+            <section class="sae-panel">
+                <p class="sae-section-label">Сильные задания</p>
+                <div class="sae-table-wrap">
+                    <table class="sae-table">
+                        <thead><tr><th>Задание</th><th>Тема / умение</th><th>Успешность</th><th>Верно (+)</th><th>Ошибок (-)</th><th>Всего</th></tr></thead>
+                        <tbody>
+                        {% for task in ui.strong_tasks %}
+                            <tr>
+                                <td>№{{ task.task_number }}</td>
+                                <td>{{ task.topic }}</td>
+                                <td>{{ task.success_rate }}%</td>
+                                <td>{{ task.plus|default:task.correct_count }}</td>
+                                <td>{{ task.minus|default:task.incorrect_count }}</td>
+                                <td>{{ task.answers_count }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {% endif %}
+
+            {% if ui.task_rows %}
+            <section class="sae-panel">
+                <p class="sae-section-label">Разбор заданий</p>
+                <div class="sae-table-wrap">
+                    <table class="sae-table">
+                        <thead><tr><th>Задание</th><th>Тема</th><th>Успешность</th><th>Верно (+)</th><th>Ошибок (-)</th><th>Всего</th></tr></thead>
+                        <tbody>
+                        {% for task in ui.task_rows %}
+                            <tr>
+                                <td>№{{ task.task_number }}</td>
+                                <td>
+                                    <strong>{{ task.topic|default:"—" }}</strong>
+                                    {% if task.section %}<br><small>{{ task.section }}</small>{% endif %}
+                                    {% if task.skill %}<br><small>Умение: {{ task.skill }}</small>{% endif %}
+                                </td>
+                                <td class="{% if task.success_rate != None and task.success_rate < 50 %}is-danger{% endif %}">{% if task.success_rate != None %}{{ task.success_rate }}%{% else %}—{% endif %}</td>
+                                <td>{{ task.plus }}</td>
+                                <td>{{ task.minus }}</td>
+                                <td>{{ task.total }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {% endif %}
+
+            <section class="sae-panel">
+                <div class="sae-panel__head">
+                    <div>
+                        <h3 class="sae-panel__title">Полный разбор в модуле ВПР</h3>
+                        <p class="sae-panel__lead">Задания, дефициты, экспертное заключение и выгрузки</p>
+                    </div>
+                </div>
+                <div class="sae-header__actions" style="justify-content:flex-start">
+                    <a class="sae-btn sae-btn--primary" href="{% url 'vpr-protocol-overview' protocol_id=vpr_selected_protocol.id %}" style="color:#0b1f3a;border:0">Обзор результатов</a>
+                    <a class="sae-btn" href="{% url 'vpr-protocol-conclusion' protocol_id=vpr_selected_protocol.id %}" style="color:#0b1f3a;border-color:#d5dde5;background:#fff">Аналитическое заключение</a>
+                    <a class="sae-btn" href="{% url 'vpr-protocol-detail' protocol_id=vpr_selected_protocol.id %}" style="color:#0b1f3a;border-color:#d5dde5;background:#fff">Карточка протокола</a>
+                    <a class="sae-btn" href="{% url 'vpr-registry' %}" style="color:#0b1f3a;border-color:#d5dde5;background:#fff">Все протоколы</a>
+                </div>
+            </section>
+
+            {% elif ui.has_subjects %}
+            <div class="sae-state">
+                <p class="sae-state__title">Выберите предмет</p>
+                <p class="sae-state__text">Откройте карточку протокола слева, чтобы увидеть сводку ВПР.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+(function () {
+    var list = document.getElementById("saeSubjectList");
+    var search = document.getElementById("saeSubjectSearch");
+    var sort = document.getElementById("saeSubjectSort");
+    if (list && search && sort) {
+        function apply() {
+            var q = (search.value || "").toLowerCase().trim();
+            var cards = Array.prototype.slice.call(list.querySelectorAll(".sae-subject"));
+            cards.forEach(function (card) {
+                var name = (card.getAttribute("data-name") || "").toLowerCase();
+                card.style.display = !q || name.indexOf(q) !== -1 ? "" : "none";
+            });
+            var visible = cards.filter(function (c) { return c.style.display !== "none"; });
+            var key = sort.value;
+            visible.sort(function (a, b) {
+                if (key === "name") {
+                    return (a.getAttribute("data-name") || "").localeCompare(b.getAttribute("data-name") || "", "ru");
+                }
+                var attr = key === "participants" ? "participants" : key === "pass" ? "pass" : "avg";
+                var av = parseFloat(a.getAttribute("data-" + attr) || "0");
+                var bv = parseFloat(b.getAttribute("data-" + attr) || "0");
+                return bv - av;
+            });
+            visible.forEach(function (c) { list.appendChild(c); });
+        }
+        search.addEventListener("input", apply);
+        sort.addEventListener("change", apply);
+    }
+})();
+</script>
+{% endwith %}

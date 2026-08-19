@@ -1,0 +1,20 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block object-tools-items %}
+    <li>
+        <form method="post" action="{% url 'admin:uploads_uploadsession_upload_ege' %}" enctype="multipart/form-data" style="display:flex; gap:8px; align-items:center;">
+            {% csrf_token %}
+            <input type="file" name="file" required accept=".xlsx,.xls,.csv">
+            <button type="submit" class="button">Загрузить ЕГЭ</button>
+        </form>
+    </li>
+    <li style="margin-top:8px;">
+        <form method="post" action="{% url 'admin:uploads_uploadsession_upload_oge' %}" enctype="multipart/form-data" style="display:flex; gap:8px; align-items:center;">
+            {% csrf_token %}
+            <input type="file" name="file" required accept=".xlsx,.xls,.csv">
+            <button type="submit" class="button">Загрузить ОГЭ</button>
+        </form>
+    </li>
+    {{ block.super }}
+{% endblock %}

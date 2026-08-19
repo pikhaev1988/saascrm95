@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "academic_year": 2026,
+      "subject": "Русский язык",
+      "parallel": 4,
+      "task_code": "1",
+      "max_score": 2,
+      "checked_skill": "Умение писать текст под диктовку",
+      "fgos_result": "Овладение основным умением писать текст",
+      "program_section": "Орфография",
+      "topic": "Диктант",
+      "topic_subsection": "Проверка орфографических навыков",
+      "difficulty": "Б",
+      "task_type": "Диктант",
+      "short_description": "Запись текста под диктовку",
+      "normative_source": "Описание ВПР по русскому языку 4 класс 2026"
+    },
+    {
+      "academic_year": 2026,
+      "subject": "Русский язык",
+      "parallel": 4,
+      "task_code": "7",
+      "max_score": 1,
+      "checked_skill": "Умение распознавать грамматические признаки слов",
+      "fgos_result": "Формирование умений характеризовать звуки",
+      "program_section": "Морфология",
+      "topic": "Части речи",
+      "topic_subsection": "Имя существительное",
+      "difficulty": "Б",
+      "task_type": "Выбор ответа",
+      "short_description": "Определение части речи",
+      "normative_source": "Описание ВПР по русскому языку 4 класс 2026"
+    },
+    {
+      "academic_year": 2026,
+      "subject": "Русский язык",
+      "parallel": 4,
+      "task_code": "9.1",
+      "task_number": 9,
+      "task_subnumber": "1",
+      "max_score": 1,
+      "checked_skill": "Умение интерпретировать информацию текста",
+      "fgos_result": "Понимание текста",
+      "program_section": "Развитие речи",
+      "topic": "Работа с текстом",
+      "topic_subsection": "Основная мысль",
+      "difficulty": "П",
+      "task_type": "Краткий ответ",
+      "short_description": "Определение основной мысли текста",
+      "normative_source": "Описание ВПР по русскому языку 4 класс 2026"
+    },
+    {
+      "academic_year": 2026,
+      "subject": "Русский язык",
+      "parallel": 4,
+      "task_code": "12.2",
+      "max_score": 1,
+      "checked_skill": "Умение создавать текст по заданным параметрам",
+      "fgos_result": "Создание письменных текстов",
+      "program_section": "Развитие речи",
+      "topic": "Сочинение",
+      "topic_subsection": "Опора на личный опыт",
+      "difficulty": "Б",
+      "task_type": "Развёрнутый ответ",
+      "short_description": "Написание текста на заданную тему",
+      "normative_source": "Описание ВПР по русскому языку 4 класс 2026"
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "stage": "STAGE_10",
+  "title": "Global methodological, mathematical and logical verification of VPR-2026 OO analytics",
+  "final_status": "RELEASE_READY",
+  "final_status_detail": "PASS_WITH_KNOWN_REMAINING",
+  "date": "2026-08-17",
+  "scope": "apps/vpr only",
+  "ege_oge_impact": false,
+  "totals": {
+    "protocols_checked": 138,
+    "pass": 138,
+    "fail": 0,
+    "blocked": 0,
+    "errors_found": 1,
+    "errors_fixed": 1,
+    "reports_regenerated": 138,
+    "rebuild_ok": 138,
+    "rebuild_fail": 0
+  },
+  "biology_11": {
+    "protocol_id": 11,
+    "subject": "Биология",
+    "class": 5,
+    "participants": 49,
+    "tasks_total": 29,
+    "tasks_below_50_old": 14,
+    "tasks_below_50_new": 15,
+    "root_cause": "strict <50 excluded completion_percent==50.0",
+    "fix": "system_tasks.below_50_inclusive=True (global, no protocol_id fork)",
+    "limited_sample": true,
+    "high_group_n": 2,
+    "high_group_status": "LIMITED_SAMPLE"
+  },
+  "sample": {
+    "limited_sample_protocols": 119,
+    "standard_sample_protocols": 19,
+    "system_groups_n_lt_10_hits": 392,
+    "protocols_with_system_group_lt_10": 133,
+    "fioko_mark_group_limited_hits": 367,
+    "protocols_with_fioko_mark_group_limited": 136
+  },
+  "tests": {
+    "manage_py_check": "PASS",
+    "apps_vpr": {"ran": 199, "skipped": 14, "failed": 0},
+    "stage10_methodology": {"ran": 11, "skipped": 1, "failed": 0},
+    "vpr_validate_all": "PASS"
+  },
+  "fioko_changes": [
+    "centralized basic/advanced thresholds and uncertainty_upper",
+    "distribution sample tiers STANDARD/LIMITED/VERY_LIMITED/HIGH_UNCERTAINTY",
+    "N<50 wording for primary score distribution"
+  ],
+  "system_changes": [
+    "tasks_below_50 inclusive ≤50",
+    "SYSTEM label in report wording for below_50",
+    "MetricFact provenance for core integrity metrics",
+    "DIAGNOSTIC/CONFIRMED aliases on EvidenceStatus"
+  ],
+  "models_changed": [],
+  "migrations_needed": false,
+  "files_changed": [
+    "apps/vpr/analytics/config.py",
+    "apps/vpr/analytics/thresholds.py",
+    "apps/vpr/facts/task_classification.py",
+    "apps/vpr/validation/consistency.py",
+    "apps/vpr/validation/integrity.py",
+    "apps/vpr/evidence/metric_fact.py",
+    "apps/vpr/evidence/statuses.py",
+    "apps/vpr/fioko_2026/classification.py",
+    "apps/vpr/fioko_2026/engine.py",
+    "apps/vpr/expert_analysis/fioko_report.py",
+    "apps/vpr/methodology/rules.py",
+    "apps/vpr/management/commands/vpr_validate_all.py",
+    "apps/vpr/tests/test_stage10_methodology.py",
+    "apps/vpr/tests/test_global_analytics.py"
+  ],
+  "new_functions": [
+    "get_vpr_analytics_config",
+    "below_50_threshold",
+    "is_below_threshold",
+    "fioko_basic_bounds",
+    "fioko_advanced_bounds",
+    "distribution_sample_tier",
+    "VprIntegrityValidator.validate",
+    "metric_fact / build_core_metric_facts",
+    "manage.py vpr_validate_all"
+  ],
+  "acceptance_criteria": {
+    "all_138_calculate": true,
+    "no_arithmetic_contradictions": true,
+    "biology_11_below_50_is_15": true,
+    "no_hardcoded_biology_11_fix": true,
+    "fioko_system_separated": true,
+    "thresholds_centralized": true,
+    "seven_fioko_directions_covered": true,
+    "full_partial_zero_ok": true,
+    "small_samples_marked": true,
+    "groups_lt10_marked": true,
+    "journal_gap_ge2_highlighted": true,
+    "no_auto_objectivity_verdict": true,
+    "planned_results_linked": true,
+    "deficits_have_evidence": true,
+    "single_low_not_stable_deficit": true,
+    "docx_rebuilt": true,
+    "no_stale_values": true,
+    "tests_pass": true,
+    "manage_check_pass": true,
+    "vpr_validate_all_pass": true,
+    "no_ege_oge_impact": true,
+    "no_manual_protocol_exceptions": true
+  },
+  "remaining_issues": [
+    "No full OLD vs NEW differential CSV artifact for all metrics",
+    "MetricFact not attached to every DOCX field",
+    "Deficit evidence primarily uses ESTABLISHED/INFORMATIVE (+ DIAGNOSTIC/CONFIRMED aliases)",
+    "Biology #11 TestCase skips when protocol absent from test DB"
+  ],
+  "artifacts": [
+    "apps/vpr/audit/VPR_STAGE10_VALIDATE_ALL.json",
+    "apps/vpr/audit/VPR_STAGE10_EXTRAS.json",
+    "apps/vpr/audit/VPR_STAGE10_ACCEPTANCE.md",
+    "apps/vpr/audit/VPR_STAGE10_ACCEPTANCE.json"
+  ]
+}

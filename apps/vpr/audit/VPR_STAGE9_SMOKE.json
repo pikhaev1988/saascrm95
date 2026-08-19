@@ -1,0 +1,278 @@
+{
+  "stage": "STAGE_9_FINAL_PRODUCTION_ACCEPTANCE",
+  "FINAL_PRODUCTION_ACCEPTANCE": "BLOCKED",
+  "TOTAL_EXISTING": 3,
+  "PASS": 0,
+  "FAIL": 3,
+  "BLOCKED": 0,
+  "HTML": "3/3",
+  "DOCX": "0/3",
+  "Facts": "3/3",
+  "Evidence": "3/3",
+  "Consistency": "3/3",
+  "Validator": "3/3",
+  "Rebuild": {
+    "attempted": 3,
+    "success": 3,
+    "fail": 0,
+    "source_data_changed": 0,
+    "status": "REBUILD_PASS",
+    "details": []
+  },
+  "New_upload": {
+    "status": "SKIPPED"
+  },
+  "Invalid_upload": {
+    "status": "SKIPPED"
+  },
+  "Duplicate_upload": {
+    "status": "SKIPPED"
+  },
+  "Performance": {
+    "existing_elapsed_sec": 2.99,
+    "avg_protocol_ms": 998
+  },
+  "Isolation": {
+    "status": "PASS",
+    "violations": [],
+    "changed_vpr_related_sample": [
+      "apps/vpr/analytics/engine.py",
+      "apps/vpr/analytics/metrics.py",
+      "apps/vpr/analytics/result.py",
+      "apps/vpr/analytics/thresholds.py",
+      "apps/vpr/audit/FIOKO_COMPLIANCE_AUDIT_STAGE6.md",
+      "apps/vpr/audit/VPR_FIOKO_STAGE7_1_ACCEPTANCE.json",
+      "apps/vpr/audit/VPR_FIOKO_STAGE7_1_ACCEPTANCE.md",
+      "apps/vpr/audit/VPR_FIOKO_STAGE7_ACCEPTANCE.json",
+      "apps/vpr/audit/VPR_FIOKO_STAGE7_ACCEPTANCE.md",
+      "apps/vpr/audit/VPR_GLOBAL_ANALYTICS_ARCHITECTURE.md",
+      "apps/vpr/audit/VPR_GLOBAL_ANALYTICS_CHANGELOG.md",
+      "apps/vpr/audit/VPR_GLOBAL_FINAL_AUDIT.json",
+      "apps/vpr/audit/VPR_GLOBAL_FINAL_AUDIT.md",
+      "apps/vpr/audit/VPR_GLOBAL_QUALITY_AUDIT.json",
+      "apps/vpr/audit/VPR_GLOBAL_QUALITY_AUDIT.md",
+      "apps/vpr/audit/VPR_STAGE8_1_ACCEPTANCE.md",
+      "apps/vpr/audit/VPR_STAGE8_1_ACCEPTANCE_PROTOCOLS.json",
+      "apps/vpr/audit/VPR_STAGE8_1_AUDIT_SUMMARY.json",
+      "apps/vpr/audit/VPR_STAGE8_QUALITY_AUDIT.json",
+      "apps/vpr/audit/VPR_STAGE8_QUALITY_AUDIT.md",
+      "apps/vpr/audit/VPR_STAGE9_BLOCKER_FIXES.md",
+      "apps/vpr/audit/VPR_STAGE9_ISOLATION.json",
+      "apps/vpr/audit/VPR_STAGE9_PRODUCTION_ACCEPTANCE.json",
+      "apps/vpr/audit/_run_stage7_remote.py",
+      "apps/vpr/audit/_run_stage8_1_remote.py",
+      "apps/vpr/audit/_run_stage8_remote.py",
+      "apps/vpr/audit/_run_stage9_remote.py",
+      "apps/vpr/audit/run_global_quality_audit.py",
+      "apps/vpr/audit/run_stage7_acceptance.py",
+      "apps/vpr/audit/run_stage8_quality_audit.py",
+      "apps/vpr/audit/run_stage9_production_acceptance.py",
+      "apps/vpr/causes/result.py",
+      "apps/vpr/comprehensive_analysis/__init__.py",
+      "apps/vpr/comprehensive_analysis/achievement.py",
+      "apps/vpr/comprehensive_analysis/engine.py",
+      "apps/vpr/comprehensive_analysis/groups.py",
+      "apps/vpr/comprehensive_analysis/objectivity.py",
+      "apps/vpr/comprehensive_analysis/presentation.py",
+      "apps/vpr/comprehensive_analysis/schemas.py",
+      "apps/vpr/comprehensive_analysis/service.py"
+    ],
+    "notes": "Isolation vs HEAD working tree: EGE/OGE/export_reports/school_ege/oge_dashboard/analytics(non-vpr) must be untouched by Stage work.",
+    "source": "/home/p/pikhae0x/analizgia.ru/public/analiz_gia/apps/vpr/audit/VPR_STAGE9_ISOLATION.json"
+  },
+  "Checks": {
+    "manage_check": {
+      "status": "PASS",
+      "output": "System check identified no issues (0 silenced).\n"
+    },
+    "makemigrations_check": {
+      "status": "PASS",
+      "output": "No changes detected\n"
+    }
+  },
+  "Warning_classification": {
+    "SAFE_DATA_LIMITATION": 7,
+    "SAFE_METHODOLOGY_LIMITATION": 0,
+    "REAL_QUALITY_WARNING": 0,
+    "BUG": 3
+  },
+  "Acceptance_matrix": [
+    {
+      "check": "TOTAL existing protocols",
+      "expected": 3,
+      "actual": 3,
+      "status": "PASS"
+    },
+    {
+      "check": "Analytics",
+      "expected": "138/138 PASS",
+      "actual": "0/3",
+      "status": "FAIL"
+    },
+    {
+      "check": "Facts",
+      "expected": "138/138",
+      "actual": "3/3",
+      "status": "PASS"
+    },
+    {
+      "check": "Evidence",
+      "expected": "138/138",
+      "actual": "3/3",
+      "status": "PASS"
+    },
+    {
+      "check": "Consistency",
+      "expected": "138/138",
+      "actual": "3/3",
+      "status": "PASS"
+    },
+    {
+      "check": "Narrative",
+      "expected": "138/138",
+      "actual": "3/3",
+      "status": "PASS"
+    },
+    {
+      "check": "HTML",
+      "expected": "138/138",
+      "actual": "3/3",
+      "status": "PASS"
+    },
+    {
+      "check": "DOCX",
+      "expected": "138/138",
+      "actual": "0/3",
+      "status": "FAIL"
+    },
+    {
+      "check": "Validator",
+      "expected": "138/138",
+      "actual": "3/3",
+      "status": "PASS"
+    },
+    {
+      "check": "Rebuild",
+      "expected": "138/138",
+      "actual": "3/3",
+      "status": "PASS"
+    },
+    {
+      "check": "New Upload",
+      "expected": "PASS",
+      "actual": "SKIPPED",
+      "status": "SKIPPED"
+    },
+    {
+      "check": "Failed Upload",
+      "expected": "PASS",
+      "actual": "SKIPPED",
+      "status": "SKIPPED"
+    },
+    {
+      "check": "Duplicate Upload",
+      "expected": "PASS",
+      "actual": "SKIPPED",
+      "status": "SKIPPED"
+    },
+    {
+      "check": "Isolation",
+      "expected": "PASS",
+      "actual": "PASS",
+      "status": "PASS"
+    },
+    {
+      "check": "manage.py check",
+      "expected": "PASS",
+      "actual": "PASS",
+      "status": "PASS"
+    },
+    {
+      "check": "makemigrations --check",
+      "expected": "PASS",
+      "actual": "PASS",
+      "status": "PASS"
+    }
+  ],
+  "Protocol_matrix": [
+    {
+      "ID": 1,
+      "Subject": "Математика",
+      "Class": 10,
+      "Year": 2026,
+      "N": 24,
+      "School": "Муниципальное бюджетное общеобразовательное учреждение \"Средняя общеобразовательная школа №1 г.Урус-Мартан\"",
+      "Facts": "PASS",
+      "Evidence": "PASS",
+      "Consistency": "PASS",
+      "HTML": "PASS",
+      "DOCX": "FAIL",
+      "Validator": "PASS",
+      "Warnings": 2,
+      "Final": "FAIL"
+    },
+    {
+      "ID": 2,
+      "Subject": "Физика",
+      "Class": 10,
+      "Year": 2026,
+      "N": 24,
+      "School": "Муниципальное бюджетное общеобразовательное учреждение \"Средняя общеобразовательная школа №1 г.Урус-Мартан\"",
+      "Facts": "PASS",
+      "Evidence": "PASS",
+      "Consistency": "PASS",
+      "HTML": "PASS",
+      "DOCX": "FAIL",
+      "Validator": "PASS",
+      "Warnings": 3,
+      "Final": "FAIL"
+    },
+    {
+      "ID": 3,
+      "Subject": "Обществознание",
+      "Class": 10,
+      "Year": 2026,
+      "N": 24,
+      "School": "Муниципальное бюджетное общеобразовательное учреждение \"Средняя общеобразовательная школа №1 г.Урус-Мартан\"",
+      "Facts": "PASS",
+      "Evidence": "PASS",
+      "Consistency": "PASS",
+      "HTML": "PASS",
+      "DOCX": "FAIL",
+      "Validator": "PASS",
+      "Warnings": 2,
+      "Final": "FAIL"
+    }
+  ],
+  "Findings": [
+    {
+      "protocol_id": 1,
+      "section": "docx",
+      "stage": "technical_metadata",
+      "error": "tech token in DOCX",
+      "evidence": "EvidenceStatus\\.",
+      "severity": "Critical",
+      "recommended_fix": "document only; no auto-fix in Stage 9"
+    },
+    {
+      "protocol_id": 2,
+      "section": "docx",
+      "stage": "technical_metadata",
+      "error": "tech token in DOCX",
+      "evidence": "EvidenceStatus\\.",
+      "severity": "Critical",
+      "recommended_fix": "document only; no auto-fix in Stage 9"
+    },
+    {
+      "protocol_id": 3,
+      "section": "docx",
+      "stage": "technical_metadata",
+      "error": "tech token in DOCX",
+      "evidence": "EvidenceStatus\\.",
+      "severity": "Critical",
+      "recommended_fix": "document only; no auto-fix in Stage 9"
+    }
+  ],
+  "Future_upload_guarantee": "Future Upload = NOT_PROVEN",
+  "note": "STAGE 9 is acceptance-only. No methodology rewrite. Изменения реализованы глобально и не зависят от protocol_id."
+}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block head_title %}{{ role_title }} — Районный центр аналитики ГИА{% endblock %}
+{% block content %}
+{% if selected_exam_type == "vpr" %}
+<div class="content-stack content-stack--loose">
+    {% include "users/includes/district_vpr_analytics.html" %}
+</div>
+{% else %}
+<div class="enterprise-dashboard hub-page">
+    {% include "users/includes/district_dashboard_header.html" %}
+    {% include "users/includes/district_filter_panel.html" %}
+
+    <section class="enterprise-section">
+        <div class="enterprise-section-head">
+            <div>
+                <span class="enterprise-eyebrow">Состояние района</span>
+                <h3>Центр управления качеством образования</h3>
+            </div>
+            <p>{{ selected_exam_type_label|default:"ЕГЭ" }} · {{ hub_selected_year|default:district_selected_year|default:"-" }}</p>
+        </div>
+        {% include "users/includes/district_kpi_cards.html" %}
+    </section>
+
+    {% include "users/includes/hub_analytics_panel.html" %}
+    {% include "users/includes/district_management_signals.html" %}
+    {% include "users/includes/district_school_ranking.html" %}
+    {% include "users/includes/district_management_decisions.html" %}
+    {% include "users/includes/district_schools_table.html" %}
+    {% include "users/includes/hub_charts_script.html" %}
+</div>
+{% endif %}
+{% endblock %}

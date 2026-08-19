@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block head_title %}Аналитика ВПР — {{ role_title|default:"Район" }}{% endblock %}
+{% block content %}
+<div class="content-stack content-stack--loose">
+    {% include "users/includes/district_vpr_analytics.html" %}
+</div>
+{% endblock %}

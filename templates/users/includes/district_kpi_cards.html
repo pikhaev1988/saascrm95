@@ -1,0 +1,44 @@
+<section class="enterprise-kpi-grid" aria-label="Состояние района">
+    <article class="enterprise-kpi-card">
+        <span class="enterprise-kpi-card__icon is-blue">OO</span>
+        <p>Всего организаций</p>
+        <strong>{{ overview_extra.schools_total|default:district_schools_count }}</strong>
+        <em>школы района</em>
+    </article>
+    <article class="enterprise-kpi-card">
+        <span class="enterprise-kpi-card__icon is-blue">Σ</span>
+        <p>Участники ГИА</p>
+        <strong>{{ overview_extra.total_participants|default:metrics.unique_students|default:metrics.total_results }}</strong>
+        <em>ЕГЭ + ОГЭ</em>
+    </article>
+    <article class="enterprise-kpi-card">
+        <span class="enterprise-kpi-card__icon is-blue">E</span>
+        <p>Средний балл ЕГЭ</p>
+        <strong>{{ ege_stats.avg_score|default:"-" }}</strong>
+        <em class="{% if overview_extra.overall_delta and overview_extra.overall_delta > 0 %}is-positive{% elif overview_extra.overall_delta and overview_extra.overall_delta < 0 %}is-negative{% endif %}">
+            {% if overview_extra.overall_delta or overview_extra.overall_delta == 0 %}
+                {% if overview_extra.overall_delta > 0 %}+{% endif %}{{ overview_extra.overall_delta }} к базовому периоду
+            {% else %}
+                динамика недоступна
+            {% endif %}
+        </em>
+    </article>
+    <article class="enterprise-kpi-card">
+        <span class="enterprise-kpi-card__icon is-cyan">O</span>
+        <p>Средний балл ОГЭ</p>
+        <strong>{{ oge_stats.avg_score|default:"-" }}</strong>
+        <em>сдаваемость {{ oge_stats.pass_rate|default:"0" }}%</em>
+    </article>
+    <article class="enterprise-kpi-card is-risk">
+        <span class="enterprise-kpi-card__icon is-red">R</span>
+        <p>Школы риска</p>
+        <strong>{{ district_risk_school_count|default:0 }}</strong>
+        <em>сдаваемость ниже 50%</em>
+    </article>
+    <article class="enterprise-kpi-card is-success">
+        <span class="enterprise-kpi-card__icon is-green">+</span>
+        <p>Лучший предмет</p>
+        <strong>{{ overview_extra.best_subject|default:"Нет данных" }}</strong>
+        <em>{% if overview_extra.best_subject_score %}{{ overview_extra.best_subject_score }} балла{% else %}ожидает данных{% endif %}</em>
+    </article>
+</section>

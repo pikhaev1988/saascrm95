@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block head_title %}Задание №{{ entry.display_code }} — Справочник ВПР{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Справочник заданий ВПР</span>
+            <h2>{{ entry.subject }}</h2>
+            <p>{{ entry.parallel }} класс · {{ entry.academic_year }} · Задание №{{ entry.display_code }}</p>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'vpr-catalog-list' %}" class="ui-btn">← К списку</a>
+                {% if can_manage %}
+                <a href="{% url 'vpr-catalog-edit' entry_id=entry.id %}" class="ui-btn ui-btn-primary">Редактировать</a>
+                <a href="{% url 'vpr-catalog-delete' entry_id=entry.id %}" class="ui-btn">Удалить</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="ui-alert {% if message.tags == 'error' %}ui-alert--error{% else %}ui-alert--success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="enterprise-panel">
+        <div class="hub-kpi-grid hub-kpi-grid--compact">
+            <article class="hub-kpi"><p class="hub-kpi-label">Максимальный балл</p><p class="hub-kpi-value">{{ entry.max_score }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Уровень сложности</p><p class="hub-kpi-value" style="font-size:1.05rem">{{ entry.difficulty|default:"—" }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Тип задания</p><p class="hub-kpi-value" style="font-size:1.05rem">{{ entry.task_type|default:"—" }}</p></article>
+            <article class="hub-kpi"><p class="hub-kpi-label">Код</p><p class="hub-kpi-value" style="font-size:1.05rem">{{ entry.display_code }}</p></article>
+        </div>
+        <div class="enterprise-empty" style="margin-top:1.25rem;line-height:1.8">
+            <p><strong>Проверяемое умение:</strong> {{ entry.checked_skill|default:"—" }}</p>
+            <p><strong>Предметный результат ФГОС:</strong> {{ entry.fgos_result|default:"—" }}</p>
+            <p><strong>Раздел программы:</strong> {{ entry.program_section|default:"—" }}</p>
+            <p><strong>Тема:</strong> {{ entry.topic|default:"—" }}</p>
+            <p><strong>Подраздел темы:</strong> {{ entry.topic_subsection|default:"—" }}</p>
+            <p><strong>Описание:</strong> {{ entry.short_description|default:"—" }}</p>
+            <p><strong>Нормативный источник:</strong> {{ entry.normative_source|default:"—" }}</p>
+            {% if entry.official_code %}<p><strong>Официальный код:</strong> {{ entry.official_code }}</p>{% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

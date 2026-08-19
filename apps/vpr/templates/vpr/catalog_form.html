@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block head_title %}{{ form_title }} — Справочник ВПР{% endblock %}
+{% block content %}
+<div class="enterprise-dashboard">
+    <header class="enterprise-header">
+        <div class="enterprise-header__main">
+            <span class="enterprise-eyebrow">Справочник заданий ВПР</span>
+            <h2>{{ form_title }}</h2>
+        </div>
+        <div class="enterprise-header__meta">
+            <div class="enterprise-actions">
+                <a href="{% url 'vpr-catalog-list' %}" class="ui-btn">← К списку</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="enterprise-panel enterprise-narrow">
+        <form method="post" class="ui-form-stack space-y-4">
+            {% csrf_token %}
+            {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<p class="enterprise-empty">{{ field.help_text }}</p>{% endif %}
+                {% for error in field.errors %}<p class="ui-alert ui-alert--error">{{ error }}</p>{% endfor %}
+            </div>
+            {% endfor %}
+            <div class="enterprise-form-actions">
+                <button type="submit" class="ui-btn ui-btn-primary">Сохранить</button>
+                <a href="{% url 'vpr-catalog-list' %}" class="ui-btn">Отмена</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

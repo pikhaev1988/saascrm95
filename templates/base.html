@@ -1,0 +1,224 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block head_title %}Анализ ГИА{% endblock %}</title>
+    <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="any">
+    <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+    <link rel="icon" href="{% static 'img/favicon-32.png' %}" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'img/site.webmanifest' %}">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=ds1">
+    <link rel="stylesheet" href="{% static 'css/ds.css' %}?v=ds1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+    <script src="{% static 'js/ds-charts.js' %}?v=ds1" defer></script>
+    {% block extra_head %}{% endblock %}
+    <script>
+    function drawFallbackChart(canvas, labels, values, mode, yMax) {
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        const width = canvas.width;
+        const height = canvas.height;
+        ctx.clearRect(0, 0, width, height);
+
+        const padLeft = 36;
+        const padRight = 10;
+        const padTop = 10;
+        const padBottom = 28;
+        const chartW = width - padLeft - padRight;
+        const chartH = height - padTop - padBottom;
+        const chartPrimary = (window.DS_CHART && window.DS_CHART.colors && window.DS_CHART.colors[0]) || "#2563eb";
+        const chartMuted = (window.DS_CHART && window.DS_CHART.text) || "#64748b";
+        const chartGrid = (window.DS_CHART && window.DS_CHART.grid) || "#e2e8f0";
+
+        ctx.strokeStyle = chartGrid;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padLeft, padTop);
+        ctx.lineTo(padLeft, padTop + chartH);
+        ctx.lineTo(padLeft + chartW, padTop + chartH);
+        ctx.stroke();
+
+        if (!values || !values.length) return;
+
+        const maxValue = yMax || Math.max(...values, 1);
+        const step = chartW / values.length;
+
+        if (mode === "line") {
+            ctx.strokeStyle = chartPrimary;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            values.forEach((v, i) => {
+                const x = padLeft + step * i + step / 2;
+                const y = padTop + chartH - (Math.max(v, 0) / maxValue) * chartH;
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        } else {
+            ctx.fillStyle = chartPrimary;
+            values.forEach((v, i) => {
+                const barW = Math.max(step * 0.65, 4);
+                const x = padLeft + step * i + (step - barW) / 2;
+                const h = (Math.max(v, 0) / maxValue) * chartH;
+                const y = padTop + chartH - h;
+                ctx.fillRect(x, y, barW, h);
+            });
+        }
+
+        ctx.fillStyle = chartMuted;
+        ctx.font = "10px Inter, sans-serif";
+        labels.forEach((label, i) => {
+            if (i % Math.ceil(labels.length / 8) !== 0 && labels.length > 8) return;
+            const x = padLeft + step * i + step / 2;
+            ctx.fillText(String(label), x - 8, padTop + chartH + 14);
+        });
+    }
+
+    window.renderSimpleBarChart = function(canvasId, labels, values, yMax) {
+        drawFallbackChart(document.getElementById(canvasId), labels, values, "bar", yMax);
+    };
+
+    window.renderSimpleLineChart = function(canvasId, labels, values) {
+        drawFallbackChart(document.getElementById(canvasId), labels, values, "line");
+    };
+    </script>
+</head>
+<body>
+<a href="#main-content" class="skip-link">К основному содержанию</a>
+<div class="app-shell">
+    <header class="app-topbar">
+        <div class="app-topbar-inner">
+            <div class="app-brand-block">
+                <span class="app-logo-mark" aria-hidden="true">АГ</span>
+                <div class="app-brand-text">
+                    {% if request.user.is_authenticated %}
+                    <a href="{% url 'cabinet-exam-choice' %}" class="app-brand-link">
+                        <h1 class="app-brand-title">Анализ ГИА</h1>
+                    </a>
+                    {% else %}
+                    <h1 class="app-brand-title">Анализ ГИА</h1>
+                    {% endif %}
+                    <p class="app-brand-meta">
+                        {% if request.user.role == "district" %}
+                            Районный центр аналитики ГИА
+                        {% elif request.user.role == "ministry" %}
+                            Сводная аналитика ЕГЭ/ОГЭ
+                        {% elif request.user.role == "school" %}
+                            Управление результатами и рисками
+                        {% else %}
+                            Платформа анализа экзаменационных результатов
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'user-logout' %}" class="app-topbar-logout">
+                    {% csrf_token %}
+                    <button type="submit" class="ui-btn ui-btn-ghost">Выйти</button>
+                </form>
+            {% endif %}
+        </div>
+    </header>
+    <div class="app-layout{% if request.user.is_authenticated %} app-layout--with-sidebar{% endif %}">
+        {% if request.user.is_authenticated %}
+            <aside class="app-sidebar" aria-label="Разделы кабинета">
+                <div class="sidebar-nav-top">
+                    <p class="app-sidebar-title">Навигация</p>
+                    <nav class="app-nav" aria-label="Основное меню">
+                        <a href="{% url 'cabinet-exam-choice' %}" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-exam-choice' %}is-active{% endif %}">
+                            <span class="app-nav-icon">🏠</span>
+                            <span>Обзор</span>
+                        </a>
+                        <a href="{% url 'cabinet' %}?exam_type=ege" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-school' and request.GET.exam_type == 'ege' %}is-active{% endif %}">
+                            <span class="app-nav-icon">📊</span>
+                            <span>Аналитика ЕГЭ</span>
+                        </a>
+                        <a href="{% url 'cabinet' %}?exam_type=oge" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-school' and request.GET.exam_type == 'oge' %}is-active{% endif %}">
+                            <span class="app-nav-icon">📈</span>
+                            <span>Аналитика ОГЭ</span>
+                        </a>
+                        <a href="{% if request.user.role == 'district' %}{% url 'cabinet-district' %}?exam_type=vpr{% else %}{% url 'vpr-school-analytics' %}{% endif %}" class="app-nav-link {% if request.resolver_match.url_name == 'vpr-school-analytics' or request.resolver_match.url_name == 'cabinet-district' and request.GET.exam_type == 'vpr' or request.resolver_match.url_name == 'vpr-registry' or request.resolver_match.url_name == 'vpr-protocol-detail' or request.resolver_match.url_name == 'vpr-protocol-info' or request.resolver_match.url_name == 'vpr-protocol-overview' or request.resolver_match.url_name == 'vpr-protocol-conclusion' or request.resolver_match.url_name == 'vpr-catalog-list' or request.resolver_match.url_name == 'vpr-catalog-detail' or request.resolver_match.url_name == 'vpr-catalog-create' or request.resolver_match.url_name == 'vpr-catalog-edit' or request.resolver_match.url_name == 'vpr-catalog-import' %}is-active{% endif %}">
+                            <span class="app-nav-icon">📋</span>
+                            <span>Аналитика ВПР</span>
+                        </a>
+                        <a href="{% url 'cabinet-profile' %}" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-profile' %}is-active{% endif %}">
+                            <span class="app-nav-icon">⚙</span>
+                            <span>Настройки</span>
+                        </a>
+                        <a href="{% url 'cabinet-password-change' %}" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-password-change' %}is-active{% endif %}">
+                            <span class="app-nav-icon">🔒</span>
+                            <span>Безопасность</span>
+                        </a>
+                        <a href="/cabinet/reports/" class="app-nav-link {% if request.path == '/cabinet/reports/' %}is-active{% endif %}">
+                            <span class="app-nav-icon">📄</span>
+                            <span>Отчёты</span>
+                        </a>
+                        {% if request.user.role == "school" %}
+                        <a href="{% url 'cabinet-upload-ege' %}" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-upload-ege' %}is-active{% endif %}">
+                            <span class="app-nav-icon">📥</span>
+                            <span>Загрузить протоколы ЕГЭ</span>
+                        </a>
+                        <a href="{% url 'cabinet-upload-oge' %}" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-upload-oge' %}is-active{% endif %}">
+                            <span class="app-nav-icon">📥</span>
+                            <span>Загрузить протоколы ОГЭ</span>
+                        </a>
+                        <a href="{% url 'cabinet-upload-vpr' %}" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-upload-vpr' or request.resolver_match.url_name == 'vpr-upload' %}is-active{% endif %}">
+                            <span class="app-nav-icon">📥</span>
+                            <span>Загрузить протоколы ВПР</span>
+                        </a>
+                        {% elif request.user.role == "district" %}
+                        <a href="{% url 'cabinet-district-upload-ege' %}" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-district-upload-ege' %}is-active{% endif %}">
+                            <span class="app-nav-icon">📥</span>
+                            <span>Загрузить протоколы ЕГЭ</span>
+                        </a>
+                        <a href="{% url 'cabinet-district-upload-oge' %}" class="app-nav-link {% if request.resolver_match.url_name == 'cabinet-district-upload-oge' %}is-active{% endif %}">
+                            <span class="app-nav-icon">📥</span>
+                            <span>Загрузить протоколы ОГЭ</span>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+                {% if request.user.role == "district" %}
+                <div class="sidebar-promo">
+                    <div class="sidebar-promo-icon">◎</div>
+                    <p class="sidebar-promo-title">Районный кабинет</p>
+                    <p class="sidebar-promo-text">Загрузка протоколов по школам района и свод в разделе «Отчёты».</p>
+                    <a href="{% url 'cabinet-reports' %}?doc=gia-summary&amp;exam_type=ege" class="sidebar-promo-link">Свод ГИА →</a>
+                </div>
+                {% else %}
+                <div class="sidebar-promo">
+                    <div class="sidebar-promo-icon">◍</div>
+                    <p class="sidebar-promo-title">Новые возможности аналитики</p>
+                    <p class="sidebar-promo-text">Следите за динамикой результатов в реальном времени.</p>
+                    <a href="#" class="sidebar-promo-link">Подробнее →</a>
+                </div>
+                {% endif %}
+                <div class="sidebar-user">
+                    <span class="sidebar-user-avatar" aria-hidden="true">{{ request.user.username|slice:":2"|upper }}</span>
+                    <div class="sidebar-user-text">
+                        <p class="sidebar-user-name">{{ request.user.get_role_display|default:"Пользователь" }}</p>
+                        <p class="sidebar-user-login">{{ request.user.username }}</p>
+                    </div>
+                </div>
+            </aside>
+        {% endif %}
+        <main id="main-content" class="app-main" tabindex="-1">
+            <div class="app-main-inner">
+            {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</div>
+{% if request.user.is_authenticated and request.user.role == "school" or request.user.is_authenticated and request.user.role == "district" %}
+<script src="{% static 'js/cabinet-download.js' %}?v=10"></script>
+{% endif %}
+</body>
+</html>

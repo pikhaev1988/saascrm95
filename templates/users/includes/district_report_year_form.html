@@ -1,0 +1,30 @@
+<form method="get" class="enterprise-toolbar">
+    <input type="hidden" name="doc" value="{{ report_doc }}">
+    <input type="hidden" name="exam_type" value="{{ report_nav_exam_type }}">
+    {% if report_doc == "subject-notes" and report_selected_district_subject %}
+        <input type="hidden" name="subject" value="{{ report_selected_district_subject }}">
+    {% endif %}
+    {% if report_doc == "mo-report" and report_selected_mo_key %}
+        <input type="hidden" name="mo" value="{{ report_selected_mo_key }}">
+    {% endif %}
+    <select name="year" class="ui-input">
+        {% for y in report_district_year_options %}
+            <option value="{{ y }}" {% if report_selected_district_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+    </select>
+    {% if report_doc == "subject-notes" %}
+        <select name="subject" class="ui-input">
+            {% for s in report_district_subject_options %}
+                <option value="{{ s }}" {% if report_selected_district_subject == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+    {% endif %}
+    {% if report_doc == "mo-report" %}
+        <select name="mo" class="ui-input">
+            {% for mo in report_mo_options %}
+                <option value="{{ mo.key }}" {% if report_selected_mo_key == mo.key %}selected{% endif %}>{{ mo.title }}</option>
+            {% endfor %}
+        </select>
+    {% endif %}
+    <button type="submit" class="ui-btn">Обновить</button>
+</form>
