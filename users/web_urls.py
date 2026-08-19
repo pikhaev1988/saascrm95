@@ -2,6 +2,12 @@ from django.contrib.auth.views import LogoutView, PasswordChangeDoneView, Passwo
 from django.views.generic import RedirectView
 from django.urls import path
 
+from users.legal_views import (
+    PrivacyPolicyView,
+    SchoolDocumentDownloadView,
+    SchoolDocumentsView,
+    TermsOfAccessView,
+)
 from users.protocol_upload_views import (
     DistrictDownloadEgeProtocolSampleView,
     DistrictDownloadOgeProtocolSampleView,
@@ -152,4 +158,9 @@ urlpatterns = [
     path("cabinet/district/export-school-comparison-docx/", DownloadDistrictSchoolComparisonDocxView.as_view(), name="cabinet-district-export-school-comparison-docx"),
     path("cabinet/district/export-mo-report-docx/", DownloadDistrictMoReportDocxView.as_view(), name="cabinet-district-export-mo-report-docx"),
     path("cabinet/district/export-management-docx/", DownloadDistrictManagementDocxView.as_view(), name="cabinet-district-export-management-docx"),
+    # Legal & documents
+    path("legal/privacy/", PrivacyPolicyView.as_view(), name="legal-privacy"),
+    path("legal/terms/", TermsOfAccessView.as_view(), name="legal-terms"),
+    path("cabinet/documents/", SchoolDocumentsView.as_view(), name="cabinet-documents"),
+    path("cabinet/documents/<slug:slug>/", SchoolDocumentDownloadView.as_view(), name="cabinet-document-download"),
 ]

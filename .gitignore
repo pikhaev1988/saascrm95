@@ -12,6 +12,7 @@ tmp/
 tmp_*
 _tmp_*
 *.docx
+!static/docs/school/*.docx
 *.xlsx
 *.zip
 *.gz
