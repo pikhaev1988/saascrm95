@@ -560,7 +560,12 @@ def _is_oge_column_header_row(row) -> bool:
 def _detect_oge_layout_from_header(row) -> str:
     headers = [_safe_str(value).lower() for value in row]
     header_joined = " ".join(header for header in headers if header)
-    is_sparse = len(row) > 4 and row[3] is None and any(header == "код оо" for header in headers)
+    # openpyxl uses None for empty cells; xlrd uses "".
+    is_sparse = (
+        len(row) > 4
+        and (row[3] is None or (isinstance(row[3], str) and not row[3].strip()))
+        and any(header == "код оо" for header in headers)
+    )
 
     if any(header == "schoolcode" for header in headers):
         return "normalized"
@@ -833,6 +838,44 @@ def _parse_oge_meta_from_xls_sheet(sheet):
         if header_text:
             return parse_exam_header(header_text)
     return None
+
+
+def _xls_row_values(sheet, row_idx: int) -> list:
+    return [sheet.cell_value(row_idx, col_idx) for col_idx in range(sheet.ncols)]
+
+
+def _iter_oge_xls_exam_blocks_stream(sheet):
+    """Stream multi-exam regional/legacy OGE blocks from classic .xls sheets."""
+    current_exam_key = None
+    current_layout = None
+    current_column_map = None
+    current_rows = []
+    for row_idx in range(sheet.nrows):
+        row = _xls_row_values(sheet, row_idx)
+        header_text = _find_exam_header_in_row([_safe_str(value) for value in row])
+        if header_text:
+            if current_exam_key and current_rows:
+                yield current_exam_key, current_rows
+            current_exam_key = parse_exam_header(header_text)
+            current_rows = []
+            current_layout = None
+            current_column_map = None
+            continue
+        if not current_exam_key or not row:
+            continue
+        if _is_oge_column_header_row(row):
+            current_layout = _detect_oge_layout_from_header(row)
+            current_column_map = _build_oge_column_map(row)
+            continue
+        layout = current_layout or _infer_oge_layout_from_data_row(row) or "legacy_dense"
+        if current_layout is None:
+            current_layout = layout
+        column_map = current_column_map or _default_oge_column_map(layout)
+        parsed = _parse_oge_row(row, column_map)
+        if parsed:
+            current_rows.append(parsed)
+    if current_exam_key and current_rows:
+        yield current_exam_key, current_rows
 
 
 def _iter_oge_xls_rows(sheet):
@@ -1108,15 +1151,21 @@ def parse_oge(file_path, school_codes=None):
     elif ext == ".xls":
         workbook = xlrd.open_workbook(file_path)
         sheet = workbook.sheet_by_index(0)
-        parsed_meta = _parse_oge_meta_from_xls_sheet(sheet)
-        if parsed_meta:
-            code, subject, exam_date = parsed_meta
-        else:
-            code, subject, exam_date = _parse_oge_exam_meta(file_path)
-        parsed_rows = _iter_oge_xls_rows(sheet)
-        exam_ids.append(
-            _process_oge_exam_block(code, subject, exam_date, parsed_rows, school_map, school_codes, stats)
-        )
+        for (code, subject, exam_date), parsed_rows in _iter_oge_xls_exam_blocks_stream(sheet):
+            exam_ids.append(
+                _process_oge_exam_block(code, subject, exam_date, parsed_rows, school_map, school_codes, stats)
+            )
+        if not exam_ids:
+            # Fallback: single-exam / legacy column layouts without exam title rows.
+            parsed_meta = _parse_oge_meta_from_xls_sheet(sheet)
+            if parsed_meta:
+                code, subject, exam_date = parsed_meta
+            else:
+                code, subject, exam_date = _parse_oge_exam_meta(file_path)
+            parsed_rows = _iter_oge_xls_rows(sheet)
+            exam_ids.append(
+                _process_oge_exam_block(code, subject, exam_date, parsed_rows, school_map, school_codes, stats)
+            )
     elif ext == ".xlsx":
         if _is_oge_appeal_results_xlsx(file_path):
             for (code, subject, exam_date), parsed_rows in _iter_oge_xlsx_appeal_results_blocks_stream(file_path):

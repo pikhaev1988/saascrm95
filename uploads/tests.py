@@ -1,4 +1,5 @@
 import io
+import os
 
 from django.test import TestCase
 from openpyxl import Workbook
@@ -7,7 +8,9 @@ from uploads.parsers import (
     _build_ege_column_map,
     _build_oge_column_map,
     _detect_ege_layout_from_header,
+    _detect_oge_layout_from_header,
     _iter_ege_exam_blocks,
+    _iter_oge_xls_exam_blocks_stream,
     _iter_oge_xlsx_appeal_results_blocks_stream,
     _iter_oge_xlsx_exam_blocks_stream,
     parse_exam_header,
@@ -368,6 +371,60 @@ class OgeProtocolParserTests(TestCase):
         self.assertEqual(first.score, 5.0)
         self.assertEqual(first.short_answer_tasks, "")
         self.assertEqual(rows[1].score, 3.0)
+
+    def test_detect_regional_sparse_layout_with_empty_string_cells(self):
+        header_row = [
+            "№",
+            "Код ОО",
+            "Класс",
+            "",
+            "Код ППЭ",
+            "",
+            "Аудитория",
+            "",
+            "Код МСУ",
+            "",
+            "Фамилия",
+            "",
+            "Имя",
+            "Отчество",
+            "Задания с кратким ответом",
+            "",
+            "",
+            "Задания с развёрнутым ответом",
+            "Первичный балл",
+            "",
+            "Оценка",
+        ]
+        self.assertEqual(_detect_oge_layout_from_header(header_row), "regional_sparse")
+
+    def test_parse_regional_oge_multi_exam_xls_protocol(self):
+        import xlrd
+
+        fixture_path = os.path.join(os.path.dirname(__file__), "fixtures", "regional_oge_multi.xls")
+        self.assertTrue(os.path.exists(fixture_path), fixture_path)
+        sheet = xlrd.open_workbook(fixture_path).sheet_by_index(0)
+        blocks = list(_iter_oge_xls_exam_blocks_stream(sheet))
+        self.assertEqual(len(blocks), 2)
+
+        (code1, subject1, exam_date1), rows1 = blocks[0]
+        self.assertEqual(code1, "12")
+        self.assertEqual(subject1, "Обществознание")
+        self.assertEqual(str(exam_date1), "2026-07-03")
+        self.assertEqual(len(rows1), 1)
+        self.assertEqual(rows1[0].school_code, "9306")
+        self.assertEqual(rows1[0].full_name, "Эльмурзаев Хамзат Хасанович")
+        self.assertEqual(rows1[0].short_answer_tasks, "++++++++++2+++++")
+        self.assertEqual(rows1[0].primary_score, 27.0)
+        self.assertEqual(rows1[0].score, 4.0)
+
+        (code2, subject2, _), rows2 = blocks[1]
+        self.assertEqual(code2, "04")
+        self.assertEqual(subject2, "Химия")
+        self.assertEqual(len(rows2), 1)
+        self.assertEqual(rows2[0].school_code, "9317")
+        self.assertEqual(rows2[0].short_answer_tasks, "+++2++++")
+        self.assertEqual(rows2[0].score, 3.0)
 
     def test_parse_long_answer_mask_from_protocol(self):
         from users.task_topics import parse_long_answer_mask

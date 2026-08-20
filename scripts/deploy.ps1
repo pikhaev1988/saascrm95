@@ -70,8 +70,9 @@ echo DEPLOY_OK
 "@
 
 $result = ssh $hostAlias $remoteCmd
-if ($LASTEXITCODE -ne 0 -or $result -notmatch "DEPLOY_OK") {
-    Write-Error "Server update failed:`n$result"
+$resultText = if ($null -eq $result) { "" } elseif ($result -is [System.Array]) { ($result | Out-String) } else { [string]$result }
+if ($LASTEXITCODE -ne 0 -or ($resultText -notmatch "DEPLOY_OK")) {
+    Write-Error "Server update failed:`n$resultText"
 }
 
 Write-Host "Deploy complete. App restarted." -ForegroundColor Green
