@@ -15,6 +15,9 @@ from users.task_topics import parse_long_answer_mask
 
 EXAM_HEADER_PATTERN = re.compile(r"(?P<code>\d+)\s*-\s*(?P<subject>.+)\s+(?P<date>\d{4}\.\d{2}\.\d{2})")
 OGE_FILE_PATTERN = re.compile(r"(?P<code>\d{2})_(?P<date>\d{4}\.\d{2}\.\d{2})")
+OGE_EXAM_CELL_PATTERN = re.compile(
+    r"(?P<subject>.+?)\s*\(\s*(?P<date>\d{4}\.\d{2}\.\d{2})\s*\)"
+)
 
 OGE_SUBJECT_CODE_MAP = {
     "01": "Русский язык",
@@ -34,6 +37,8 @@ OGE_SUBJECT_CODE_MAP = {
     "18": "Родной язык",
     "94": "Резерв",
 }
+
+OGE_SUBJECT_NAME_TO_CODE = {name.lower(): code for code, name in OGE_SUBJECT_CODE_MAP.items()}
 
 
 @dataclass
@@ -77,6 +82,29 @@ def parse_exam_header(raw_header: str):
         raise ValueError(f"Некорректный формат экзамена: {raw_header}")
     exam_date = dt.datetime.strptime(match.group("date"), "%Y.%m.%d").date()
     return match.group("code"), match.group("subject").strip(), exam_date
+
+
+def _oge_subject_to_code(subject: str) -> str:
+    normalized = (subject or "").strip().lower()
+    if not normalized:
+        return "00"
+    if normalized in OGE_SUBJECT_NAME_TO_CODE:
+        return OGE_SUBJECT_NAME_TO_CODE[normalized]
+    for name, code in OGE_SUBJECT_NAME_TO_CODE.items():
+        if normalized.startswith(name) or name.startswith(normalized):
+            return code
+    return "00"
+
+
+def parse_oge_exam_cell(raw_cell: str):
+    """Parse cells like 'Математика(2026.06.02)' from appeal-results protocols."""
+    match = OGE_EXAM_CELL_PATTERN.search((raw_cell or "").strip())
+    if not match:
+        raise ValueError(f"Некорректный формат экзамена в ячейке: {raw_cell}")
+    subject = match.group("subject").strip()
+    exam_date = dt.datetime.strptime(match.group("date"), "%Y.%m.%d").date()
+    code = _oge_subject_to_code(subject)
+    return code, subject, exam_date
 
 
 def _find_exam_header_in_row(row):
@@ -464,6 +492,25 @@ def _default_oge_column_map(layout: str) -> dict:
             "primary_mark": 18,
             "mark5": 20,
         }
+    if layout == "appeal_results":
+        return {
+            "order": 0,
+            "school_code": 1,
+            "class_code": 2,
+            "station_code": 3,
+            "auditorium_code": 4,
+            "government_cell": None,
+            "surname": 5,
+            "name": 6,
+            "patronymic": 7,
+            "exam_cell": 8,
+            "document_series": None,
+            "document_number": None,
+            "short_tasks": None,
+            "long_tasks": None,
+            "primary_mark": 10,
+            "mark5": 11,
+        }
     return {
         "order": 0,
         "school_code": 1,
@@ -481,6 +528,22 @@ def _default_oge_column_map(layout: str) -> dict:
         "primary_mark": 13,
         "mark5": 14,
     }
+
+
+def _is_oge_appeal_results_header_row(row) -> bool:
+    headers = [_normalize_header_cell(value) for value in row if value is not None]
+    has_exam = any(header == "экзамен" for header in headers)
+    has_appeal = any("апелляц" in header for header in headers if header)
+    return has_exam and has_appeal
+
+
+def _is_oge_appeal_results_xlsx(file_path) -> bool:
+    workbook = load_workbook(file_path, read_only=True, data_only=True)
+    sheet = workbook.active
+    for row in sheet.iter_rows(min_row=1, max_row=20, values_only=True):
+        if row and _is_oge_appeal_results_header_row(row):
+            return True
+    return False
 
 
 def _is_oge_column_header_row(row) -> bool:
@@ -710,6 +773,57 @@ def _iter_oge_xlsx_exam_blocks_stream(file_path):
             current_rows.append(parsed)
     if current_exam_key and current_rows:
         yield current_exam_key, current_rows
+
+
+def _iter_oge_xlsx_appeal_results_blocks_stream(file_path):
+    """
+    Compact appeal-results protocol:
+    № | Код ОО | Класс | Код ППЭ | Аудитория | ФИО | Экзамен | апелляция | Первичный балл | Оценка
+    Exam meta comes from the 'Экзамен' cell, e.g. Математика(2026.06.02).
+    """
+    workbook = load_workbook(file_path, read_only=True, data_only=True)
+    sheet = workbook.active
+    column_map = None
+    rows_by_exam = {}
+    for row in sheet.iter_rows(min_row=1, values_only=True):
+        if not row:
+            continue
+        if _is_oge_appeal_results_header_row(row):
+            column_map = dict(_default_oge_column_map("appeal_results"))
+            built = _build_oge_column_map(row)
+            for key in ("order", "school_code", "class_code", "station_code", "auditorium_code", "surname", "name", "patronymic"):
+                if built.get(key) is not None:
+                    column_map[key] = built[key]
+            exam_idx = _find_header_index(list(row), "экзамен")
+            if exam_idx is not None:
+                column_map["exam_cell"] = exam_idx
+            continue
+        if column_map is None:
+            continue
+        # Refine score columns from a secondary header row under merged "Текущие".
+        primary_idx = _find_header_index(list(row), "первичный балл")
+        mark_idx = _find_header_index(list(row), "оценка")
+        if primary_idx is not None or mark_idx is not None:
+            if primary_idx is not None:
+                column_map["primary_mark"] = primary_idx
+            if mark_idx is not None:
+                column_map["mark5"] = mark_idx
+            continue
+
+        parsed = _parse_oge_row(row, column_map)
+        if not parsed:
+            continue
+        exam_raw = _safe_str(_oge_cell(row, column_map.get("exam_cell")))
+        if not exam_raw:
+            continue
+        try:
+            exam_key = parse_oge_exam_cell(exam_raw)
+        except ValueError:
+            continue
+        rows_by_exam.setdefault(exam_key, []).append(parsed)
+
+    for exam_key, parsed_rows in rows_by_exam.items():
+        yield exam_key, parsed_rows
 
 
 def _parse_oge_meta_from_xls_sheet(sheet):
@@ -1004,22 +1118,28 @@ def parse_oge(file_path, school_codes=None):
             _process_oge_exam_block(code, subject, exam_date, parsed_rows, school_map, school_codes, stats)
         )
     elif ext == ".xlsx":
-        for (code, subject, exam_date), parsed_rows in _iter_oge_xlsx_exam_blocks_stream(file_path):
-            exam_ids.append(
-                _process_oge_exam_block(code, subject, exam_date, parsed_rows, school_map, school_codes, stats)
-            )
-        if not exam_ids:
-            workbook = load_workbook(file_path, read_only=True, data_only=True)
-            sheet = workbook.active
-            parsed_meta = _parse_oge_meta_from_xlsx_sheet(sheet)
-            if parsed_meta:
-                code, subject, exam_date = parsed_meta
-            else:
-                code, subject, exam_date = _parse_oge_exam_meta(file_path)
-            parsed_rows = _iter_oge_xlsx_rows(file_path)
-            exam_ids.append(
-                _process_oge_exam_block(code, subject, exam_date, parsed_rows, school_map, school_codes, stats)
-            )
+        if _is_oge_appeal_results_xlsx(file_path):
+            for (code, subject, exam_date), parsed_rows in _iter_oge_xlsx_appeal_results_blocks_stream(file_path):
+                exam_ids.append(
+                    _process_oge_exam_block(code, subject, exam_date, parsed_rows, school_map, school_codes, stats)
+                )
+        else:
+            for (code, subject, exam_date), parsed_rows in _iter_oge_xlsx_exam_blocks_stream(file_path):
+                exam_ids.append(
+                    _process_oge_exam_block(code, subject, exam_date, parsed_rows, school_map, school_codes, stats)
+                )
+            if not exam_ids:
+                workbook = load_workbook(file_path, read_only=True, data_only=True)
+                sheet = workbook.active
+                parsed_meta = _parse_oge_meta_from_xlsx_sheet(sheet)
+                if parsed_meta:
+                    code, subject, exam_date = parsed_meta
+                else:
+                    code, subject, exam_date = _parse_oge_exam_meta(file_path)
+                parsed_rows = _iter_oge_xlsx_rows(file_path)
+                exam_ids.append(
+                    _process_oge_exam_block(code, subject, exam_date, parsed_rows, school_map, school_codes, stats)
+                )
     else:
         raise ValueError(f"Неподдерживаемый формат файла ОГЭ: {ext}")
 

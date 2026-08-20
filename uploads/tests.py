@@ -8,8 +8,10 @@ from uploads.parsers import (
     _build_oge_column_map,
     _detect_ege_layout_from_header,
     _iter_ege_exam_blocks,
+    _iter_oge_xlsx_appeal_results_blocks_stream,
     _iter_oge_xlsx_exam_blocks_stream,
     parse_exam_header,
+    parse_oge_exam_cell,
 )
 from uploads.sample_protocols import build_ege_sample_xlsx, build_oge_sample_xlsx
 
@@ -210,6 +212,82 @@ def _build_regional_oge_sample_xlsx(school_code: str = "13450", msu_code: str = 
     return buffer.getvalue()
 
 
+def _build_oge_appeal_results_sample_xlsx(school_code: str = "18579") -> bytes:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Page 1"
+    ws.append(["Протокол проверки результатов  государственной итоговой аттестации 2026 г."])
+    ws.append(["20 - Чеченская Республика"])
+    ws.append([None])
+    ws.append(
+        [
+            "№",
+            "Код ОО",
+            "Класс",
+            "Код ППЭ",
+            "Аудитория",
+            "Фамилия",
+            "Имя",
+            "Отчество",
+            "Экзамен",
+            "Состояние апелляции",
+            "Текущие",
+            None,
+        ]
+    )
+    ws.append(
+        [
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            "Первичный балл",
+            "Оценка",
+        ]
+    )
+    ws.append(
+        [
+            1,
+            school_code,
+            "А",
+            "503",
+            "0204",
+            "Абдурзакова",
+            "Марха",
+            "Магомедовна",
+            "Математика(2026.06.02)",
+            "Апелляция удовлетворена",
+            "22",
+            "5",
+        ]
+    )
+    ws.append(
+        [
+            2,
+            "18560",
+            "9А",
+            "503",
+            "0207",
+            "Сатуев",
+            "Сайфула",
+            "Алиханович",
+            "Математика(2026.06.02)",
+            "Апелляция удовлетворена",
+            "12",
+            "3",
+        ]
+    )
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    return buffer.getvalue()
+
+
 class OgeProtocolParserTests(TestCase):
     def test_parse_legacy_oge_sample_protocol(self):
         content = build_oge_sample_xlsx("12345")
@@ -267,6 +345,29 @@ class OgeProtocolParserTests(TestCase):
         self.assertEqual(first.score, 4.0)
         self.assertIn("++", first.short_answer_tasks)
         self.assertEqual(first.long_answer_tasks, "0(2)0(2)0(2)0(2)0(2)0(2)")
+
+    def test_parse_oge_exam_cell(self):
+        code, subject, exam_date = parse_oge_exam_cell("Математика(2026.06.02)")
+        self.assertEqual(code, "02")
+        self.assertEqual(subject, "Математика")
+        self.assertEqual(str(exam_date), "2026-06-02")
+
+    def test_parse_oge_appeal_results_protocol(self):
+        content = _build_oge_appeal_results_sample_xlsx("18579")
+        blocks = list(_iter_oge_xlsx_appeal_results_blocks_stream(io.BytesIO(content)))
+        self.assertEqual(len(blocks), 1)
+        (code, subject, exam_date), rows = blocks[0]
+        self.assertEqual(code, "02")
+        self.assertEqual(subject, "Математика")
+        self.assertEqual(str(exam_date), "2026-06-02")
+        self.assertEqual(len(rows), 2)
+        first = rows[0]
+        self.assertEqual(first.school_code, "18579")
+        self.assertEqual(first.full_name, "Абдурзакова Марха Магомедовна")
+        self.assertEqual(first.primary_score, 22.0)
+        self.assertEqual(first.score, 5.0)
+        self.assertEqual(first.short_answer_tasks, "")
+        self.assertEqual(rows[1].score, 3.0)
 
     def test_parse_long_answer_mask_from_protocol(self):
         from users.task_topics import parse_long_answer_mask
