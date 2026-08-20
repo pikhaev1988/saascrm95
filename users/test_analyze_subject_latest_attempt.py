@@ -47,6 +47,9 @@ class AnalyzeSubjectLatestAttemptTests(TestCase):
             score=4,
             total_score=4,
             passed=True,
+            short_answer_tasks="+" * 21,
+            long_answer_tasks="",
+            primary_score=4,
         )
         for task_number in range(1, 22):
             TaskResult.objects.create(
@@ -88,6 +91,10 @@ class AnalyzeSubjectLatestAttemptTests(TestCase):
         self.assertEqual(data.students_count, 1)
         self.assertEqual(data.avg_score, 4.0)
         self.assertTrue(getattr(data, "engine_result", None))
+        self.assertEqual(len(data.protocol_rows or []), 1)
+        self.assertEqual(data.protocol_rows[0]["student_name"], "Ученик SUBJ")
+        self.assertEqual(data.protocol_rows[0]["exam_date"], "22.06.2026")
+        self.assertTrue(str(data.protocol_rows[0]["short_answer_tasks"]).startswith("+"))
 
     def test_generate_school_subject_note_docx_is_full_analytical_report(self):
         payload = generate_school_subject_note_docx(
@@ -107,6 +114,9 @@ class AnalyzeSubjectLatestAttemptTests(TestCase):
         )
         self.assertIn("АНАЛИТИЧЕСКАЯ СПРАВКА", text)
         self.assertIn("итоговые результаты за 2026 год", text)
+        self.assertIn("Приложение. Протокол экзамена", text)
+        self.assertIn("Ученик SUBJ", text)
+        self.assertIn("22.06.2026", text)
 
     def test_analyze_exam_still_uses_single_protocol(self):
         result = AnalyticsEngine().analyze_exam(self.school.id, self.exam_main.id)

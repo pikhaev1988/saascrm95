@@ -42,6 +42,37 @@ class ExamData:
     score_values: list[float]
     exam_year: int
     dynamics: list[dict]
+    protocol_rows: list[dict] | None = None
+
+
+def build_protocol_rows(results_qs) -> list[dict]:
+    """Строки протокола для приложения к аналитической справке."""
+    rows = []
+    qs = results_qs.select_related("exam", "student").order_by(
+        "exam__exam_date",
+        "student_name",
+        "student__full_name",
+        "id",
+    )
+    for idx, result in enumerate(qs, start=1):
+        exam_date = ""
+        if result.exam and result.exam.exam_date:
+            exam_date = result.exam.exam_date.strftime("%d.%m.%Y")
+        score = result.score if result.score is not None else result.total_score
+        rows.append(
+            {
+                "n": idx,
+                "student_name": (result.student_name or getattr(result.student, "full_name", "") or "—").strip(),
+                "exam_date": exam_date,
+                "exam_code": getattr(result.exam, "code", "") or "",
+                "short_answer_tasks": (result.short_answer_tasks or "").strip(),
+                "long_answer_tasks": (result.long_answer_tasks or "").strip(),
+                "primary_score": result.primary_score,
+                "score": score,
+                "passed": bool(result.passed),
+            }
+        )
+    return rows
 
 
 STOPWORDS = {
@@ -617,16 +648,15 @@ def collect_subject_data_for_export(
     ]
     from analytics.engine.attempts import filter_latest_exam_results
 
-    score_values = list(
-        filter_latest_exam_results(
-            ExamResult.objects.filter(
-                student__school_id=school_id,
-                exam__exam_type=result.exam_type,
-                exam__subject=result.subject,
-                exam__year=year,
-            )
-        ).values_list("score", flat=True)
+    latest_qs = filter_latest_exam_results(
+        ExamResult.objects.filter(
+            student__school_id=school_id,
+            exam__exam_type=result.exam_type,
+            exam__subject=result.subject,
+            exam__year=year,
+        )
     )
+    score_values = list(latest_qs.values_list("score", flat=True))
     score_values = [float(v or 0) for v in score_values]
 
     data = ExamData(
@@ -646,6 +676,7 @@ def collect_subject_data_for_export(
         score_values=score_values,
         exam_year=result.exam_year or int(year),
         dynamics=result.dynamics,
+        protocol_rows=build_protocol_rows(latest_qs),
     )
     data.engine_result = result  # type: ignore[attr-defined]
     return data
@@ -669,9 +700,8 @@ def collect_exam_data_for_export(school_id: int, exam_id: int) -> ExamData | Non
         }
         for task in result.tasks
     ]
-    score_values = list(
-        ExamResult.objects.filter(student__school_id=school_id, exam_id=exam_id).values_list("score", flat=True)
-    )
+    results_qs = ExamResult.objects.filter(student__school_id=school_id, exam_id=exam_id)
+    score_values = list(results_qs.values_list("score", flat=True))
     score_values = [float(v or 0) for v in score_values]
 
     data = ExamData(
@@ -691,6 +721,7 @@ def collect_exam_data_for_export(school_id: int, exam_id: int) -> ExamData | Non
         score_values=score_values,
         exam_year=result.exam_year or 0,
         dynamics=result.dynamics,
+        protocol_rows=build_protocol_rows(results_qs),
     )
     data.engine_result = result  # type: ignore[attr-defined]
     return data

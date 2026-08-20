@@ -12,27 +12,171 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
-<body>
+<body class="ui-login-page">
 <div class="ui-login-wrap">
-    <form method="post" class="ui-login-card ui-form-stack">
-        {% csrf_token %}
-        <h1 class="ui-login-brand">Анализ ГИА</h1>
-        <p class="ui-login-lead">Платформа аналитики ЕГЭ и ОГЭ для школ, районов и министерства.</p>
+    <div class="ui-login-orb ui-login-orb--a" aria-hidden="true"></div>
+    <div class="ui-login-orb ui-login-orb--b" aria-hidden="true"></div>
+    <div class="ui-login-orb ui-login-orb--c" aria-hidden="true"></div>
 
-        {% if form.errors %}
-            <div class="mb-2 ui-alert ui-alert--error">Неверный логин или пароль</div>
-        {% endif %}
+    <div class="ui-login-shell">
+        <section class="ui-login-promo" aria-label="О платформе">
+            <div class="ui-login-brandrow">
+                <span class="ui-login-logo" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 16.5L9 11l3.5 3.5L20 7" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15.5 7H20v4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <span class="ui-login-brandname">Анализ ГИА</span>
+                <span class="ui-login-version">v2.4.0</span>
+            </div>
 
-        <label for="login-username">Логин</label>
-        <input id="login-username" type="text" name="username" autocomplete="username" required placeholder="Введите логин">
+            <h1 class="ui-login-headline">
+                Аналитика ЕГЭ и ОГЭ<br>
+                <span>для школ, районов и министерства</span>
+            </h1>
+            <p class="ui-login-subcopy">
+                Система анализа результатов экзаменов с умными отчётами,
+                диаграммами и рекомендациями для принятия решений.
+            </p>
 
-        <label for="login-password">Пароль</label>
-        <input id="login-password" type="password" name="password" autocomplete="current-password" required placeholder="Введите пароль">
+            <ul class="ui-login-features">
+                <li>
+                    <span class="ui-login-feat-ico ui-login-feat-ico--blue" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19V5M8 19V10M12 19V7M16 19v-6M20 19V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </span>
+                    Детальная аналитика
+                </li>
+                <li>
+                    <span class="ui-login-feat-ico ui-login-feat-ico--violet" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 0 9 9h-9V3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M13.5 3.2A9 9 0 0 1 20.8 10.5H13.5V3.2z" fill="currentColor" opacity=".25"/></svg>
+                    </span>
+                    Визуализация данных
+                </li>
+                <li>
+                    <span class="ui-login-feat-ico ui-login-feat-ico--sky" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="2"/><path d="M14 3v4h4M9 12h6M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </span>
+                    Умные отчёты
+                </li>
+            </ul>
 
-        <button type="submit" class="w-full ui-btn ui-btn-primary" style="margin-top: 8px;">
-            Войти
-        </button>
-    </form>
+            <div class="ui-login-viz" aria-hidden="true">
+                <div class="ui-login-viz-card ui-login-viz-card--kpi">
+                    <span class="ui-login-viz-label">Средний балл</span>
+                    <div class="ui-login-viz-kpi">
+                        <strong>59.7</strong>
+                        <em>+12.5%</em>
+                    </div>
+                </div>
+                <div class="ui-login-viz-card ui-login-viz-card--line">
+                    <span class="ui-login-viz-label">Динамика среднего балла</span>
+                    <svg class="ui-login-linechart" viewBox="0 0 180 70" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="loginLineFill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.35"/>
+                                <stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M0 52 C28 48, 40 40, 58 36 C78 31, 95 42, 112 28 C130 14, 150 20, 180 10 L180 70 L0 70 Z" fill="url(#loginLineFill)"/>
+                        <path d="M0 52 C28 48, 40 40, 58 36 C78 31, 95 42, 112 28 C130 14, 150 20, 180 10" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                    <div class="ui-login-years"><span>2022</span><span>2023</span><span>2024</span><span>2025</span><span>2026</span></div>
+                </div>
+                <div class="ui-login-viz-card ui-login-viz-card--donut">
+                    <svg viewBox="0 0 42 42" class="ui-login-donut">
+                        <circle cx="21" cy="21" r="15.5" fill="none" stroke="#e2e8f0" stroke-width="5"/>
+                        <circle cx="21" cy="21" r="15.5" fill="none" stroke="#3b82f6" stroke-width="5" stroke-dasharray="55 97" stroke-linecap="round" transform="rotate(-90 21 21)"/>
+                        <circle cx="21" cy="21" r="15.5" fill="none" stroke="#a78bfa" stroke-width="5" stroke-dasharray="28 97" stroke-dashoffset="-55" stroke-linecap="round" transform="rotate(-90 21 21)"/>
+                        <circle cx="21" cy="21" r="15.5" fill="none" stroke="#34d399" stroke-width="5" stroke-dasharray="14 97" stroke-dashoffset="-83" stroke-linecap="round" transform="rotate(-90 21 21)"/>
+                    </svg>
+                </div>
+                <div class="ui-login-viz-card ui-login-viz-card--heat">
+                    <span class="ui-login-viz-label">Успешность по заданиям</span>
+                    <div class="ui-login-heat">
+                        <i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i>
+                        <i class="h2"></i><i class="h4"></i><i class="h1"></i><i class="h3"></i>
+                        <i class="h3"></i><i class="h1"></i><i class="h4"></i><i class="h2"></i>
+                    </div>
+                </div>
+                <div class="ui-login-viz-card ui-login-viz-card--bars">
+                    <span class="ui-login-viz-label">Топ предметов</span>
+                    <div class="ui-login-bars">
+                        <div><span>Математика</span><b style="--w:86%"></b></div>
+                        <div><span>Русский</span><b style="--w:72%"></b></div>
+                        <div><span>Обществознание</span><b style="--w:58%"></b></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="ui-login-panel">
+            <form method="post" class="ui-login-card" novalidate>
+                {% csrf_token %}
+                <div class="ui-login-lock" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                        <rect x="5" y="11" width="14" height="10" rx="2.5" stroke="#3b82f6" stroke-width="1.8"/>
+                        <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="#3b82f6" stroke-width="1.8" stroke-linecap="round"/>
+                        <circle cx="12" cy="16" r="1.3" fill="#3b82f6"/>
+                    </svg>
+                </div>
+                <h2 class="ui-login-card-title">Вход в систему</h2>
+                <p class="ui-login-card-lead">Добро пожаловать! Войдите в свой аккаунт для продолжения работы</p>
+
+                {% if form.errors %}
+                    <div class="ui-alert ui-alert--error ui-login-error">Неверный логин или пароль</div>
+                {% endif %}
+
+                <label class="ui-login-label" for="login-username">Логин</label>
+                <div class="ui-login-field">
+                    <span class="ui-login-field-ico" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 19c1.2-3.2 3.5-4.8 6.5-4.8s5.3 1.6 6.5 4.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    </span>
+                    <input id="login-username" type="text" name="username" autocomplete="username" required placeholder="Введите логин" value="{{ form.username.value|default:'' }}">
+                </div>
+
+                <label class="ui-login-label" for="login-password">Пароль</label>
+                <div class="ui-login-field ui-login-field--password">
+                    <input id="login-password" type="password" name="password" autocomplete="current-password" required placeholder="Введите пароль">
+                    <button type="button" class="ui-login-eye" id="login-toggle-password" aria-label="Показать пароль">
+                        <svg class="ui-login-eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.8" stroke="currentColor" stroke-width="1.8"/></svg>
+                        <svg class="ui-login-eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" hidden><path d="M3 3l18 18M10.5 10.6a2.8 2.8 0 0 0 3.9 3.9M7.1 7.3C4.8 8.7 3.2 11 2.5 12c0 0 3.5 5.5 9.5 5.5 1.7 0 3.2-.4 4.5-1M16.8 14.3c1.4-1 2.5-2.3 3.2-3.3 0 0-3.5-5.5-9.5-5.5-1 .0-1.9.2-2.8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+
+                <div class="ui-login-meta">
+                    <label class="ui-login-remember">
+                        <input type="checkbox" name="remember" value="1">
+                        <span>Запомнить меня</span>
+                    </label>
+                    <a class="ui-login-forgot" href="mailto:support@analizgia.ru?subject=Восстановление%20доступа">Забыли пароль?</a>
+                </div>
+
+                <button type="submit" class="ui-login-submit">
+                    <span>Войти</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </form>
+        </section>
+    </div>
+
+    <p class="ui-login-footer">© 2026 Анализ ГИА. Все права защищены.</p>
 </div>
+<script>
+(function () {
+    var btn = document.getElementById("login-toggle-password");
+    var input = document.getElementById("login-password");
+    if (!btn || !input) return;
+    var openIcon = btn.querySelector(".ui-login-eye-open");
+    var closedIcon = btn.querySelector(".ui-login-eye-closed");
+    btn.addEventListener("click", function () {
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.setAttribute("aria-label", show ? "Скрыть пароль" : "Показать пароль");
+        if (openIcon) openIcon.hidden = show;
+        if (closedIcon) closedIcon.hidden = !show;
+    });
+})();
+</script>
 </body>
 </html>

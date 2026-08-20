@@ -156,10 +156,74 @@ def render_exam_analysis_docx(data) -> BytesIO:
     else:
         _body(doc, "Заданий с успешностью ниже 50% не выявлено.")
 
+    _append_protocol_appendix(doc, data)
+
     out = BytesIO()
     doc.save(out)
     out.seek(0)
     return out
+
+
+def _append_protocol_appendix(doc, data) -> None:
+    """Приложение: протокол участников, вошедших в справку."""
+    from docx.enum.text import WD_BREAK
+    from docx.shared import Pt
+
+    rows = list(getattr(data, "protocol_rows", None) or [])
+    doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+    _module(doc, "Приложение. Протокол экзамена")
+    _body(
+        doc,
+        "В приложение включены результаты участников, по которым построена аналитическая справка "
+        "(для предметного среза — итоговая попытка каждого обучающегося).",
+    )
+    if not rows:
+        _body(doc, "Данные протокола отсутствуют.")
+        return
+
+    table = doc.add_table(rows=1, cols=8)
+    headers = [
+        "№",
+        "ФИО",
+        "Дата",
+        "Краткий ответ",
+        "Развёрнутый ответ",
+        "Первичный",
+        "Балл",
+        "Результат",
+    ]
+    for i, h in enumerate(headers):
+        _cell_text(table.rows[0].cells[i], h, bold=True, size=7, color=_C["white"], fill=_C["navy"])
+
+    for row in rows:
+        cells = table.add_row().cells
+        primary = row.get("primary_score")
+        score = row.get("score")
+        primary_text = "—" if primary is None else str(primary)
+        score_text = "—" if score is None else str(score)
+        _cell_text(cells[0], str(row.get("n") or ""), bold=True, size=7, color=_C["ink"])
+        _cell_text(cells[1], str(row.get("student_name") or "—"), size=7, color=_C["ink"])
+        _cell_text(cells[2], str(row.get("exam_date") or "—"), size=7, color=_C["ink"])
+        _cell_text(cells[3], str(row.get("short_answer_tasks") or "—"), size=6, color=_C["ink"])
+        _cell_text(cells[4], str(row.get("long_answer_tasks") or "—"), size=6, color=_C["ink"])
+        _cell_text(cells[5], primary_text, size=7, color=_C["ink"])
+        _cell_text(cells[6], score_text, bold=True, size=7, color=_C["ink"])
+        _cell_text(
+            cells[7],
+            "сдал" if row.get("passed") else "не сдал",
+            size=7,
+            color=_C["good"] if row.get("passed") else _C["low"],
+        )
+
+    # Ширины под книжную ориентацию A4.
+    _set_tbl_widths(table, [0.7, 3.4, 1.7, 3.6, 2.6, 1.3, 1.2, 1.3])
+    _nofit(table)
+    _set_borders(table, _C["line"])
+    for row in table.rows:
+        for cell in row.cells:
+            for p in cell.paragraphs:
+                p.paragraph_format.space_before = Pt(0)
+                p.paragraph_format.space_after = Pt(0)
 
 
 def _insert_charts(doc, data) -> None:
