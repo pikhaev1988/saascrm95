@@ -10,7 +10,7 @@ from datetime import date
 from django.db.models import Avg, Count, Min, Max, Q
 
 from exams.models import EgePassingThreshold, ExamResult, TaskResult
-from exams.passing import gve_subject_label, is_gve_exam
+from exams.passing import gve_exam_code_filter_values, gve_subject_label, is_gve_exam
 from organizations.models import School
 from users.ai import enhance_exam_analysis
 from users.task_topics import (
@@ -2194,7 +2194,9 @@ def _build_school_info_stat_payload(school_id: int, exam_type: str, year: int | 
         ]
         if gve_ids and len(gve_ids) < len(ege_rows):
             metric_qs = qs.exclude(
-                Q(exam__code__in=["51", "051"]) | Q(exam__subject__icontains="ГВЭ") | Q(exam__subject__icontains="гвэ")
+                Q(exam__code__in=gve_exam_code_filter_values())
+                | Q(exam__subject__icontains="ГВЭ")
+                | Q(exam__subject__icontains="гвэ")
             )
 
     avg_score = float(metric_qs.aggregate(v=Avg("score"))["v"] or 0)
@@ -2234,7 +2236,9 @@ def _build_school_info_stat_payload(school_id: int, exam_type: str, year: int | 
         prev_metric = prev_qs
         if et == "ege":
             prev_metric = prev_qs.exclude(
-                Q(exam__code__in=["51", "051"]) | Q(exam__subject__icontains="ГВЭ") | Q(exam__subject__icontains="гвэ")
+                Q(exam__code__in=gve_exam_code_filter_values())
+                | Q(exam__subject__icontains="ГВЭ")
+                | Q(exam__subject__icontains="гвэ")
             )
             if not prev_metric.exists():
                 prev_metric = prev_qs

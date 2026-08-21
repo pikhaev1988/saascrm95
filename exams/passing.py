@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-# В протоколах ЕГЭ код 51 — русский язык ГВЭ (оценка 2–5, порог ≥ 3).
-GVE_EXAM_CODES = frozenset({"51"})
+# ГВЭ в протоколах: 51 — русский, 52 — математика (оценка 2–5, порог ≥ 3).
+GVE_EXAM_CODES = frozenset({"51", "52"})
 GVE_GRADE_THRESHOLD = SimpleNamespace(minimum_score=None, minimum_grade=3)
 
 
@@ -13,8 +13,19 @@ def normalize_exam_code(code) -> str:
     return str(code or "").strip()
 
 
+def gve_exam_code_filter_values() -> list[str]:
+    """Коды ГВЭ для ORM-фильтров, включая варианты с ведущим нулём (051, 052)."""
+    values = set()
+    for code in GVE_EXAM_CODES:
+        values.add(code)
+        if code.isdigit():
+            values.add(str(int(code)))
+            values.add(code.zfill(3))
+    return sorted(values)
+
+
 def is_gve_exam(*, exam_code=None, subject_name: str | None = None) -> bool:
-    """ГВЭ в выгрузках ЕГЭ: код предмета 51 (русский) или явное «ГВЭ» в названии."""
+    """ГВЭ: коды 51/52 или явное «ГВЭ» в названии предмета."""
     code = normalize_exam_code(exam_code)
     if code in GVE_EXAM_CODES:
         return True

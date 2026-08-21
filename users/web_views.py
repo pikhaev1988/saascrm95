@@ -333,7 +333,7 @@ def _ege_exam_passed(row: dict, threshold_cache: dict) -> bool:
     """
     Сдал ли экзамен по ЕГЭ с учётом EgePassingThreshold (а не только флага passed в строке импорта).
     row: словарь с ключами exam__subject, exam__year, score, passed; опционально exam__code.
-    ГВЭ (код 51 и др.) — шкала оценок 2–5, порог ≥ 3.
+    ГВЭ (коды 51, 52 и др.) — шкала оценок 2–5, порог ≥ 3.
     """
     from exams.passing import ege_result_passed
 
