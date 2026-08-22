@@ -1,0 +1,46 @@
+<section class="ui-support-ask" aria-labelledby="support-ask-title">
+    <div class="ui-support-ask__head">
+        <h3 id="support-ask-title">Есть вопрос?</h3>
+        <p>
+            Напишите тему и вопрос — сообщение придёт на
+            <a href="mailto:{{ support_email }}">{{ support_email }}</a>.
+            Форма не запрашивает персональные данные: только тема и текст вопроса.
+        </p>
+    </div>
+    <form
+        class="ui-support-ask__form"
+        id="support-ask-form"
+        action="{% url 'cabinet-support-ask' %}"
+        method="post"
+        novalidate
+    >
+        {% csrf_token %}
+        <label class="ui-support-ask__label" for="support-ask-topic">Тема</label>
+        <input
+            id="support-ask-topic"
+            class="ui-support-ask__input"
+            type="text"
+            name="topic"
+            maxlength="120"
+            required
+            autocomplete="off"
+            placeholder="Кратко сформулируйте тему"
+            value="{{ support_form_topic|default:'' }}"
+        >
+        <label class="ui-support-ask__label" for="support-ask-question">Вопрос</label>
+        <textarea
+            id="support-ask-question"
+            class="ui-support-ask__textarea"
+            name="question"
+            rows="4"
+            maxlength="2000"
+            required
+            autocomplete="off"
+            placeholder="Опишите вопрос"
+        >{{ support_form_question|default:'' }}</textarea>
+        <div class="ui-support-ask__actions">
+            <button type="submit" class="ui-btn ui-btn-primary">Отправить</button>
+            <span class="ui-support-ask__mail">{{ support_email }}</span>
+        </div>
+    </form>
+</section>

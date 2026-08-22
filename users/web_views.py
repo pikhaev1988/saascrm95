@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
+from django.contrib import messages
 from django.core.cache import cache
 from django.db import IntegrityError
 from django.db.models import Avg, Count, Max, Min, Q
@@ -522,8 +523,41 @@ class RoleLoginView(LoginView):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        from users.legal import SUPPORT_EMAIL
+
+        context = super().get_context_data(**kwargs)
+        context["support_email"] = SUPPORT_EMAIL
+        return context
+
     def get_success_url(self):
         return "/cabinet/"
+
+
+class SupportQuestionView(LoginRequiredMixin, View):
+    """Accept topic + question from the hub page and email support (no PII fields)."""
+
+    def post(self, request, *args, **kwargs):
+        from users.support_mail import send_support_question
+
+        topic = (request.POST.get("topic") or "").strip()
+        question = (request.POST.get("question") or "").strip()
+        if not topic or not question:
+            messages.error(request, "Укажите тему и текст вопроса.")
+            return redirect("cabinet-exam-choice")
+        if len(topic) > 120 or len(question) > 2000:
+            messages.error(request, "Слишком длинное сообщение.")
+            return redirect("cabinet-exam-choice")
+        try:
+            send_support_question(topic, question, sender=request.user)
+        except Exception:
+            messages.error(
+                request,
+                "Не удалось отправить сообщение. Напишите на support@analizgia.ru.",
+            )
+            return redirect("cabinet-exam-choice")
+        messages.success(request, "Сообщение отправлено. Мы ответим в ближайшее время.")
+        return redirect("cabinet-exam-choice")
 
 
 def csrf_failure(request, reason=""):
@@ -1072,6 +1106,9 @@ class ExamTypeChoiceView(LoginRequiredMixin, TemplateView):
         context["school_code"] = school_code
         context["school_name"] = school_name
         context["scope_label"] = scope_label
+        from users.legal import SUPPORT_EMAIL
+
+        context["support_email"] = SUPPORT_EMAIL
 
         exam_filter = (self.request.GET.get("exam_type") or "all").strip().lower()
         if exam_filter not in ("all", "ege", "oge", "vpr"):

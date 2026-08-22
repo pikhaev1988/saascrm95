@@ -718,6 +718,16 @@
     }
 })();
 </script>
+{% if messages %}
+<div class="ui-support-ask-messages" role="status">
+    {% for message in messages %}
+    <p class="ui-alert ui-alert--{% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% include "users/includes/support_question_form.html" %}
+
 <footer class="page-legal-links" aria-label="Правовая информация">
     <a href="{% url 'legal-privacy' %}">Политика обработки персональных данных</a>
     <span aria-hidden="true">·</span>

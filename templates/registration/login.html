@@ -149,13 +149,21 @@
                         <input type="checkbox" name="remember" value="1">
                         <span>Запомнить меня</span>
                     </label>
-                    <a class="ui-login-forgot" href="mailto:support@analizgia.ru?subject=Восстановление%20доступа">Забыли пароль?</a>
+                    <a class="ui-login-forgot" href="mailto:{{ support_email }}?subject={{ 'Восстановление пароля — Анализ ГИА'|urlencode }}">Забыли пароль?</a>
                 </div>
 
                 <button type="submit" class="ui-login-submit">
                     <span>Войти</span>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
+
+                <div class="ui-login-support">
+                    <p class="ui-login-support-title">Нужна помощь?</p>
+                    <p class="ui-login-support-text">
+                        При потере пароля или для подключения новой школы напишите нам на
+                        <a href="mailto:{{ support_email }}?subject={{ 'Подключение школы / восстановление доступа — Анализ ГИА'|urlencode }}">{{ support_email }}</a>.
+                    </p>
+                </div>
             </form>
         </section>
     </div>

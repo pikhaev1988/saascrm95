@@ -62,6 +62,7 @@ from users.web_views import (
     RoleLoginView,
     RoleRedirectView,
     SchoolDashboardView,
+    SupportQuestionView,
     VprPlaceholderView,
 )
 
@@ -83,6 +84,7 @@ urlpatterns = [
     ),
     path("cabinet/", RoleRedirectView.as_view(), name="cabinet"),
     path("cabinet/exam-choice/", ExamTypeChoiceView.as_view(), name="cabinet-exam-choice"),
+    path("cabinet/support-ask/", SupportQuestionView.as_view(), name="cabinet-support-ask"),
     path("cabinet/reports/", ReportsHubView.as_view(), name="cabinet-reports"),
     path("cabinet/profile/", OrganizationProfileView.as_view(), name="cabinet-profile"),
     path("cabinet/upload/ege/", SchoolUploadEgeProtocolsView.as_view(), name="cabinet-upload-ege"),
