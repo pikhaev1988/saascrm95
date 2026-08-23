@@ -76,6 +76,7 @@ jobs:
               exit 1
             fi
             ls -lt \"\$BACKUP_DIR\" | head -n 6
+            ls -1t \"\$BACKUP_DIR\"/pre_deploy_* 2>/dev/null | tail -n +6 | xargs -r rm -f
 
             echo '--- migrate ---'
             '${PYTHON_BIN}' manage.py migrate --noinput

@@ -63,30 +63,39 @@ if (-not $SkipPush) {
 if ($SkipMigrate) {
     $migratePart = "echo SKIP_MIGRATE"
 } else {
+    # Важно: имена файлов бэкапа собираем на стороне bash (не в PowerShell-кавычках).
     $migratePart = @"
-echo '--- DB backup ---' && \
-mkdir -p '$backupDir' && \
-STAMP=`$(date +%Y%m%d_%H%M%S) && \
-if [ -f db.sqlite3 ]; then \
-  cp -a db.sqlite3 '$backupDir/pre_deploy_`$STAMP.sqlite3' && \
-  SIZE=`$(wc -c < '$backupDir/pre_deploy_`$STAMP.sqlite3') && \
-  echo "SQLite backup: `$SIZE bytes -> pre_deploy_`$STAMP.sqlite3" && \
-  test "`$SIZE" -gt 1024; \
-elif [ -f .env ]; then \
-  set -a && . ./.env && set +a && \
-  if [ "`${USE_SQLITE:-True}" != "True" ] && [ -n "`$DB_NAME" ] && command -v pg_dump >/dev/null 2>&1; then \
-    pg_dump -h "`${DB_HOST:-localhost}" -p "`${DB_PORT:-5432}" -U "`$DB_USER" -Fc "`$DB_NAME" -f '$backupDir/pre_deploy_`$STAMP.dump' && \
-    SIZE=`$(wc -c < '$backupDir/pre_deploy_`$STAMP.dump') && \
-    echo "PostgreSQL backup: `$SIZE bytes -> pre_deploy_`$STAMP.dump" && \
-    test "`$SIZE" -gt 102400; \
-  else \
-    echo 'WARNING: no db.sqlite3 / pg_dump target — aborting for safety' && exit 1; \
-  fi; \
-else \
-  echo 'WARNING: cannot locate DB for backup — aborting for safety' && exit 1; \
-fi && \
-ls -lt '$backupDir' | head -n 6 && \
-echo '--- migrate ---' && \
+echo '--- DB backup ---'
+mkdir -p '$backupDir'
+STAMP=`$(date +%Y%m%d_%H%M%S)
+if [ -f db.sqlite3 ]; then
+  BACKUP_FILE='$backupDir'/pre_deploy_`$STAMP.sqlite3
+  cp -a db.sqlite3 "`$BACKUP_FILE"
+  SIZE=`$(wc -c < "`$BACKUP_FILE")
+  echo "SQLite backup: `$SIZE bytes -> `$BACKUP_FILE"
+  test "`$SIZE" -gt 1024
+elif [ -f .env ]; then
+  set -a
+  . ./.env
+  set +a
+  if [ "`${USE_SQLITE:-True}" != "True" ] && [ -n "`$DB_NAME" ] && command -v pg_dump >/dev/null 2>&1; then
+    BACKUP_FILE='$backupDir'/pre_deploy_`$STAMP.dump
+    pg_dump -h "`${DB_HOST:-localhost}" -p "`${DB_PORT:-5432}" -U "`$DB_USER" -Fc "`$DB_NAME" -f "`$BACKUP_FILE"
+    SIZE=`$(wc -c < "`$BACKUP_FILE")
+    echo "PostgreSQL backup: `$SIZE bytes -> `$BACKUP_FILE"
+    test "`$SIZE" -gt 102400
+  else
+    echo 'WARNING: no db.sqlite3 / pg_dump target — aborting for safety'
+    exit 1
+  fi
+else
+  echo 'WARNING: cannot locate DB for backup — aborting for safety'
+  exit 1
+fi
+ls -lt '$backupDir' | head -n 6
+# хранить не больше 5 последних копий
+ls -1t '$backupDir'/pre_deploy_* 2>/dev/null | tail -n +6 | xargs -r rm -f
+echo '--- migrate ---'
 $pythonBin manage.py migrate --noinput
 "@
 }
