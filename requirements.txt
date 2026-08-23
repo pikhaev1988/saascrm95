@@ -10,6 +10,7 @@ psycopg2-binary>=2.9
 python-docx>=1.1
 python-pptx>=0.6
 reportlab>=4.2
+matplotlib>=3.8
 gigachat>=0.2.1
 python-dotenv>=1.0
 whitenoise>=6.9

@@ -135,11 +135,14 @@ class VprOverviewScreenTests(TestCase):
 
         with ZipFile(BytesIO(content)) as zf:
             xml = zf.read("word/document.xml").decode("utf-8", "ignore")
+            media = [n for n in zf.namelist() if n.startswith("word/media/")]
         self.assertIn("Анализ результатов ВПР на уровне общеобразовательной организации", xml)
         self.assertIn("Паспорт анализа", xml)
         self.assertIn("Итоговое экспертное заключение", xml)
         self.assertIn("План мероприятий", xml)
         self.assertNotIn("Количество критических заданий", xml)
+        # Диаграммы (отметки, баллы, задания, группы, объективность)
+        self.assertGreaterEqual(len(media), 3)
 
     def test_overview_matches_engines_without_recalculation(self):
         protocol = self._import(PROTOCOL_FIXTURE, "match")

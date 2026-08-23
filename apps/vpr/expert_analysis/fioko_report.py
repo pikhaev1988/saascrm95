@@ -354,6 +354,22 @@ def _prep_index(summary) -> float | None:
     return round(sum(parts) / len(parts), 1)
 
 
+def _unique_texts(items: list[str] | None, *, exclude: set[str] | None = None) -> list[str]:
+    """Убрать пустые строки и точные повторы (с сохранением порядка)."""
+    seen: set[str] = set(exclude or ())
+    out: list[str] = []
+    for raw in items or []:
+        text = str(raw or "").strip()
+        if not text:
+            continue
+        key = " ".join(text.split()).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(text)
+    return out
+
+
 def _cycle(
     interpretation: list[str] | None = None,
     causes: list[str] | None = None,
@@ -361,12 +377,21 @@ def _cycle(
     method: list[str] | None = None,
     effect: list[str] | None = None,
 ) -> AnalyticCycle:
+    interpretation_u = _unique_texts(interpretation)
+    used = {" ".join(t.split()).lower() for t in interpretation_u}
+    causes_u = _unique_texts(causes, exclude=used)
+    used.update(" ".join(t.split()).lower() for t in causes_u)
+    org_u = _unique_texts(org, exclude=used)
+    used.update(" ".join(t.split()).lower() for t in org_u)
+    method_u = _unique_texts(method, exclude=used)
+    used.update(" ".join(t.split()).lower() for t in method_u)
+    effect_u = _unique_texts(effect, exclude=used)
     return AnalyticCycle(
-        interpretation=list(interpretation or []),
-        causes=list(causes or []),
-        org_decisions=list(org or []),
-        method_decisions=list(method or []),
-        expected_effect=list(effect or []),
+        interpretation=interpretation_u,
+        causes=causes_u,
+        org_decisions=org_u,
+        method_decisions=method_u,
+        expected_effect=effect_u,
     )
 
 
@@ -658,19 +683,12 @@ def _section2_individuals(analysis, expert):
             )
         )
 
+    # Состав групп уже выводится в DOCX/HTML — в цикле только интерпретация без повторов.
     interpretation = [
-        "Анализ индивидуальных результатов выполнен в логике рекомендаций ФИОКО: "
-        "выделены группа риска, группа стабильных результатов, группа высокого уровня "
-        "и обучающиеся с положительным потенциалом."
+        "Состав групп участников сформирован средствами внутренней аналитики "
+        "по индивидуальным результатам ВПР (группа риска, стабильные результаты, "
+        "высокий уровень, положительный потенциал)."
     ]
-    for g in insights:
-        if g.key == "potential" and g.percent == 0 and g.sample_names:
-            interpretation.append(
-                f"{g.title}: {', '.join(g.sample_names)}"
-                f"{'…' if len(potential) > 5 else ''}. {g.characteristic}"
-            )
-        else:
-            interpretation.append(f"{g.title}: {g.count} чел. ({g.percent}%). {g.characteristic}")
     if decline:
         interpretation.append(
             "Выявлена подгруппа с признаками риска по расхождению журнальной и внешней оценки "
@@ -1080,18 +1098,13 @@ def _section6_content(analysis, expert):
         "Согласно методологии ФИОКО анализ содержания идёт последовательно: "
         "задания → темы → содержательные линии → образовательные дефициты.",
     ]
-    if expert.tasks_analysis:
-        pipeline.append("1. Анализ выполнения заданий. " + expert.tasks_analysis[0])
-        if len(expert.tasks_analysis) > 1:
-            pipeline.append(expert.tasks_analysis[1])
-    if expert.topics_analysis:
-        pipeline.append("2. Объединение заданий в темы. " + expert.topics_analysis[0])
+    # Краткие экспертные акценты (без длинных повторов — детали в таблице и содержательных линиях).
     if expert.structure_analysis:
-        pipeline.append(
-            "3. Объединение тем в содержательные линии. " + expert.structure_analysis[0]
-        )
-    if expert.patterns_analysis:
-        pipeline.append(expert.patterns_analysis[0])
+        pipeline.append(expert.structure_analysis[0])
+    elif expert.topics_analysis:
+        pipeline.append(expert.topics_analysis[0])
+    elif expert.tasks_analysis:
+        pipeline.append(expert.tasks_analysis[0])
 
     task_performance_rows: list[TaskPerformanceRow] = []
     for row in analysis.task_rows or []:
@@ -1180,7 +1193,8 @@ def _section6_content(analysis, expert):
         )
 
     weak = [ln for ln in lines if ln.mastery_level in {"problem", "critical"}]
-    interpretation = list(pipeline[:1])
+    # Pipeline уже печатается выше таблицы — в цикле только краткая сводка без повторов.
+    interpretation: list[str] = []
     if task_performance_rows:
         weak_tasks = [
             r
@@ -1196,8 +1210,14 @@ def _section6_content(analysis, expert):
             f"Выделено содержательных линий (тем) для анализа: {len(lines)}; "
             f"с проблемным / критическим уровнем освоения: {len(weak)}."
         )
-    if expert.topics_analysis:
-        interpretation.append(expert.topics_analysis[0])
+    if weak:
+        interpretation.append(
+            "Приоритетные содержательные линии: "
+            + "; ".join(ln.name[:60] for ln in weak[:4])
+            + "."
+        )
+    elif not interpretation:
+        interpretation.append(pipeline[0])
 
     causes = [
         "Образовательные дефициты формируются на стыке слабых тем и недостаточно "
@@ -1482,11 +1502,13 @@ def _section8_group_tasks(analysis, protocol):
 
     interpretation = [
         "Сравнение выполнения заданий группами участников (сильные, средние, слабые / группа риска) "
-        "проведено в логике ФИОКО."
+        "выполнено средствами внутренней аналитики."
     ]
-    for ins in insights:
-        interpretation.append(f"{ins.title}: {ins.explanation}")
-    if not insights:
+    if insights:
+        interpretation.append(
+            "Выделены типы заданий: " + "; ".join(ins.title for ins in insights) + "."
+        )
+    else:
         interpretation.append("Выраженных контрастов между группами по заданиям не выявлено.")
 
     causes = [
@@ -1628,13 +1650,11 @@ def _section9_deficits(analysis, expert):
         if chain.summary:
             causes.append(chain.summary)
 
+    # Решения по каждому дефициту уже в карточках items — здесь только общие меры.
     org = [
         "Утвердить приоритетный перечень образовательных дефицитов на уровне администрации.",
         "Включить мониторинг устранения дефицитов во внутришкольный контроль.",
     ]
-    for d in items[:3]:
-        org.extend(d.management_decisions[:1])
-
     method = [
         "Разработать методические мероприятия по каждому приоритетному дефициту.",
         "Скорректировать рабочие программы и текущий контроль.",
@@ -1684,7 +1704,8 @@ def _section10_admin(report: SubjectReport, analysis):
             "Наличие приоритетных образовательных дефицитов требует контроля реализации "
             "мероприятий на уровне директора и заместителя директора."
         )
-    org = director + deputy[:2]
+    # Списки директора/заместителя уже выводятся отдельно — не дублировать в цикле.
+    org: list[str] = []
     method = [
         "Обеспечить методическое сопровождение реализации управленческих решений "
         "через ШМО и заместителя директора.",
@@ -1729,7 +1750,8 @@ def _section11_smo(report: SubjectReport, analysis):
         "Включить обсуждение результатов ВПР в план работы ШМО.",
         "Назначить ответственных за банк заданий и взаимопосещение.",
     ]
-    method = actions[:5]
+    # Перечень actions уже в начале раздела — не повторять как method.
+    method: list[str] = []
     effect = [
         "Повышение методической согласованности педагогов и снижение дефицитов "
         "по приоритетным содержательным линиям.",
@@ -1774,12 +1796,16 @@ def _section12_teachers(report: SubjectReport, expert, subject):
         "Профессиональные дефициты педагогов определены по итогам анализа образовательных "
         "результатов, объективности оценивания и содержательных линий."
     ]
-    causes = list(deficits[:3])
+    causes = [
+        "Профессиональные дефициты педагогов связаны с результатами обучающихся, "
+        "объективностью оценивания и методикой формирования планируемых результатов."
+    ]
     org = [
         "Утвердить план методического сопровождения педагогов по итогам ВПР.",
         "Закрепить наставнические пары при наличии устойчивых профессиональных дефицитов.",
     ]
-    method = actions[:5]
+    # deficits и actions уже в начале раздела — не дублировать.
+    method: list[str] = []
     effect = [
         "Снижение профессиональных дефицитов педагогов и рост качества преподавания "
         "по приоритетным направлениям.",
@@ -1793,20 +1819,16 @@ def _section12_teachers(report: SubjectReport, expert, subject):
 
 
 def _section13_parents(report: SubjectReport):
-    actions = list(report.parent_support_actions) or [
-        "Информирование родителей о результатах ВПР и качестве образовательных результатов.",
+    # Не копируем пункты из раздела 2 (parent_support_actions) — там уже есть базовое сопровождение.
+    actions = [
+        "Провести индивидуальные консультации по сопровождению обучающихся группы риска.",
+        "Организовать совместные мероприятия (родительские собрания / консультации) "
+        "по итогам ВПР.",
+        "Предоставить рекомендации по домашнему сопровождению освоения дефицитных тем.",
+        "Согласовать с родителями контроль посещаемости дополнительных занятий "
+        "для обучающихся группы риска.",
     ]
-    actions.extend(
-        [
-            "Провести индивидуальные консультации по сопровождению обучающихся группы риска.",
-            "Организовать совместные мероприятия (родительские собрания / консультации) "
-            "по итогам ВПР.",
-            "Предоставить рекомендации по домашнему сопровождению освоения дефицитных тем.",
-        ]
-    )
-    # unique preserve order
-    seen = set()
-    actions = [a for a in actions if not (a in seen or seen.add(a))]
+    actions = _unique_texts(actions)
 
     interpretation = [
         "Работа с родителями является обязательным элементом индивидуального сопровождения "
@@ -1889,7 +1911,8 @@ def _section14_methodical(report: SubjectReport, analysis, expert, subject):
     org = [
         "Утвердить перечень методических изменений на уровне ШМО и заместителя директора.",
     ]
-    method = out[:8]
+    # Рекомендации уже списком в начале раздела — не повторять как method.
+    method: list[str] = []
     effect = [
         "Повышение уровня освоения планируемых результатов и качества предметной подготовки.",
     ]

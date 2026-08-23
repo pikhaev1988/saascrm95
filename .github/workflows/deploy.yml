@@ -27,7 +27,7 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H "${{ secrets.DEPLOY_SERVER_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Deploy on server
+      - name: Deploy on server (backup → migrate → restart)
         env:
           DEPLOY_USER: ${{ secrets.DEPLOY_SERVER_USER }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_SERVER_HOST }}
@@ -35,14 +35,49 @@ jobs:
           DEPLOY_BRANCH: ${{ secrets.DEPLOY_BRANCH }}
           PYTHON_BIN: ${{ secrets.DEPLOY_PYTHON_BIN }}
           RESTART_FILE: ${{ secrets.DEPLOY_RESTART_FILE }}
+          BACKUP_DIR: ${{ secrets.DEPLOY_BACKUP_DIR }}
         run: |
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "
             set -e
             cd '${DEPLOY_PATH}'
+            BACKUP_DIR='${BACKUP_DIR:-/home/p/pikhae0x/backups/analiz_gia}'
+            echo '--- pre-deploy revision ---'
+            git rev-parse --short HEAD
             git fetch origin
             git checkout '${DEPLOY_BRANCH:-main}'
             git pull origin '${DEPLOY_BRANCH:-main}'
+            echo '--- post-pull revision ---'
+            git rev-parse --short HEAD
             '${PYTHON_BIN}' -m pip install -r requirements.txt -q
+
+            echo '--- DB backup ---'
+            mkdir -p \"\$BACKUP_DIR\"
+            STAMP=\$(date +%Y%m%d_%H%M%S)
+            if [ -f db.sqlite3 ]; then
+              cp -a db.sqlite3 \"\$BACKUP_DIR/pre_deploy_\${STAMP}.sqlite3\"
+              SIZE=\$(wc -c < \"\$BACKUP_DIR/pre_deploy_\${STAMP}.sqlite3\")
+              echo \"SQLite backup: \$SIZE bytes\"
+              test \"\$SIZE\" -gt 1024
+            elif [ -f .env ]; then
+              set -a
+              . ./.env
+              set +a
+              if [ \"\${USE_SQLITE:-True}\" != \"True\" ] && [ -n \"\$DB_NAME\" ] && command -v pg_dump >/dev/null 2>&1; then
+                pg_dump -h \"\${DB_HOST:-localhost}\" -p \"\${DB_PORT:-5432}\" -U \"\$DB_USER\" -Fc \"\$DB_NAME\" -f \"\$BACKUP_DIR/pre_deploy_\${STAMP}.dump\"
+                SIZE=\$(wc -c < \"\$BACKUP_DIR/pre_deploy_\${STAMP}.dump\")
+                echo \"PostgreSQL backup: \$SIZE bytes\"
+                test \"\$SIZE\" -gt 102400
+              else
+                echo 'ERROR: cannot create DB backup — aborting'
+                exit 1
+              fi
+            else
+              echo 'ERROR: cannot locate DB for backup — aborting'
+              exit 1
+            fi
+            ls -lt \"\$BACKUP_DIR\" | head -n 6
+
+            echo '--- migrate ---'
             '${PYTHON_BIN}' manage.py migrate --noinput
             '${PYTHON_BIN}' manage.py collectstatic --noinput
             touch '${RESTART_FILE}'
